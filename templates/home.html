@@ -1,0 +1,17 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super()}}
+<div class="row" style="width:100%;">
+    <div class="col-sm-8">
+        <h1>Bienvenido {{name}}</h1>
+        <div class="project-list-div">
+            proyectos
+        </div>
+    </div>
+    <div class="col-sm-4" style="padding-top:65px;">
+        {% include 'elements/_sidebar_menu.html' %}
+    </div>
+</div>
+
+
+{% endblock %}
