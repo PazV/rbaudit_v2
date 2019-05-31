@@ -20,7 +20,9 @@
     <body>
         {% include 'elements/_topnavbar.html' %}
         <div id="bodyContent" class="container-fluid">{% block bodyContent %}{% endblock %}</div>
+        {% include 'modal/new_project.html' %}
         {% include 'modal/my_account.html' %}
+        {% include 'modal/new_user.html' %}
 
 
         <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
@@ -33,6 +35,7 @@
         <script src="../static/jquery-loading/js/easy-loading.min.js"></script>
         <script src="../static/jquery-confirm/jquery-confirm.min.js"></script>
         <script src="../static/js/notifications.js"></script>
+        <script src="../static/js/user.js"></script>
     </body>
 
 </html>

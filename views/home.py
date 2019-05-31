@@ -12,8 +12,12 @@ import json
 # from flask import current_app as app
 
 
-bp = Blueprint('test', __name__ )
+bp = Blueprint('home', __name__ )
 
 @bp.route('/home')
 def home():
     return render_template('home.html',name='Paz')
+
+@bp.route('/notifications')
+def notifications():
+    return render_template('notifications.html')

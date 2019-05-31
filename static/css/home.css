@@ -88,11 +88,9 @@ naranja: #ed8b00
 .project-list-div{
     width:100%;
     border-style:double;
-    /* border-color:#24a8d759; */
-    border-color:#00bfb3;
+    border-color:rgba(0,0,0,0.2);;
     border-radius:5px;
     position:relative;
-    /* top:35%; */
     left:10%;
     overflow-y: auto;
     max-height: 60%;
