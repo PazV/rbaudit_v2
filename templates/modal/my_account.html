@@ -1,0 +1,44 @@
+<div class="modal fade" id="mod_my_account" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header green-modal">
+                <span class="spn-modal-header">Mi cuenta</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <div class="form-group row">
+                        <label for="MAname" class="col-sm-2 col-form-label">Nombre: </label>
+                        <div class="col-sm-10">
+                            <input id="MAname" type="text" placeholder="Nombre" class="form-control"/>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="MAemail" class="col-sm-2 col-form-label">Correo: </label>
+                        <div class="col-sm-10">
+                            <input type="email" id="MAemail" class="form-control" placeholder="Correo electrónico" />
+                        </div>
+                    </div>
+                    <div id="password_collapse">
+                        <div class="form-group row">
+                            <label class="col-form-label col-sm-2" for="MAold_password">Actual: </label>
+                            <div class="col-sm-9">
+                                <input type="password" id="MAold_password" class="form-control" placeholder="Contraseña actual"/>
+                            </div>
+                            <div class="col-sm-1 form-check" style="align-self:center;">
+                                <input type="checkbox" class="form-check-input"/>
+                                <span class="form-check-label"><i class="fa fa-eye" style="position:relative; bottom:2px;"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark"><span class="hide-text">Guardar </span><i class="fa fa-save"></i></button>
+                <button type="button" class="btn btn-outline-dark"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
