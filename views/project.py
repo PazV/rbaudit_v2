@@ -12,12 +12,18 @@ import json
 # from flask import current_app as app
 
 
-bp = Blueprint('home', __name__,  url_prefix='/home' )
+bp = Blueprint('project', __name__, url_prefix='/project' )
 
 @bp.route('/')
-def home():
-    return render_template('home.html',name='Paz')
+def project():
+    return render_template('project.html')
 
-@bp.route('/notifications')
-def notifications():
-    return render_template('notifications.html')
+@bp.route("/createform/<int:step>", methods=['GET','POST'])
+def createform(step):
+    if int(step)==1:
+        return render_template('createform_step1.html')
+    elif int(step)==2:
+        return render_template('createform_step2.html')
+
+    # else:
+    #     return render_template('error.html')

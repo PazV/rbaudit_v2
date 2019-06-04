@@ -12,12 +12,10 @@ import json
 # from flask import current_app as app
 
 
-bp = Blueprint('home', __name__,  url_prefix='/home' )
+bp = Blueprint('notifications', __name__,  url_prefix='/notifications' )
+
+
 
 @bp.route('/')
-def home():
-    return render_template('home.html',name='Paz')
-
-@bp.route('/notifications')
 def notifications():
     return render_template('notifications.html')

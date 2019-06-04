@@ -6,7 +6,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_mail import Mail, Message
+from flask import render_template
 
+def page_not_found(e):
+    return render_template('error.html'),404
 
 def create_app(test_config=None):
 
@@ -20,7 +23,7 @@ def create_app(test_config=None):
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
 
-
+    app.register_error_handler(404, page_not_found)
     # mail = Mail(app)
     # from views import app_config as cfg
 
@@ -58,24 +61,11 @@ def create_app(test_config=None):
 
     from views import home
     app.register_blueprint(home.bp)
+    from views import project
+    app.register_blueprint(project.bp)
+    from views import notifications
+    app.register_blueprint(notifications.bp)
 
-    # from views import auth
-    # app.register_blueprint(auth.bp)
-    # from views import register
-    # app.register_blueprint(register.bp)
-    # from views import dashboard
-    # app.register_blueprint(dashboard.bp)
-    # app.add_url_rule('/home',endpoint='index')
-    # app.add_url_rule('/',endpoint='index2')
-    # # app.add_url_rule('/',endpoint='index')
-    # from views import users
-    # app.register_blueprint(users.bp)
-    # from views import task
-    # app.register_blueprint(task.bp)
-    # from views import settings
-    # app.register_blueprint(settings.bp)
-    # from views import project
-    # app.register_blueprint(project.bp)
 
     return app
 

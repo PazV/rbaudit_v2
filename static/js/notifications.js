@@ -5,7 +5,7 @@ $(document).ready(function(){
         $("#btnOpenNotifications").children().removeClass('bell-notif').addClass('bell-no-notif');
     });
 
-    if (window.location.pathname=='/notifications'){
+    if (window.location.pathname=='/notifications/'){
         $("#btnOpenNotifications").children().removeClass('bell-notif').addClass('bell-no-notif');
     }
 });

@@ -1,0 +1,14 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super() }}
+<div class="row" style="width:100%;">
+    <div class="col-sm-8">
+        <div class="div-proj-title">
+            <span class="spnMyProjects">Mis notificaciones</span>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        {% include 'elements/_sidebar_menu.html' %}
+    </div>
+</div>
+{% endblock %}
