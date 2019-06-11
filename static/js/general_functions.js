@@ -11,7 +11,7 @@ function getForm(formId,select_list=null,check_list=null){
         }
     }
     if (check_list!==null){
-        var all_checks=$(formId).find("input[type=checkbox]");
+        var all_checks= $(formId).find("input[type=checkbox]");
         for (a in all_checks){
             if (all_checks[a].type=='checkbox'){
                 frm[all_checks[a].name]=all_checks[a].checked;
@@ -23,5 +23,137 @@ function getForm(formId,select_list=null,check_list=null){
 
 //Cerrar modal
 $(".close-modal").click(function(){
-    $(".close-modal").parents('.modal').modal('hide');
+    var mod_id=this.offsetParent.offsetParent.offsetParent.id;
+    $("#"+mod_id).modal("hide");
+
+
 });
+
+function emptyField(fieldId,errorId){
+    var valid=false;
+    var input=$(fieldId);
+    var is_name=input.val();
+    if(is_name && (input[0].value.trim()).length>0){ //valida si es diferente de vacio y verifica que no tenga puros espacios vacios
+        input.removeClass("invalid-field").addClass("valid-field");
+        $(errorId).removeClass("show-error-msg").addClass("hide-error-msg");
+        valid=true;
+    }
+    else{
+        input.removeClass("valid-field").addClass("invalid-field");
+        $(errorId).removeClass("hide-error-msg").addClass("show-error-msg");
+        $(errorId).html("Este campo es requerido.");
+    }
+    return valid;
+}
+
+function ajaxError(xhr, textStatus, error){
+    $.confirm({
+        theme:'dark',
+        title:'Atención',
+        content:'Su sesión ha expirado, favor de iniciar sesión nuevamente.',
+        buttons: {
+            confirm:{
+                text:'Aceptar',
+                action: function(){
+                    location.reload();
+                }
+            }
+        }
+    });
+}
+
+function validateMail(inputId,errorDiv){
+    var valid=false;
+    var val=$(inputId)[0].value;
+    var patt=/^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    if (patt.exec(val)==null){
+        $(inputId).removeClass("valid-field").addClass("invalid-field");
+        $(errorDiv).removeClass("hide-error-msg").addClass("show-error-msg");
+        $(errorDiv).html("Debe ingresar una dirección de correo válida.");
+    }
+    else{
+        $(inputId).removeClass("invalid-field").addClass("valid-field");
+        $(errorDiv).removeClass("show-error-msg").addClass("hide-error-msg");
+        valid=true;
+    }
+    return valid;
+}
+
+function hasExtension(inputID, exts) {
+    var fileName = document.getElementById(inputID).value;
+    return (new RegExp('(' + exts.join('|').replace(/\./g, '\\.') + ')$')).test(fileName);
+}
+
+function resetForm(formId,input_type){
+    $(formId)[0].reset();
+    for (x in input_type){
+        var node_name=input_type[x].split("|")[1];
+        var input_list=$(formId).find(input_type[x].split("|")[0]);
+        for (i in input_list){
+            if (input_list[i].nodeName==node_name){ //solo se toman en cuenta los input
+                if ($("#"+input_list[i].id).hasClass('valid-field')){
+                    $("#"+input_list[i].id).removeClass('valid-field');
+                }
+                if ($("#"+input_list[i].id).hasClass('invalid-field')){
+                    $("#"+input_list[i].id).removeClass('invalid-field');
+                }
+                if ($("#err"+input_list[i].id).hasClass('show-error-msg')){
+                    $("#err"+input_list[i].id).removeClass("show-error-msg").addClass("hide-error-msg");
+                }
+                // if ($("#err"+input_list[i].id).hasClass('show-error-msg-row')){
+                //     $("#err"+input_list[i].id).removeClass("show-error-msg-row").addClass("error-msg-row");
+                //     $("#err"+input_list[i].id).html("Error");
+                // }
+
+                if (node_name=='SELECT'){
+                    $("#"+input_list[i].id).empty(); //vacia un select
+                }
+            }
+        }
+    }
+}
+
+$.extend($.fn.dataTable.defaults, {
+    "autoWidth":true,
+    "searching":false,
+    "responsive":true,
+    "ordering":false,
+    "destroy":true,
+    "select":{
+        "style":"single",
+    },
+    "lengthMenu": [ 5, 10, 15, 20, 25 ],
+    "language":{
+        "decimal":        ".",
+        "emptyTable":     "No hay información disponible",
+        "info":           "Mostrando _START_ a _END_ de _TOTAL_ registros",
+        "infoEmpty":      "Mostrando 0 a 0 de 0 registros",
+        "infoFiltered":   "(filtrado de _MAX_ total registros)",
+        "infoPostFix":    "",
+        "thousands":      ",",
+        "lengthMenu":     "Mostrar _MENU_ registros",
+        "loadingRecords": "Cargando...",
+        "processing":     "Procesando...",
+        "search":         "Buscar:",
+        "zeroRecords":    "No se encontraron registros",
+        "paginate": {
+            "first":      "Primero",
+            "last":       "Última",
+            "next":       "Siguiente",
+            "previous":   "Anterior"
+        },
+        "aria": {
+            "sortAscending":  ": activar para ordenar de forma ascendente",
+            "sortDescending": ": activar para ordenar de forma descendente"
+        },
+        "select":{
+            "rows":""
+        }
+    },
+});
+
+//función para validar formularios
+// function validateForm(formId){
+//     var valid = false;
+//
+// }

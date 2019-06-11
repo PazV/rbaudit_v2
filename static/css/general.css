@@ -30,8 +30,61 @@ body{
     /* margin-top:3px; */
 }
 
+.generic-user-img{
+    content:url('../images/default-user.png');
+    width:30px;
+    height:30px;
+}
+
 #divUserDropdown {
     right: 0;
     position: absolute;
     left:initial;
+}
+
+.form-group.no-space-bottom{
+    padding-bottom:0 !important;
+    margin-bottom:0 !important;
+}
+
+.show-error-msg{
+    font-size:0.8rem;
+    visibility:visible;
+    color:gray;
+}
+
+.hide-error-msg{
+    visibility:hidden;
+}
+
+.valid-field{
+    border:1px solid #0eab0e;
+}
+
+.invalid-field{
+    border: 1px solid #ea480b;
+}
+
+.valid-file-field{
+    height:auto;
+    border:1px solid #0eab0e;
+    border-radius:5px;
+}
+
+.invalid-file-field{
+    height:auto;
+    border:1px solid #ea480b;
+    border-radius:5px;
+}
+
+.user-table-size{
+    width:20px;
+    height:20px;
+    border-radius:50px;
+}
+
+.user-topnavbar-size{
+    width:30px;
+    height:30px;
+    border-radius:50px;
 }

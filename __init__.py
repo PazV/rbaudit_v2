@@ -65,7 +65,11 @@ def create_app(test_config=None):
     app.register_blueprint(project.bp)
     from views import notifications
     app.register_blueprint(notifications.bp)
-
+    from views import users
+    app.register_blueprint(users.bp)
+    from views import login
+    app.register_blueprint(login.bp)
+    app.add_url_rule('/',endpoint='index')
 
     return app
 

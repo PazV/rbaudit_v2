@@ -10,21 +10,36 @@
             <div class="modal-body">
                 <div class="container-fluid">
                     <form id="frmNewUser">
-                        <div class="form-group row">
+                        <div class="form-group row no-space-bottom">
                             <label class="col-sm-2 col-form-label" for="NUname">Nombre: </label>
                             <div class="col-sm-10">
-                                <input type="text" id="NUname" placeholder="Nombre" class="form-control" name="name"/>
+                                <input type="text" id="NUname" placeholder="Nombre" class="form-control" name="name" data-required="true"/>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row justify-content-end">
+                            <div class="col-sm-10 hide-error-msg" id="errNUname">
+                                Campo inválido
+                            </div>
+                        </div>
+                        <div class="form-group row no-space-bottom">
                             <label class="col-form-label col-sm-2" for="NUemail">Correo: </label>
                             <div class="col-sm-10">
-                                 <input type="email" id="NUemail" placeholder="Correo" class="form-control" name="email"/>
+                                 <input type="email" id="NUemail" placeholder="Correo" class="form-control" name="email" data-required="true"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-10 offset-sm-2 hide-error-msg" id="errNUemail">
+                                Campo inválido
                             </div>
                         </div>
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="NUuser_image" name="profile_img"/>
+                            <input type="file" class="custom-file-input" id="NUuser_image" name="profile_img" data-required="false" pattern=".png,.PNG,.Png,.jpeg,.JPEG,.Jpeg,.jpg,.JPG,.Jpg"/>
                             <label class="custom-file-label" for="NUuser_image">Seleccionar imagen</label>
+                        </div>
+                        <div class="row">
+                            <div class="hide-error-msg col-sm-10" id="errNUuser_image">
+                                Campo inválido
+                            </div>
                         </div>
                         <fieldset style="border:1px solid #00bfb3; padding:0 2%; border-radius:5px;">
                             <legend style="width: auto;">Permisos</legend>
