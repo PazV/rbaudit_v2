@@ -12,7 +12,7 @@
                     <i class="fa fa-list-alt hidden-navbar-icon" style="margin-right:5px; vertical-align:middle;"></i>Formularios
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarForms">
-                    <a class="dropdown-item" href="/project/createform/1">Nuevo</a>
+                    <a class="dropdown-item" href="/project/{{g.project_factor}}/createform/step-1">Nuevo</a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" data-toggle="modal" href="#win_new_project" id="a_clone_form">Clonar</a>
                 </div>
@@ -30,11 +30,11 @@
             <a data-toggle="tooltip" title="Ver notificaciones" style="cursor:pointer; margin-right:10px; color:rgba(255,255,255,0.5); font-weight:bold;" id="btnOpenNotifications" href="/notifications"><i class="bell-notif"></i></a>
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item dropdown" >
-                    <a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true"><img class={{class_img}} height="30px" width="30px" style="border-radius:50px;" alt=""/></a>
+                    <a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true"><img class={{g.profile_picture_class}} height="30px" width="30px" style="border-radius:50px;" alt=""/></a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="divUserDropdown">
                         <a class="dropdown-item" href="#mod_my_account" data-toggle="modal">Mi cuenta</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Cerrar sesión</a>
+                        <a class="dropdown-item" href="#" role="button" id="btnSignOut">Cerrar sesión</a>
                     </div>
                 </li>
             </ul>

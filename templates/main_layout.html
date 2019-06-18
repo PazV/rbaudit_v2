@@ -17,10 +17,17 @@
         <link rel="stylesheet" href="/static/css/home.css" />
         <link rel="stylesheet" href="/static/css/forms.css" />
         <link rel="stylesheet" href="/static/css/profile_images.css"/>
+        <link rel="stylesheet" href="/static/jquery-folding-tree/css/file-explore.css"/>
+        <link rel="stylesheet" href="/static/css/_treepanel.css"/>
         <title>Auditoría</title>
     </head>
     <body>
         {% include 'elements/_topnavbar.html' %}
+        {% if g.user_info %}
+        <span id="spnSession" style="display: none">{{ g.user_info }}</span>
+        {% else %}
+        <span id="spnSession" style="display: none">{}</span>
+        {% endif %}
         <div id="bodyContent" class="container-fluid">{% block bodyContent %}{% endblock %}</div>
         {% include 'modal/new_project.html' %}
         {% include 'modal/my_account.html' %}
@@ -43,6 +50,9 @@
         <script src="/static/js/forms.js"></script>
         <script src="/static/js/general_functions.js"></script>
         <script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.10.16/r-2.2.1/rr-1.2.3/sc-1.4.4/sl-1.2.5/datatables.min.js"></script>
+        <script src="/static/js/project.js"></script>
+        <script src="/static/jquery-folding-tree/js/file-explore.js"></script>
+        <script src="/static/js/treepanel.js"></script>
     </body>
 
 </html>

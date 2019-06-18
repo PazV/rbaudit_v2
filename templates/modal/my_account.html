@@ -9,31 +9,47 @@
             </div>
             <div class="modal-body">
                 <div class="container-fluid">
-                    <form>
-                        <div class="form-group row">
+                    <form id="frmMAgeneral">
+                        <div class="form-group row no-space-bottom">
                             <label for="MAname" class="col-sm-2 col-form-label">Nombre: </label>
                             <div class="col-sm-10">
                                 <input id="MAname" type="text" placeholder="Nombre" class="form-control"/>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row justify-content-end">
+                            <div class="col-sm-10 hide-error-msg" id="errMAname">
+                                Campo requerido
+                            </div>
+                        </div>
+                        <div class="form-group row no-space-bottom">
                             <label for="MAemail" class="col-sm-2 col-form-label">Correo: </label>
                             <div class="col-sm-10">
                                 <input type="email" id="MAemail" class="form-control" placeholder="Correo electrónico" />
                             </div>
                         </div>
-                        <div class="form-group row" style="padding: 0 7% 0 3%;">
+                        <div class="row justify-content-end">
+                            <div class="col-sm-10 hide-error-msg" id="errMAemail">
+                                Campo requerido
+                            </div>
+                        </div>
+                        <div class="form-group row no-space-bottom" style="padding: 0 7% 0 3%;">
                             <div class="custom-file col-10">
                                 <input type="file" class="custom-file-input" id="MAuser_image"/>
                                 <label class="custom-file-label" for="MAuser_image">Seleccionar imagen</label>
                             </div>
                             <div class="col-2">
-                                <button type="button" class="btn btn-success" disabled>Quitar</button>
+                                <button type="button" class="btn btn-success" id="btnMAremoveImage" disabled>Quitar</button>
                             </div>
                         </div>
-
+                        <div class="row">
+                            <div class="col-sm-8 hide-error-msg" id="errMAuser_image">
+                                Formato incorrecto
+                            </div>
+                        </div>
+                    </form>
+                    <form id="frmMApassword">
                         <div id="password_collapse" style="display:none;">
-                            <div class="form-group row">
+                            <div class="form-group row no-space-bottom">
                                 <label class="col-form-label col-sm-2" for="MAold_password">Actual: </label>
                                 <div class="col-sm-9">
                                     <input type="password" id="MAold_password" class="form-control" placeholder="Contraseña actual" data-toggle="tooltip" data-placement="bottom" title="Contraseña actual"/>
@@ -43,7 +59,12 @@
                                     <span class="form-check-label"><i class="fa fa-eye" style="position:relative; bottom:2px;"></i></span>
                                 </div>
                             </div>
-                            <div class="form-group row">
+                            <div class="row">
+                                <div class=" col-sm-9 offset-sm-2 hide-error-msg" id="errMAold_password">
+                                    Campo requerido
+                                </div>
+                            </div>
+                            <div class="form-group row no-space-bottom">
                                 <label class="col-form-label col-sm-2" for="MAnew_password">Nueva: </label>
                                 <div class="col-sm-9">
                                     <input type="password" id="MAnew_password" class="form-control" placeholder="Nueva contraseña" data-toggle="tooltip" data-placement="bottom" title="Nueva contraseña" />
@@ -53,7 +74,12 @@
                                     <span class="form-check-label"><i class="fa fa-eye" style="position:relative; bottom:2px;"></i></span>
                                 </div>
                             </div>
-                            <div class="form-group row">
+                            <div class="row">
+                                <div class="col-sm-9 offset-sm-2 hide-error-msg" id="errMAnew_password">
+                                    Campo requerido
+                                </div>
+                            </div>
+                            <div class="form-group row no-space-bottom">
                                 <label class="col-form-label col-sm-2" for="MAconfirm_password">Confirmar: </label>
                                 <div class="col-sm-9">
                                     <input type="password" id="MAconfirm_password" class="form-control" placeholder="Confirmar contraseña" data-toggle="tooltip" data-placement="bottom" data-placement="Confirmar contraseña"/>
@@ -63,13 +89,18 @@
                                     <span class="form-check-label"><i class="fa fa-eye" style="position:relative; bottom:2px;"></i></span>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-sm-9 offset-sm-2 hide-error-msg" id="errMAconfirm_password">
+                                    Campo requerido
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
             <div class="modal-footer green-modal">
                 <button type="button" class="btn btn-outline-dark mr-auto" id="btnChangePassword"><span class="hide-text">Cambiar contraseña </span><i class="fa fa-lock"></i></button>
-                <button type="button" class="btn btn-outline-dark"><span class="hide-text">Guardar </span><i class="fa fa-save"></i></button>
+                <button type="button" class="btn btn-outline-dark" id="btnSaveMyAccount"><span class="hide-text">Guardar </span><i class="fa fa-save"></i></button>
                 <button type="button" class="btn btn-outline-dark close-modal"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
             </div>
         </div>

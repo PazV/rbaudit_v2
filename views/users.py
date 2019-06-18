@@ -15,6 +15,7 @@ import ast
 from werkzeug.utils import secure_filename
 import os
 import copy
+from .login import is_logged_in
 from .db_connection import getDB
 db = getDB()
 
@@ -22,6 +23,7 @@ db = getDB()
 bp = Blueprint('users', __name__,  url_prefix='/users' )
 
 @bp.route('/saveUser',methods=['GET','POST'])
+@is_logged_in
 def saveUser():
     response={}
     try:
@@ -84,38 +86,89 @@ def saveUser():
     return json.dumps(response)
 
 @bp.route('/getUserTable', methods=['GET','POST'])
+@is_logged_in
 def getUserTable():
-    app.logger.info("get user table")
     response={}
     try:
-        users=db.query("""
-            select
-                user_id,
-                name,
-                email,
-                profile_picture_class,
-                'Habilitado' as status
-            from
-                system.user
-            where
-                enabled=True
-            offset %s limit %s
-        """%(int(request.form['start']),int(request.form['length']))).dictresult()
-        for u in users:
-            u['profile_picture']='<img class="%s user-topnavbar-size"  alt=""/>'%u['profile_picture_class']
-        users_count=db.query("""
-            select count(*)
-            from system.user
-            where enabled=True
-        """).dictresult()
-        response['data']=users
-        response['recordsTotal']=users_count[0]['count']
-        response['recordsFiltered']=users_count[0]['count']
-        response['success']=True
+        if request.method=='POST':
+            users=db.query("""
+                select
+                    user_id,
+                    name,
+                    email,
+                    profile_picture_class,
+                    'Habilitado' as status
+                from
+                    system.user
+                where
+                    enabled=True
+                offset %s limit %s
+            """%(int(request.form['start']),int(request.form['length']))).dictresult()
+            for u in users:
+                u['profile_picture']='<img class="%s user-topnavbar-size"  alt=""/>'%u['profile_picture_class']
+            users_count=db.query("""
+                select count(*)
+                from system.user
+                where enabled=True
+            """).dictresult()
+            response['data']=users
+            response['recordsTotal']=users_count[0]['count']
+            response['recordsFiltered']=users_count[0]['count']
+            response['success']=True
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
 
     except:
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info= sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getUserList', methods=['GET','POST'])
+@is_logged_in
+def getUserList():
+    response={}
+    try:
+        if request.method=='POST':
+            users=db.query("""
+                select user_id, name
+                from system.user
+                order by name asc
+            """).dictresult()
+            response['data']=users
+            response['success']=True
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getAccountInfo', methods=['GET','POST'])
+@is_logged_in
+def getAccountInfo():
+    response={}
+    try:
+        valid,data=GF.getDict(request.form,'post')
+        if valid:
+            user=db.query("""
+                select user_id, name, email
+                from system.user
+                where user_id=%s
+            """%data['user_id']).dictresult()[0]
+            response['data']=user
+            response['success']=True
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+        exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
     return json.dumps(response)

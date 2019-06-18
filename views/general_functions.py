@@ -12,6 +12,8 @@ import smtplib
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 import re
+from .db_connection import getDB
+db = getDB()
 app=Flask(__name__)
 
 class GeneralFunctions:
@@ -96,3 +98,15 @@ class GeneralFunctions:
         pattern = re.compile("|".join(rep.keys()))
         new_text = pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
         return new_text
+
+    def userInfo(self,extras=None):
+        user_info=db.query("""
+            select user_id,profile_picture_class
+            from system.user where user_id=%s
+        """%session['user_id']).dictresult()[0]
+        if extras!=None:
+            for x in extras:
+                user_info.update(x)
+        g.user_info=json.dumps(user_info)
+        g.profile_picture_class=user_info['profile_picture_class']
+        return g

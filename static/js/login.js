@@ -15,6 +15,8 @@ $.(document).ready(function(){
             console.log("no válido");
         }
     });
+
+    
 });
 
 function validateLoginMail(){

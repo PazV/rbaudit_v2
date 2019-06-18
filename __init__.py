@@ -41,7 +41,7 @@ def create_app(test_config=None):
     )
     # mail = Mail(app)
     # toolbar=DebugToolbarExtension(app)
-    logging.basicConfig(filename='/var/log/rbaudit/aud_second_log.log', format='%(asctime)s %(message)s',level=logging.INFO)
+    logging.basicConfig(filename='/var/log/rbaudit/audlog.log', format='%(asctime)s %(message)s',level=logging.INFO)
 
 
 
@@ -69,7 +69,8 @@ def create_app(test_config=None):
     app.register_blueprint(users.bp)
     from views import login
     app.register_blueprint(login.bp)
-    app.add_url_rule('/',endpoint='index')
+    app.add_url_rule('/',endpoint='home.home')
+    app.add_url_rule('/home', endpoint='home.home')
 
     return app
 

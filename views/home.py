@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from .db_connection import getDB
 import logging
 db = getDB()
-# from .auth import is_logged_in
+from .login import is_logged_in
 import json
 from flask import current_app as app
 # from flask import current_app as app
@@ -16,18 +16,19 @@ from flask import current_app as app
 bp = Blueprint('home', __name__,  url_prefix='/home' )
 
 @bp.route('/')
+@is_logged_in
 def home():
-    app.logger.info("g home")
-    app.logger.info(g)
-    app.logger.info(session)
-    app.logger.info(session['user_id'])
     user_info=db.query("""
-        select profile_picture_class
+        select user_id,profile_picture_class
         from system.user where user_id=%s
-    """%session['user_id']).dictresult()[0]['profile_picture_class']
+    """%session['user_id']).dictresult()[0]
+    g.user_info=json.dumps(user_info)
+    g.profile_picture_class=user_info['profile_picture_class']
+    return render_template('home.html',g=g)
 
-    return render_template('home.html',class_img=user_info)
+
 
 @bp.route('/notifications')
+@is_logged_in
 def notifications():
     return render_template('notifications.html')

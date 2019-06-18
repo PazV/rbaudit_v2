@@ -113,44 +113,7 @@ function resetForm(formId,input_type){
     }
 }
 
-$.extend($.fn.dataTable.defaults, {
-    "autoWidth":true,
-    "searching":false,
-    "responsive":true,
-    "ordering":false,
-    "destroy":true,
-    "select":{
-        "style":"single",
-    },
-    "lengthMenu": [ 5, 10, 15, 20, 25 ],
-    "language":{
-        "decimal":        ".",
-        "emptyTable":     "No hay información disponible",
-        "info":           "Mostrando _START_ a _END_ de _TOTAL_ registros",
-        "infoEmpty":      "Mostrando 0 a 0 de 0 registros",
-        "infoFiltered":   "(filtrado de _MAX_ total registros)",
-        "infoPostFix":    "",
-        "thousands":      ",",
-        "lengthMenu":     "Mostrar _MENU_ registros",
-        "loadingRecords": "Cargando...",
-        "processing":     "Procesando...",
-        "search":         "Buscar:",
-        "zeroRecords":    "No se encontraron registros",
-        "paginate": {
-            "first":      "Primero",
-            "last":       "Última",
-            "next":       "Siguiente",
-            "previous":   "Anterior"
-        },
-        "aria": {
-            "sortAscending":  ": activar para ordenar de forma ascendente",
-            "sortDescending": ": activar para ordenar de forma descendente"
-        },
-        "select":{
-            "rows":""
-        }
-    },
-});
+
 
 //función para validar formularios
 // function validateForm(formId){
