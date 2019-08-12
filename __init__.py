@@ -41,7 +41,7 @@ def create_app(test_config=None):
     )
     # mail = Mail(app)
     # toolbar=DebugToolbarExtension(app)
-    logging.basicConfig(filename='/var/log/rbaudit/audlog.log', format='%(asctime)s %(message)s',level=logging.INFO)
+    # logging.basicConfig(filename='/var/log/rbaudit/audlog.log', format='%(asctime)s %(message)s',level=logging.INFO)
 
 
 

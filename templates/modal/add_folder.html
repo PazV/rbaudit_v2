@@ -1,0 +1,39 @@
+<div class="modal fade" id="mod_add_folder" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header green-modal">
+                <span class="spn-modal-header">Nueva carpeta</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <form id="frmFolderInfo">
+                        <div class="form-group row no-space-bottom" id="divFIparent">
+                            <label for="FIparent" class="col-sm-3 col-form-label">Pertenece a: </label>
+                            <div class="col-sm-9">
+                                <input id="FIparent" type="text" class="form-control" name="parent_id" readonly/>
+                            </div>
+                        </div>
+                        <div class="form-group row no-space-bottom">
+                            <label for="FIname" class="col-sm-3 col-form-label">Nombre: </label>
+                            <div class="col-sm-9">
+                                <input id="FIname" type="text" placeholder="Nombre" class="form-control" name="name"/>
+                            </div>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-sm-9 hide-error-msg" id="errFIname">
+                                Campo requerido
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark" id="btnSaveFolder"><span class="hide-text">Crear </span><i class="fa fa-save"></i></button>
+                <button type="button" class="btn btn-outline-dark close-modal"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </div>
+</div>

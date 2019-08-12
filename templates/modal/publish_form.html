@@ -1,0 +1,61 @@
+<div class="modal fade" id="mod_publish_form" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header green-modal">
+                <span class="spn-modal-header">Publicar formulario</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="frmFormToPublish">
+                    <div class="form-group row">
+                        <label for="FTPassigned_to" class="col-sm-3 col-form-label">Asignar a:</label>
+                        <div class="col-sm-9">
+                            <select class="form-control" id="FTPassigned_to" name="assigned_to"></select>
+                        </div>
+                    </div>
+                    <div class="form-group row no-space-bottom">
+                        <label for="FTPresolve_date" class="col-sm-4 col-form-label">Resolver antes de:</label>
+                        <div class="col-sm-8">
+                            <input type="date" class="form-control" id="FTPresolve_date" required name="resolve_date" />
+                        </div>
+                    </div>
+                    <div class="row justify-content-end">
+                        <div class="col-sm-8 hide-error-msg" id="errFTPresolve_date">
+                            Campo requerido
+                        </div>
+                    </div>
+                    <fieldset class="fieldset-permits">
+                        <legend class="fieldset-legend-permits" style="font-size:1.2rem;">Notificaciones </legend>
+                        <div class="custom-control custom-checkbox">
+                            <input class="custom-control-input" type="checkbox" id="FTPcheck_notify_assignee" name="notify_assignee"/>
+                            <label class="custom-control-label" for="FTPcheck_notify_assignee">Enviar notificación por correo al usuario asignado</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input class="custom-control-input" type="checkbox" id="FTPcheck_notify_resolved" name="notify_resolved"/>
+                            <label class="custom-control-label" for="FTPcheck_notify_resolved">Recibir notificación por correo cuando sea resuelto</label>
+                        </div>
+                    </fieldset>
+                    <div class="form-group row" style="padding-top:5px;">
+                        <label for="FTPrevision_1" class="col-sm-3 col-form-label">Revisión 1: </label>
+                        <div class="col-sm-7">
+                            <select class="form-control" id="FTPrevision_1" name="revision_1" data-revision="1"></select>
+                        </div>
+                        <div class="btn-group btn-group-sm col-sm-2" style="padding-left:0px;" role="group">
+                            <button type="button" class="btn btn-secondary" style="border:.5px solid #595f65;" data-toggle="tooltip" title="Eliminar revisión" id="btnFTPremoveRevision"><i class="fa fa-minus"></i></button>
+                            <button type="button" class="btn btn-secondary" style="border:.5px solid #595f65;" data-toggle="tooltip" title="Agregar revisión" id="btnFTPaddRevision"><i class="fa fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div id="FTPrevisions" >
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark" id="btnPFpublishForm"><span class="hide-text">Publicar </span><i class="fa fa-cloud-upload"></i></button>
+                <button type="button" class="btn btn-outline-dark close-modal"><span class="hide-text">Salir </span><i class="fa fa-close"></i></button>
+            </div>
+        </div>
+    </div>
+</div>

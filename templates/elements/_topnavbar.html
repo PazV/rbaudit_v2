@@ -6,7 +6,7 @@
         &#9776;
     </button>
     <div class="collapse navbar-collapse navbar-toggleable-xs" id="divNavBar">
-        <ul class="navbar-nav mr-auto">
+        <ul class="navbar-nav mr-auto" id="topnb_leftmenu">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarForms" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Formularios">
                     <i class="fa fa-list-alt hidden-navbar-icon" style="margin-right:5px; vertical-align:middle;"></i>Formularios
@@ -22,12 +22,12 @@
                     <i class="fa fa-group hidden-navbar-icon" style="margin-right:5px; vertical-align:middle;"></i>Usuarios
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarUser">
-                        <a class="dropdown-item" data-toggle="modal" href="#win_admin_users">Administrar usuarios del proyecto</a>
+                        <a class="dropdown-item" data-toggle="modal" href="#mod_admin_project_users">Administrar usuarios del proyecto</a>
                 </div>
             </li>
         </ul>
         <div class="row" >
-            <a data-toggle="tooltip" title="Ver notificaciones" style="cursor:pointer; margin-right:10px; color:rgba(255,255,255,0.5); font-weight:bold;" id="btnOpenNotifications" href="/notifications"><i class="bell-notif"></i></a>
+            <a data-toggle="tooltip" title="Ver notificaciones" style="cursor:pointer; margin-right:10px; color:rgba(255,255,255,0.5); font-weight:bold;" id="btnOpenNotifications" href="/notifications"><i class="bell-no-notif"></i></a>
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item dropdown" >
                     <a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true"><img class={{g.profile_picture_class}} height="30px" width="30px" style="border-radius:50px;" alt=""/></a>
@@ -39,7 +39,5 @@
                 </li>
             </ul>
         </div>
-
-
     </div>
 </nav>

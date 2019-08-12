@@ -205,3 +205,13 @@ naranja: #ed8b00
     font-size:1.8em;
   }
 }
+
+.fieldset-permits{
+    border:1px solid #00bfb3;
+    padding:0 2%;
+    border-radius:5px;
+}
+
+.fieldset-legend-permits{
+    width: auto;
+}

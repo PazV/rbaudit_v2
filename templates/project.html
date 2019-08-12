@@ -1,14 +1,15 @@
 {% extends 'main_layout.html' %}
 {% block bodyContent %}
 {{ super() }}
-<div class="row" style="width:100%;">
-    <div class="col-sm-3">
+<div class="row" style="width:100%; height:80vh;">
+    <div class="col-sm-3 mh-inh">
         {% include 'elements/_project_tree_structure.html' %}
+
     </div>
-    <div class="col-sm-6">
-        <h1>Aquí va el proyecto</h1>
+    <div class="col-sm-6 mh-inh">
+        
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-3 mh-inh">
         {%include 'elements/_panel_right.html' %}
     </div>
 </div>

@@ -28,11 +28,15 @@
         {% else %}
         <span id="spnSession" style="display: none">{}</span>
         {% endif %}
-        <div id="bodyContent" class="container-fluid">{% block bodyContent %}{% endblock %}</div>
+        <div id="bodyContent" class="container-fluid" style="padding-top:65px;">{% block bodyContent %}{% endblock %}</div>
         {% include 'modal/new_project.html' %}
         {% include 'modal/my_account.html' %}
         {% include 'modal/admin_users.html' %}
         {% include 'modal/new_user.html' %}
+        {% include 'modal/add_folder.html' %}
+        {% include 'modal/publish_form.html' %}
+        {% include 'modal/admin_project_users.html' %}
+        {% include 'modal/project_user_permits.html' %}
 
 
 

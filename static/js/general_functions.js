@@ -25,8 +25,6 @@ function getForm(formId,select_list=null,check_list=null){
 $(".close-modal").click(function(){
     var mod_id=this.offsetParent.offsetParent.offsetParent.id;
     $("#"+mod_id).modal("hide");
-
-
 });
 
 function emptyField(fieldId,errorId){

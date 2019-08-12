@@ -4,3 +4,35 @@
     border-style: 1px solid #ffffe6;
     width: 100%;
 }
+
+.unpublished-form-ul{
+    padding-left:0;
+}
+
+.unpublished-form-a:hover{
+    display:block;
+    background-color:#00a9ce;
+    color:white;
+    text-decoration:none;
+    border-left:4px solid var(--naranja);
+}
+
+.unpublished-form-a{
+    display:block;
+    background-color:white;
+    color:#353434;
+    text-decoration:none;
+    padding-left:5%;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.unpublished-form-li{
+    text-decoration:none;
+    display:block;
+}
+
+.card-body#divFormPanel{
+    padding: 0.5rem;
+}

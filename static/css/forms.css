@@ -1,5 +1,5 @@
 .form-fieldset{
-    border:1px solid #797979;
+    border:1px solid #afa9a9;
     padding: 0 2%;
     border-radius: 5px;
 }
@@ -9,4 +9,17 @@
     padding: 4px;
     margin-left: 5px;
     font-size:large;
+}
+
+.form-paging-toolbar{
+    border:.5px solid #595f65;
+}
+
+#paging_toolbar_number{
+    width: 30px;
+    border-radius: 5px;
+    border: 0;
+    color:#353434;
+    text-align:center;
+    margin-right: 5px;
 }

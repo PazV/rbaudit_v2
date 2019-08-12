@@ -1,0 +1,25 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super() }}
+<div class="row" style="width:100%; height:80vh;">
+    <div class="col-sm-3 mh-inh">
+        {% include 'elements/_project_tree_structure.html' %}
+
+    </div>
+    <div class="col-sm-6 mh-inh">
+        <h3 id="resolveFormName"></h3>
+        <div id="divTableToResolve">
+        </div>
+        <div id="divTableToResolvePagingToolbar" style="float:right;">
+
+        </div>
+        <div style="margin-top:50px;">
+            <button class="btn btn-dark pull-right" data-toggle="tooltip" title="Guardar cambios hasta el momento" id="btnSaveResolvedForm"><span class="hide-text">Guardar cambios </span><i class="fa fa-save"></i></button>
+            <button class="btn btn-dark pull-right" data-toggle="tooltip" title="Enviar a revisión" id="btnSendToRevision"><span class="hide-text">Finalizar </span><i class="fa fa-check"></i></button>
+        </div>
+    </div>
+    <div class="col-sm-3 mh-inh">
+        {%include 'elements/_panel_right.html' %}
+    </div>
+</div>
+{% endblock %}

@@ -11,6 +11,14 @@ $(document).ready(function(){
     var location=window.location.pathname;
     if (location.split('/')[1]=='project'){
         loadFormPanel(me.user_info,location);
+        loadTreeMenu(me.user_info['project_id']);
+    }
+
+    if (window.location.pathname.includes('/home/') || (window.location.pathname.includes('/notifications/'))){
+        $("#topnb_leftmenu").css("visibility","hidden");
+    }
+    else{
+        $("#topnb_leftmenu").css("visibility","visible");
     }
 
     $("#mod_new_project").on('show.bs.modal',function(){
@@ -117,7 +125,7 @@ $(document).ready(function(){
 
     });
 
-    $("#frmNewProject .form-control").focusout(function(){        
+    $("#frmNewProject .form-control").focusout(function(){
         if (this.id!=='NPcomments'){
             var id="#"+this.id;
             var error_id="#err"+this.id;
@@ -164,7 +172,7 @@ function loadProjects(){
 function loadFormPanel(user_info,location){
     var me = this;
     var url=location+'/getUnpublishedForms';
-    console.log(user_info);
+    // console.log(user_info);
     $.ajax({
         url:url,
         type:'POST',
@@ -178,7 +186,8 @@ function loadFormPanel(user_info,location){
             if (res.success){
                 $("#divFormPanel ul").children().remove();
                 $.each(res.data,function(i,item){
-                    $("#divFormPanel ul").append('<li><a href="#">'+item.name+'</a></li>')
+                    url='/project/'+user_info['project_factor']+'/createform/step-2/'+item['form_id'];
+                    $("#divFormPanel ul").append('<li class="unpublished-form-li"><a class="unpublished-form-a" href="'+url+'" data-toggle="tooltip" title="'+item.name+'">'+item.name+'</a></li>')
                 });
             }
             else{
