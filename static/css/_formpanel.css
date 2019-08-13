@@ -36,3 +36,7 @@
 .card-body#divFormPanel{
     padding: 0.5rem;
 }
+
+.unpublished-pin-collapsed{
+    transform:rotate(270deg);
+}

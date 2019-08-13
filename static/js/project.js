@@ -132,6 +132,36 @@ $(document).ready(function(){
             emptyField(id,error_id);
         }
     });
+
+    $("#btnCollapseUnpublishedPanel").click(function(){
+        if ($("#ibtnCollapseUnpublishedPanel").hasClass('unpublished-pin-collapsed')){
+            $("#ibtnCollapseUnpublishedPanel").removeClass('unpublished-pin-collapsed');
+            $($("#bodyContent").children().children()[2]).addClass('col-sm-3');
+            $($("#bodyContent").children().children()[2]).css("max-width","");
+            $($("#bodyContent").children().children()[1]).css("width","");
+            $($("#bodyContent").children().children()[1]).css("max-width","");
+            if ($("#divCollapseTreepanel").is(':visible')){
+                $($("#bodyContent").children().children()[1]).addClass('col-sm-6');
+            }
+            else{
+                $($("#bodyContent").children().children()[1]).css("max-width","70%");
+                $($("#bodyContent").children().children()[1]).css("width","100%");
+            }
+        }
+        else{
+            $("#ibtnCollapseUnpublishedPanel").addClass('unpublished-pin-collapsed');
+            $($("#bodyContent").children().children()[2]).removeClass('col-sm-3');
+            $($("#bodyContent").children().children()[2]).css("max-width","5%");
+            $($("#bodyContent").children().children()[1]).removeClass('col-sm-6');
+            $($("#bodyContent").children().children()[1]).css("width","100%");
+            if ($("#divCollapseTreepanel").is(':visible')){
+                $($("#bodyContent").children().children()[1]).css("max-width","70%");
+            }
+            else{
+                $($("#bodyContent").children().children()[1]).css("max-width","90%");
+            }
+        }
+    });
 });
 
 function loadProjects(){

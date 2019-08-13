@@ -1,3 +1,12 @@
-.selectable-folder{    
+.selectable-folder{
     cursor:pointer;
+}
+
+.treepanel-pin-collapsed{
+    transform:rotate(90deg);
+}
+
+ .btn-collapse-treepanel:hover, .btn-collapse-treepanel:visited, .btn-collapse-treepanel:active, .btn-collapse-treepanel:focus {
+    outline:none !important;
+    box-shadow:none !important;
 }
