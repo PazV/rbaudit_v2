@@ -6,7 +6,7 @@ $(document).ready(function(){
     }
 
     if (window.location.pathname=='/project/'+me.user_info['project_factor']+'/'+me.user_info['form_id']){
-        getFormToResolve(me.user_info['project_id'],me.user_info['form_id'],1);
+        getFormToResolve(me.user_info['project_id'],me.user_info['form_id'],1,me.user_info['user_id']);
 
     }
 
@@ -56,7 +56,7 @@ $(document).ready(function(){
                             if (res.success){
 
                                 window.location.pathname='/project/'+me.user_info.project_factor+'/createform/step-2/'+res.form_id;
-                                loadFormTable(res.form_id);
+                                loadFormTable(res.form_id,1);
                             }
                             else{
                                 $.alert({
@@ -155,54 +155,7 @@ $(document).ready(function(){
     });
 
     $("#btnSavePrefilledForm").click(function(){
-        var table_data = $("#grdPrefilledForm tr").map(function (index, elem) {
-            var lista=[];
-            var dict={};
-            if (index>0){
-                $('td',this).each(function(){
-                    var value=$(this).html().replace(/&nbsp;/gi,'')
-                    // dict[$(this).attr('name')]=$(this).html();
-                    dict[$(this).attr('name')]=value;
-                    dict['entry_id']=$(this).data('entry');
-                });
-                lista.push(dict);
-            }
-            return lista;
-        });
-        var data={};
-        data['table_data']=table_data.get();
-        data['form_id']=me.user_info['form_id'];
-        data['project_id']=me.user_info['project_id'];
-
-        EasyLoading.show({
-            text:'Cargando...',
-            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
-        });
-        $.ajax({
-            url:'/project/savePrefilledForm',
-            type:'POST',
-            data:JSON.stringify(data),
-            success:function(response){
-                EasyLoading.hide();
-                try{
-                    var res=JSON.parse(response);
-                }catch(err){
-                    ajaxError();
-                }
-                $.alert({
-                    theme:'dark',
-                    title:'Atención',
-                    content:res.msg_response
-                });
-            },
-            error:function(){
-                $.alert({
-                    theme:'dark',
-                    title:'Atención',
-                    content:'Ocurrió un errorm favor de intentarlo de nuevo más tarde.'
-                });
-            }
-        });
+        saveTableInfo("#grdPrefilledForm",'/project/savePrefilledForm',me.user_info,true);
     });
 
     $("#btnPublishForm").click(function(){
@@ -240,6 +193,7 @@ $(document).ready(function(){
     $("#btnPFpublishForm").click(function(){
         $("#FTPresolve_date").focusout();
         if ($("#FTPresolve_date").hasClass('valid-field')){
+            saveTableInfo("#grdPrefilledForm",'/project/savePrefilledForm',me.user_info,false);
             var sel_list=[{'id':'#FTPassigned_to','name':'assigned_to'},{'id':'#FTPrevision_1','name':'revision_1'}];
             var revisions=$("#FTPrevisions").children();
             for (var x of revisions){
@@ -248,7 +202,6 @@ $(document).ready(function(){
             var data=getForm("#frmFormToPublish",sel_list,true);
             data['project_id']=me.user_info['project_id'];
             data['form_id']=me.user_info['form_id'];
-            console.log(data);
             $.ajax({
                 url:'/project/publishForm',
                 type:'POST',
@@ -301,6 +254,173 @@ $(document).ready(function(){
 
     });
 
+    $("#btnSaveResolvedForm").click(function(){
+        saveTableInfo("#grdFormToResolve",'/project/saveResolvingForm',me.user_info,true);
+    });
+
+    $("#btnSeeFormDetails").click(function(){
+        $.ajax({
+            url:'/project/getFormDetails',
+            type:'POST',
+            data:JSON.stringify({'form_id':me.user_info['form_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#divFormDetails").html(res.data);
+                    $("#mod_form_details").modal("show");
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnSendToRevision").click(function(){
+        $.confirm({
+            theme:'dark',
+            title:'Atención',
+            content:'Una vez enviado a revisión, este formulario no podrá ser editado, ¿desea continuar?',
+            buttons:{
+                confirm:{
+                    text:'Sí',
+                    action:function(){
+                        //se guardan cambios antes de enviar a revisión
+                        saveTableInfo("#grdFormToResolve",'/project/saveResolvingForm',me.user_info,false);
+                        var data={
+                            'form_id':me.user_info['form_id'],
+                            'project_id':me.user_info['project_id'],
+                            'user_id':me.user_info['user_id']
+                        };
+                        EasyLoading.show({
+                            text:'Cargando...',
+                            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                        })
+                        $.ajax({
+                            url:'/project/sendFormToRevision',
+                            type:'POST',
+                            data:JSON.stringify(data),
+                            success:function(response){
+                                EasyLoading.hide();
+                                try{
+                                    var res=JSON.parse(response);
+                                }catch(err){
+                                    ajaxError();
+                                }
+                                //cargar panel de pendientes por revisar
+                                window.location.pathname='/project/'+me.user_info.project_factor;
+                            },
+                            error:function(){
+                                EasyLoading.hide();
+                            }
+                        })
+                    }
+                },
+                cancel:{
+                    text:'No'
+                }
+            }
+        })
+    });
+
+    $("#btnFinishRevision").click(function(){
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
+        $.ajax({
+            url:'/project/checkToDoRevision',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id'],'form_id':me.user_info['form_id']}),
+            success:function(response){
+                EasyLoading.hide();
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    if (res.allowed){
+                        //mostrar modal de finalizar revisión
+                        $("#mod_finish_checking_form").modal("show");
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnReturnToAssignee").click(function(){
+        var data={};
+        data['msg']=$("#FCHFmessage").val();
+        data['form_id']=me.user_info['form_id'];
+        data['user_id']=me.user_info['user_id'];
+        data['project_id']=me.user_info['project_id'];
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
+        $.ajax({
+            url:'/project/returnFormToAssignee',
+            type:'POST',
+            data:JSON.stringify(data),
+            success:function(response){
+                EasyLoading.hide();
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#mod_finish_checking_form").modal("hide");
+                }
+            },
+            error:function(){
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
 
 });
 
@@ -319,6 +439,7 @@ function loadFormTable(form_id,page){
             }
             if (res.success){
                 $("#columnSettingsFormName").html(res.form_name);
+                $("#columnSettingsLastUpdated").html(res.last_updated);
                 $("#divColumnsSettings").append(res.html);
                 $("#divFormPagingToolbar").append(res.paging_toolbar);
                 $("#paging_toolbar_number").val(page);
@@ -385,11 +506,11 @@ function loadRevisionUsers(select_id,project_id){
     });
 }
 
-function getFormToResolve(project_id,form_id,page){
+function getFormToResolve(project_id,form_id,page,user_id){
     $.ajax({
-        url:'/project/getFormToResolve',
+        url:'/project/checkUserIsAllowed',
         type:'POST',
-        data:JSON.stringify({'project_id':project_id,'form_id':form_id,'page':page}),
+        data:JSON.stringify({'user_id':user_id, 'form_id':form_id}),
         success:function(response){
             try{
                 var res=JSON.parse(response);
@@ -397,16 +518,57 @@ function getFormToResolve(project_id,form_id,page){
                 ajaxError();
             }
             if (res.success){
-                $("#resolveFormName").html(res.form_name);
-                $("#divTableToResolve").append(res.html);
-                $("#divTableToResolvePagingToolbar").append(res.paging_toolbar);
-                $("#paging_toolbar_numberTR").val(page);
-                $(".tableTR-paging-toolbar").click(function(){
-                    $("#divTableToResolve").empty();
-                    $("#divTableToResolvePagingToolbar").empty();
-                    // console.log($(this).data('number'));
-                    getFormToResolve(project_id,form_id,$(this).data('number'));
-                });
+                if (res.match===true){
+                    $.ajax({
+                        url:'/project/getFormToResolve',
+                        type:'POST',
+                        data:JSON.stringify({'project_id':project_id,'form_id':form_id,'page':page,'user_id':user_id}),
+                        success:function(response2){
+                            try{
+                                var res2=JSON.parse(response2);
+                            }catch(err){
+                                ajaxError();
+                            }
+                            if (res2.success){
+                                $("#resolveFormName").html(res2.form_name);
+                                $("#resolveFormLastUpdated").html(res2.last_updated);
+                                $("#divTableToResolve").append(res2.html);
+                                $("#divTableToResolvePagingToolbar").append(res2.paging_toolbar);
+                                $("#paging_toolbar_numberTR").val(page);
+                                if (res.readonly===true){
+                                    $("#grdFormToResolve td").attr('contenteditable','false');
+                                }
+                                $(".form-paging-toolbar").click(function(){
+                                    $("#divTableToResolve").empty();
+                                    $("#divTableToResolvePagingToolbar").empty();
+                                    getFormToResolve(project_id,form_id,$(this).data('number'),user_id);
+                                });
+
+                            }
+                            else{
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:res2.msg_response
+                                });
+                            }
+                        },
+                        error:function(){
+                            $.alert({
+                                theme:'dark',
+                                title:'Atención',
+                                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                            });
+                        }
+                    });
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
             }
             else{
                 $.alert({
@@ -423,5 +585,58 @@ function getFormToResolve(project_id,form_id,page){
                 content:'Ocurrió un error, favor de intentarlo de nuevo.'
             });
         }
-    })
+    });
+}
+
+function saveTableInfo(table_id,url,user_info,show_msg){
+    var table_data = $(table_id+" tr").map(function (index, elem) {
+        var lista=[];
+        var dict={};
+        if (index>0){
+            $('td',this).each(function(){
+                var value=$(this).html().replace(/&nbsp;/gi,'')
+                dict[$(this).attr('name')]=value;
+                dict['entry_id']=$(this).data('entry');
+            });
+            lista.push(dict);
+        }
+        return lista;
+    });
+    var data={};
+    data['table_data']=table_data.get();
+    data['form_id']=user_info['form_id'];
+    data['project_id']=user_info['project_id'];
+    data['user_id']=user_info['user_id'];
+    EasyLoading.show({
+        text:'Cargando...',
+        type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+    });
+    $.ajax({
+        url:url,
+        type:'POST',
+        data:JSON.stringify(data),
+        success:function(response){
+            EasyLoading.hide();
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (show_msg===true){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        error:function(){
+            EasyLoading.hide();
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
 }

@@ -33,7 +33,7 @@
     display:block;
 }
 
-.card-body#divFormPanel{
+.card-body#divFormPanel, .card-body#divFormPanelToCheck{
     padding: 0.5rem;
 }
 

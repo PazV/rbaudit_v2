@@ -171,7 +171,7 @@ def getUnpublishedForms(subpath):
     try:
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
-            app.logger.info(data)
+
             if valid:
                 forms=db.query("""
                     select
@@ -241,7 +241,7 @@ def getMenu():
                     select folder_id, name from project.folder
                     where project_id=%s and parent_id=-1 order by folder_id
                 """%data['project_id']).dictresult()
-                app.logger.info(folders)
+
                 final_html=""
                 if folders!=[]:
                     for f in folders:
@@ -279,7 +279,7 @@ def getMenuNodes(folder_id, fh_html,sh_html,project_id):
             select
                 form_id, name
             from project.form where project_id=%s and folder_id=%s
-            and status_id=3 order by name
+            and status_id>2 order by name
         """%(project_id,folder_id)).dictresult()
 
         node=""
@@ -351,7 +351,9 @@ def createFormTable():
             if valid:
                 page=(int(data['page'])*10)-10
                 form_info=db.query("""
-                    select form_id,project_id,columns_number, rows, columns,name
+                    select form_id,project_id,columns_number, rows, columns,name,
+                    to_char(last_updated, 'DD-MM-YYYY HH24:MI:SS') as last_updated,
+                    (select u.name from system.user u where u.user_id=user_last_update) as user_last_update
                     from project.form
                     where form_id=%s
                 """%data['form_id']).dictresult()
@@ -404,7 +406,7 @@ def createFormTable():
                     num_buttons=int(int(form_info[0]['rows'])/10)+1
                 else:
                     num_buttons=int(int(form_info[0]['rows'])/10)
-                buttons='<div class="btn-group btn-group-sm" role="group"><input type="text" readonly id="paging_toolbar_number"/>'
+                buttons='<div class="btn-group btn-group-sm" role="group"><input class="paging-toolbar-number" type="text" readonly id="paging_toolbar_number"/>'
                 for b in range (0,num_buttons):
                     buttons+='<button type="button" class="btn btn-secondary form-paging-toolbar" data-number="%s">%s</button>'%(int(b+1),int(b+1))
                 buttons+='</div>'
@@ -413,6 +415,7 @@ def createFormTable():
                 response['success']=True
                 response['html']=table_str
                 response['paging_toolbar']=buttons
+                response['last_updated']='Actualizado %s por %s'%(form_info[0]['last_updated'],form_info[0]['user_last_update'])
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error la intentar obtener la información, favor de intentarlo de nuevo.'
@@ -450,8 +453,8 @@ def savePrefilledForm():
                     db.query(query)
 
                 db.query("""
-                    update project.form set status_id=2 where form_id=%s and project_id=%s
-                """%(data['form_id'],data['project_id']))
+                    update project.form set status_id=2, user_last_update=%s, last_updated='now' where form_id=%s and project_id=%s
+                """%(data['user_id'],data['form_id'],data['project_id']))
 
                 response['success']=True
                 response['msg_response']='Los cambios han sido guardados.'
@@ -528,6 +531,10 @@ def publishForm():
                     where form_id=%s
                     and project_id=%s
                 """%(data['notify_assignee'],data['notify_resolved'],data['resolve_date'],data['assigned_to'],str_revisions,data['form_id'],data['project_id']))
+                table_name='form.project_%s_form_%s'%(data['project_id'],data['form_id'])
+                db.query("""
+                    alter table %s add rev_1 text default ''
+                """%table_name)
                 response['success']=True
                 response['msg_response']='El formulario ha sido publicado, puede encontrarlo en el menú del lado izquierdo.'
             else:
@@ -553,18 +560,25 @@ def getFormToResolve():
             if valid:
                 page=(int(data['page'])*10)-10
                 form_info=db.query("""
-                    select form_id,project_id,columns_number, rows, columns, name
+                    select form_id,project_id,columns_number, rows, columns, name, assigned_to,
+                    to_char(last_updated, 'DD-MM-YYYY HH24:MI:SS') as last_updated,
+                    (select u.name from system.user u where u.user_id=user_last_update) as user_last_update
                     from project.form
                     where form_id=%s
                 """%data['form_id']).dictresult()
                 columns=eval(form_info[0]['columns'])
-                app.logger.info(columns)
+
                 #check if table exists
                 table_name='project_%s_form_%s'%(form_info[0]['project_id'],form_info[0]['form_id'])
 
-                table_str='<table class="table table-bordered table-responsive-md table-striped text-center" id="grdPrefilledForm"><thead><tr>'
+                table_str='<table class="table table-bordered table-responsive-md table-striped text-center table-ns" id="grdFormToResolve"><thead><tr>'
+                editables=[]
                 for c in columns:
                     table_str+='<th class="text-center">%s</th>'%c['name']
+                    if c['editable']==True:
+                        editables.append('col_%s'%c['order'])
+                rev='Revisión'.decode('utf8')
+                table_str+='<th class="text-center">%s</th>'%rev
                 table_str+='</tr></thead><tbody>'
 
                 table_info=db.query("""
@@ -572,14 +586,23 @@ def getFormToResolve():
                     offset %s limit 10
                 """%(table_name,page)).dictresult()
 
-
+                rev_editable=True #columna de revisión es editable
+                if int(data['user_id'])==form_info[0]['assigned_to']: #en caso de que el usuario que va a ver el formulario sea a quien fue asignado
+                    rev_editable=False #no se permite editar columna de revisión
                 for t in table_info:
                     keys=sorted(t.iteritems())
                     table_str+='<tr>'
                     for k in keys:
                         if k[0].split('_')[0]=='col':
-                            table_str+='<td class="pt-3-half" contenteditable="true" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
+                            if k[0] in editables:
+                                table_str+='<td class="pt-3-half" contenteditable="true" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
+                            else:
+                                table_str+='<td class="pt-3-half" contenteditable="false" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
                         else:
+                            if rev_editable==True:
+                                table_str+='<td class="pt-3-half" contenteditable="true" name="rev_1" data-entry="%s">%s</td>'%(t['entry_id'],t['rev_1'].decode('utf8'))
+                            else:
+                                table_str+='<td class="pt-3-half" contenteditable="false" name="rev_1" data-entry="%s">%s</td>'%(t['entry_id'],t['rev_1'].decode('utf8'))
                             table_str+='</tr>'
                             break
                 table_str+='</tbody></table>'
@@ -588,7 +611,7 @@ def getFormToResolve():
                     num_buttons=int(int(form_info[0]['rows'])/10)+1
                 else:
                     num_buttons=int(int(form_info[0]['rows'])/10)
-                buttons='<div class="btn-group btn-group-sm" role="group"><input type="text" readonly id="paging_toolbar_number"/>'
+                buttons='<div class="btn-group btn-group-sm" role="group"><input class="paging-toolbar-number" type="text" readonly id="paging_toolbar_numberTR"/>'
                 for b in range (0,num_buttons):
                     buttons+='<button type="button" class="btn btn-secondary form-paging-toolbar" data-number="%s">%s</button>'%(int(b+1),int(b+1))
                 buttons+='</div>'
@@ -596,9 +619,354 @@ def getFormToResolve():
                 response['success']=True
                 response['html']=table_str
                 response['paging_toolbar']=buttons
+                response['last_updated']='Actualizado %s por %s'%(form_info[0]['last_updated'],form_info[0]['user_last_update'])
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/checkUserIsAllowed',methods=['GET','POST'])
+@is_logged_in
+def checkUserIsAllowed():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                allowed_users=db.query("""
+                    select
+                        f.assigned_to,
+                        f.revisions,
+                        p.manager,
+                        p.partner,
+                        p.project_id,
+                        f.status_id
+                    from
+                        project.project p,
+                        project.form f
+                    where
+                        f.form_id=%s
+                    and f.project_id=p.project_id
+                """%data['form_id']).dictresult()[0]
+
+                match=False
+                readonly=False
+                if int(allowed_users['partner'])==int(data['user_id']) or int(allowed_users['manager'])==int(data['user_id']): #si es socio o gerente del proyecto, tiene acceso a editar y/o ver formularios en todo momento
+                    match=True
+                    readonly=False
+                else:
+                    if int(allowed_users['status_id'])<5: #si está en proceso de llenado o configuración del formulario
+                        for k,v in allowed_users.iteritems():
+                            if k=='revisions':
+                                revision_list=v.split(",")
+                                for r in revision_list:
+                                    if int(r.split(":")[1])==int(data['user_id']):
+                                        match=True #si es revisor, tiene permiso de ver el formulario y editarlo
+                                        break
+                                    break
+                            else:
+                                if v!='project_id' or v!='status_id':
+                                    if int(v)==int(data['user_id']):
+                                        match=True #si tiene asignado el formulario, tiene permisos para verlo
+                                        break
+                        if match==False: #si no se encuentra entre los usuarios del formulario
+                            #se busca si el usuario tiene permisos para ver todos los formularios
+                            allowed_seeing=db.query("""
+                                select see_all_forms
+                                from system.user where user_id=%s
+                            """%data['user_id']).dictresult()
+                            if allowed_seeing[0]['see_all_forms']==True:
+                                match=True #si tiene permiso, se le permite verlo
+                                readonly=True #pero no puede editarlo
+                    else: #si se encuentra en la etapa de revisión
+                        if int(data['user_id'])==int(allowed_users['assigned_to']): #si es el usuario a quien fue asignado el formulario
+                            match=True #puede verlo
+                            readonly=True #no puede editarlo
+                        else:
+                            rev_list=allowed_users['revisions'].split(",") #se busca si está entre los revisores
+                            app.logger.info(rev_list)
+                            for r in rev_list:
+                                if int(r.split(":")[1])==int(data['user_id']):
+                                    match=True #si está entre los revisores, puede verlo
+                                    readonly=False #y puede editarlo
+                                    break
+                            if match==False: #si no se encuentra entre los usuarios del formulario
+                                #se busca si el usuario tiene permisos para ver todos los formularios
+                                allowed_seeing=db.query("""
+                                    select see_all_forms from system.user
+                                    where user_id=%s
+                                """%data['user_id']).dictresult()[0]
+                                if allowed_seeing['see_all_forms']==True:
+                                    match=True #si tiene permisos, se permite ver el formulario
+                                    readonly=True #pero no puede editarlo
+
+                response['match']=match
+                response['success']=True
+                response['readonly']=readonly
+                if match==False:
+                    response['msg_response']='Usted no tiene permisos para acceder a este formulario.'
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getFormDetails', methods=['GET','POST'])
+@is_logged_in
+def getFormDetails():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                info=db.query("""
+                    select
+                        (select a.name from system.user a where a.user_id=assigned_to) as assigned_to,
+                        revisions,
+                        to_char(create_date,'DD-MM-YYYY HH24:MI:SS') as create_date,
+                        (select a.name from system.user a where a.user_id=created_by) as created_by,
+                        to_char(resolve_before,'DD-MM-YYYY HH24:MI:SS') as resolve_before
+                    from
+                        project.form
+                    where
+                        form_id=%s
+                """%data['form_id']).dictresult()[0]
+
+                html='<p><b>Asignado a: </b>%s<br><b>Resolver antes de: </b>%s<br>'%(info['assigned_to'].decode('utf-8'),info['resolve_before'])
+
+                rev_list=info['revisions'].split(',')
+                for r in rev_list:
+                    rev='Revisión %s'%((r.split(":")[0]).split("_")[1])
+                    user_rev=db.query("""
+                        select name from system.user where user_id=%s
+                    """%r.split(":")[1]).dictresult()[0]
+                    html+='<b>%s: </b>%s<br>'%(rev.decode('utf-8'),user_rev['name'].decode('utf-8'))
+
+                html+='<b>Creado: </b>%s<br>'%info['create_date']
+                html+='<b>Creado por: </b>%s</p>'%info['created_by'].decode('utf-8')
+
+                response['success']=True
+                response['data']=html
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/saveResolvingForm', methods=['GET','POST'])
+@is_logged_in
+def saveResolvingForm():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                for x in data['table_data']:
+                    update_list=[]
+                    for key,value in x.iteritems():
+                        if key.split("_")[0]=='col' or key.split("_")[0]=='rev':
+                            update_list.append("%s='%s'"%(key,value))
+                    update_str=','.join(e for e in update_list)
+                    query="""
+                        update form.project_%s_form_%s set %s where entry_id=%s
+                    """%(data['project_id'],data['form_id'],update_str,x['entry_id'])
+                    # app.logger.info(query)
+                    db.query(query)
+
+                db.query("""
+                    update project.form set status_id=4, user_last_update=%s, last_updated='now' where form_id=%s and project_id=%s
+                """%(data['user_id'],data['form_id'],data['project_id']))
+
+                response['success']=True
+                response['msg_response']='Los cambios han sido guardados.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/sendFormToRevision', methods=['GET','POST'])
+@is_logged_in
+def sendFormToRevision():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update project.form
+                    set
+                        status_id=5,
+                        user_last_update=%s,
+                        last_updated='now'
+                    where
+                        form_id=%s
+                    and project_id=%s
+                """%(data['user_id'],data['form_id'],data['project_id']))
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/<path:subpath>/getFormsToCheck', methods=['GET','POST'])
+@is_logged_in
+def getFormsToCheck(subpath):
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                forms=db.query("""
+                    select
+                        form_id, name, revisions
+                    from
+                        project.form
+                    where
+                        project_id=%s
+                        and status_id in (5,6)
+                        order by create_date desc
+                """%data['project_id']).dictresult()
+                managers=db.query("""
+                    select manager,partner
+                    from project.project
+                    where project_id=%s
+                """%data['project_id']).dictresult()[0]
+                response['success']=True
+                if int(managers['manager'])==int(data['user_id']) or int(managers['partner'])==int(data['user_id']):
+                    response['data']=forms
+                else:
+                    showing_forms=[]
+                    for f in forms:
+                        revs=f['revisions'].split(",")
+                        for r in revs:
+                            if int(r.split(":")[1])==int(data['user_id']):
+                                showing_forms.append(f)
+                                break
+                    response['data']=showing_forms
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/checkToDoRevision', methods=['GET','POST'])
+@is_logged_in
+def checkToDoRevision():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                form=db.query("""
+                    select
+                        status_id, revisions
+                    from
+                        project.form
+                    where form_id=%s
+                """%(data['form_id'])).dictresult()
+                response['success']=True
+                if form[0]['status_id'] in (5,6): #revisa el status del formulario para ver si puede ser revisado
+                    users=db.query("""
+                        select manager, partner
+                        from project.project
+                        where project_id=%s
+                    """%data['project_id']).dictresult()[0]
+                    if int(data['user_id'])==int(users['manager']) or int(data['user_id'])==int(users['partner']): #verifica si el usuario es el gerente o socio del proyecto
+                        response['allowed']=True
+                    else:
+                        rev_list=form[0]['revisions'].split(",")
+                        app.logger.info("rev_list")
+                        app.logger.info(rev_list)
+                        for r in rev_list: #verifica si el usuario es alguno de los revisores
+                            if int(data['user_id'])==int(r.split(":")[1]):
+                                app.logger.info("allowed")
+                                response['allowed']=True
+                                break
+                        if 'allowed' not in response:
+                            response['allowed']=False
+                            response['msg_response']='Usted no tiene permisos para revisar este formulario.'
+                else:
+                    response['msg_response']='El formulario no se encuentra disponible para ser revisado.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener los datos, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/returnFormToAssignee', methods=['GET','POST'])
+@is_logged_in
+def returnFormToAssignee():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update project.form
+                    set status_id=3,
+                    user_last_update=%s,
+                    last_updated='now'
+                    where form_id=%s
+                """%(data['user_id'],data['form_id']))
+                response['success']=True
+                response['msg_response']='El formulario ha sido enviado a corregir.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'

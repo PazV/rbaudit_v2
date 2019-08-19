@@ -12,6 +12,7 @@ $(document).ready(function(){
     if (location.split('/')[1]=='project'){
         loadFormPanel(me.user_info,location);
         loadTreeMenu(me.user_info['project_id']);
+        loadFormsToCheck(me.user_info,location);
     }
 
     if (window.location.pathname.includes('/home/') || (window.location.pathname.includes('/notifications/'))){
@@ -235,5 +236,43 @@ function loadFormPanel(user_info,location){
                 content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
             });
         }
-    })
+    });
+}
+
+function loadFormsToCheck(user_info,location){
+
+    var url=location+'/getFormsToCheck';
+    $.ajax({
+        url:url,
+        type:'POST',
+        data:JSON.stringify({'project_id':user_info.project_id, 'user_id':user_info.user_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#divFormPanelToCheck ul").children().remove();
+                $.each(res.data,function(i,item){
+                    url='/project/'+user_info['project_factor']+'/'+item['form_id'];
+                    $("#divFormPanelToCheck ul").append('<li class="unpublished-form-li"><a class="unpublished-form-a" href="'+url+'" data-toggle="tooltip" title="'+item.name+'">'+item.name+'</a></li>')
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        error:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+            });
+        }
+    });
 }

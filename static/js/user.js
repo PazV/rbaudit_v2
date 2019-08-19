@@ -612,7 +612,134 @@ $(document).ready(function(){
                 content:'Debe seleccionar un usuario para ver sus permisos.'
             });
         }
-    })
+    });
+
+    $("#btnModEditUser").click(function(){
+        var table=$("#grdAdminUsers").DataTable();
+        if (table.rows('.selected').any()){
+            var ind=table.row('.selected').index();
+            var record=table.rows(ind).data()[0];
+            $.ajax({
+                url:'/users/getUserPermits',
+                type:'POST',
+                data:JSON.stringify({'user_id':record['user_id']}),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        var keys=Object.keys(res.data);
+                        for (var x of keys){
+                            $("#EdUch_"+x).prop("checked",res.data[x]);
+                        }
+                        $("#EdUname").val(record['name']);
+                        $("#EdUemail").val(record['email']);
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo más tarde.'
+                    });
+                }
+            });
+            $("#mod_edit_user").data('user_id',record['user_id']);
+            $("#mod_edit_user").modal("show");
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debe seleccionar un usuario para editarlo.'
+            });
+        }
+    });
+
+    $("#frmEditUser .form-control").focusout(function(){
+        var id="#"+this.id;
+        var error_id="#err"+this.id;
+        emptyField(id,error_id);
+        if (id=='#EdUemail'){
+            validateMail('#EdUemail','#errEdUemail');
+        }
+    });
+
+    $("#btnEdSaveUser").click(function(){
+        $("#frmEditUser .form-control").focusout();
+        if ($("#EdUname").hasClass('valid-field') && $("#EdUemail").hasClass('valid-field')){
+            var data = getForm('#frmEditUser',null,true);
+            data['name']=data['name'].trim();
+            data['user_id']=$("#mod_edit_user").data('user_id');
+            console.log(data);
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
+            $.ajax({
+                url:'/users/editUser',
+                type:'POST',
+                data:JSON.stringify(data),
+                success:function(response){
+                    EasyLoading.hide();
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+                                        $("#mod_edit_user").modal('hide');
+                                    }
+                                }
+                            }
+                        })
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Existen datos incorrectos o vacíos, favor de revisar.'
+            });
+        }
+    });
+
+    $("#mod_edit_user").on('hide.bs.modal',function(){
+        resetForm("#frmEditUser",["input|INPUT"]);
+    });
 
     $.extend($.fn.dataTable.defaults, {
         "autoWidth":true,

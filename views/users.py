@@ -164,6 +164,7 @@ def getUserTable():
                     system.user
                 where
                     enabled=True
+                    order by name
                 offset %s limit %s
             """%(int(request.form['start']),int(request.form['length']))).dictresult()
             for u in users:
@@ -420,6 +421,79 @@ def getProjectUserPermits():
                 p+='</ul>'
                 response['success']=True
                 response['data']=p
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getUserPermits', methods=['GET','POST'])
+@is_logged_in
+def getUserPermits():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                permits=db.query("""
+                    select
+                        resolve_forms,
+                        create_forms,
+                        create_projects,
+                        create_folders,
+                        download_forms,
+                        create_users,
+                        see_all_forms
+                    from
+                        system.user
+                    where user_id=%s
+                """%data['user_id']).dictresult()
+                response['data']=permits[0]
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/editUser', methods=['GET','POST'])
+@is_logged_in
+def editUser():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                data['name']=data['name'].encode('utf-8')
+                db.query("""
+                    update system.user
+                    set name='{name}',
+                    email='{email}',
+                    resolve_forms={resolve_forms},
+                    create_forms={create_forms},
+                    create_projects={create_projects},
+                    create_folders={create_folders},
+                    download_forms={download_forms},
+                    create_users={create_users},
+                    see_all_forms={see_all_forms}
+                    where user_id={user_id}
+                """.format(**data))
+                response['success']=True
+                response['msg_response']='El usuario ha sido actualizado.'
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
