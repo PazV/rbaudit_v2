@@ -1,0 +1,142 @@
+.spnNotifsTitle{
+    margin-left: 6%;
+    font-family: sans-serif;
+    font-size: 2.5em;
+    color: #515A5A;
+    font-weight: bold;
+}
+
+#divNotificationList{
+    width:63%;
+}
+
+.main-div-notif{
+    margin-top:2%;
+}
+
+.notif-div{
+    border:double #c6ccd2;
+    border-radius: 5px;
+    min-height:430px;
+    max-height:-webkit-fill-available;
+    margin-left:2%;
+}
+
+.notif{
+    max-width: inherit;
+    margin:auto;
+    border-radius: inherit;
+    height:60px;
+    align-items:center;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    border:0.5px solid #d0cdcd;
+    cursor:pointer;
+}
+
+.notif:hover{
+    background-color: #a7caf1;
+}
+
+.read-notif{
+    background-color: #dee2e6;
+}
+
+.unread-notif{
+    background-color: white;
+}
+
+.read-notif .notif-subject{
+    font-weight:normal;
+}
+
+.selected-notif{
+    background-color: #c5dcf7;
+}
+
+.notif-img{
+    width:50px;
+    height:50px;
+    border:0.5px double #767b7f96;
+    border-radius: 50px;
+}
+
+.notif i{
+    color:#f8c234;
+    width:10%;
+}
+
+.notif a{
+    width:90%;
+    margin-left:5px;
+    color:#495057;
+    text-decoration:none;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display:grid;
+}
+
+.notif a:hover{
+    text-decoration:none;
+}
+
+.notif a:visited{
+    text-decoration:none;
+}
+
+.notif-subject{
+    font-weight:bold;
+    font-size:1.2rem;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: normal;
+}
+
+.notif-date{
+    font-size:0.8rem;
+    font-style:italic;
+    line-height: normal;
+    color:#888b8e;
+}
+
+#divNotificationContent{
+    width:33%;
+    background-color: white;
+}
+
+.notif-content-img{
+    width:35px;
+    height:35px;
+    border:0.5px double #767b7f96;
+    border-radius: 50px;
+}
+
+.notif-content-header{
+    /* height:70px; */
+    margin:auto;
+    padding:3px;
+}
+
+.div-notif-content-img{
+    width:13%;
+    margin-left: 2%;
+    margin-right:2%;
+    align-self:center;
+}
+
+.div-notif-content-header-text{
+    width:83%;
+    font-size:0.8rem;
+}
+
+.div-notif-content-header-text p{
+    margin-bottom:0;
+}
+
+.notif-content-msg{
+    padding:10px;
+    font-size:0.9rem;
+}

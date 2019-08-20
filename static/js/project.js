@@ -13,10 +13,17 @@ $(document).ready(function(){
         loadFormPanel(me.user_info,location);
         loadTreeMenu(me.user_info['project_id']);
         loadFormsToCheck(me.user_info,location);
+        $("#btnOpenNotifications").css("visibility","visible");
     }
 
     if (window.location.pathname.includes('/home/') || (window.location.pathname.includes('/notifications/'))){
         $("#topnb_leftmenu").css("visibility","hidden");
+        if (window.location.pathname.includes('/home/')){
+            $("#btnOpenNotifications").css("visibility","hidden");
+        }
+        else{
+            $("#btnOpenNotifications").css("visibility","visible");
+        }
     }
     else{
         $("#topnb_leftmenu").css("visibility","visible");
