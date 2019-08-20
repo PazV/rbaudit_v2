@@ -7,17 +7,18 @@ $(document).ready(function(){
 
     if (window.location.pathname.includes('/notifications/')){
         $("#btnOpenNotifications").children().removeClass('bell-notif').addClass('bell-no-notif');
-        getNotifications(me.user_info);
+        getNotifications(me.user_info,1);
     }
 });
 
-function getNotifications(user_info){
+function getNotifications(user_info,page){
     $.ajax({
         url:'/notifications/getNotifications',
         type:'POST',
         data:JSON.stringify({
             'user_id':user_info['user_id'],
-            'project_id':user_info['project_id']
+            'project_id':user_info['project_id'],
+            'page':page
         }),
         success:function(response){
             try{
@@ -26,7 +27,7 @@ function getNotifications(user_info){
                 ajaxError();
             }
             if (res.success){
-                $("#divNotificationList").empty();
+                // $("#divNotificationList").empty();
                 for (var x of res.data){
                     $("#divNotificationList").append(x);
                     $(".notif").on('click',function(){
@@ -35,6 +36,14 @@ function getNotifications(user_info){
                         showNotification(this);
                     });
                 }
+                $("#divNotificationsPagingToolbar").empty();
+                $("#divNotificationsPagingToolbar").append(res.paging_toolbar);
+                $("#paging_toolbar_numberNotif").val(page);
+                $(".form-paging-toolbar").click(function(){
+                    $("#divNotificationList").empty();
+                    $("#divNotificationsPagingToolbar").empty();
+                    getNotifications(user_info,$(this).data('number'));                    
+                });
             }
             else{
                 $.alert({

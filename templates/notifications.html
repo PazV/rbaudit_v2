@@ -2,26 +2,20 @@
 {% block bodyContent %}
 {{ super() }}
 <div class="row" style="width:100%;">
-    <div class="col-sm-9">
+    <div class="col-sm-12">
         <span class="spnNotifsTitle">Mis notificaciones</span>
         <div class="row main-div-notif">
-            <div class="notif-div" id="divNotificationList">
-                <!-- <div class="notif unread-notif row container">
-                    <img class="profileimage-user-15- notif-img"  alt=""/>
-                    <a href="#" ><span class="notif-subject">Usted tiene una notificación este nombre es muy muy largo y no cabe</span><span class="notif-date">17-07-2019 13:00:09</span></a>
-                    <i class="fa fa-envelope"></i>
-                </div>
-                <div class="notif read-notif row container">
-                    <img class="profileimage-user-15- notif-img"  alt=""/>
-                    <a href="#" ><span class="notif-subject">Usted tiene una notificación este nombre es muy muy largo y no cabe</span><span class="notif-date">17-07-2019 13:00:09</span></a>
-                    <i class="fa fa-envelope-open"></i>
-                </div>
-                <div class="notif read-notif row container">
-                    <img class="profileimage-user-10- notif-img"  alt=""/>
-                    <a href="#" ><span class="notif-subject">Usted tiene una notificación este nombre es muy muy largo y no cabe</span><span class="notif-date">17-07-2019 13:00:09</span></a>
-                    <i class="fa fa-envelope-open"></i>
+            <!-- <div> -->
+                <div class="notif-div" id="divNotificationList">
+                <!-- <div id="divNotificationsPagingToolbar" style="float:right;">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input class="paging-toolbar-number" type="text" readonly id="paging_toolbar_numberNotif"/>
+                        <button type="button" class="btn btn-secondary form-paging-toolbar" data-number="1">1</button>
+                        <button type="button" class="btn btn-secondary form-paging-toolbar" data-number="2">2</button>
+                    </div>
                 </div> -->
             </div>
+
             <div class="notif-div" id="divNotificationContent">
                 <!-- <div class="row notif-content-header">
                     <div class="div-notif-content-img">
@@ -40,9 +34,13 @@
                 </div> -->
             </div>
         </div>
-    </div>
-    <div class="col-sm-3">
-        {% include 'elements/_sidebar_menu.html' %}
+        <div id="divNotificationsPagingToolbar" style="margin-left:10px;">
+            <!-- <div class="btn-group btn-group-sm" role="group">
+                <input class="paging-toolbar-number" type="text" readonly id="paging_toolbar_numberNotif"/>
+                <button type="button" class="btn btn-secondary form-paging-toolbar" data-number="1">1</button>
+                <button type="button" class="btn btn-secondary form-paging-toolbar" data-number="2">2</button>
+            </div> -->
+        </div>
     </div>
 </div>
 {% endblock %}

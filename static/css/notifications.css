@@ -1,3 +1,16 @@
+.bell-notif{
+    content:url('../images/bell-notif.png');
+    height:40px;
+    width:40px;
+}
+
+.bell-no-notif{
+    content:url('../images/bell-no-notif.png');
+    height:40px;
+    width:40px;
+    /* margin-top:3px; */
+}
+
 .spnNotifsTitle{
     margin-left: 6%;
     font-family: sans-serif;

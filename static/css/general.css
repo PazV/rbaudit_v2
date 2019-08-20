@@ -22,18 +22,7 @@ body{
     min-height:inherit;
 }
 
-.bell-notif{
-    content:url('../images/bell-notif.png');
-    height:40px;
-    width:40px;
-}
 
-.bell-no-notif{
-    content:url('../images/bell-no-notif.png');
-    height:40px;
-    width:40px;
-    /* margin-top:3px; */
-}
 
 .generic-user-img{
     content:url('../images/default-user.png');

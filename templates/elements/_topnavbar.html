@@ -27,7 +27,13 @@
             </li>
         </ul>
         <div class="row" >
-            <a data-toggle="tooltip" title="Ver notificaciones" style="cursor:pointer; margin-right:10px; color:rgba(255,255,255,0.5); font-weight:bold; visibility:hidden;" id="btnOpenNotifications" href="/notifications/{{g.project_factor}}"><i class="bell-no-notif"></i></a>
+            <a data-toggle="tooltip" title="Ver notificaciones" style="cursor:pointer; margin-right:10px; color:rgba(255,255,255,0.5); font-weight:bold; visibility:hidden;" id="btnOpenNotifications" href="/notifications/{{g.project_factor}}">
+                {% if g.notifications==True %}
+                    <i class="bell-notif"></i>
+                {% else %}
+                    <i class="bell-no-notif"></i>
+                {% endif %}
+            </a>
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item dropdown" >
                     <a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true"><img class={{g.profile_picture_class}} height="30px" width="30px" style="border-radius:50px;" alt=""/></a>

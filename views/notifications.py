@@ -31,6 +31,7 @@ def notifications(project_factor):
     project_id=int(project_factor)/int(cfg.project_factor)
     g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
     g.project_factor=project_factor
+    g.notifications=False
     # g.user_info=json.dumps(user_info)
     # g.profile_picture_class=user_info['profile_picture_class']
     return render_template('notifications.html',g=g)
@@ -43,6 +44,7 @@ def getNotifications():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
+                page=(int(data['page'])*10)-10
                 notifs=db.query("""
                     select
                         notification_id,
@@ -55,10 +57,12 @@ def getNotifications():
                     where
                         project_id=%s
                     and user_to=%s
-                    order by sent_date desc limit 10
-                """%(data['project_id'],data['user_id'])).dictresult()
+                    order by sent_date desc
+                    offset %s limit 10
+                """%(data['project_id'],data['user_id'],page)).dictresult()
 
                 not_list=[]
+                response['paging_toolbar']=''
                 if notifs!=[]:
                     for n in notifs:
                         if n['read']==False:
@@ -66,6 +70,22 @@ def getNotifications():
                         else:
                             notif='<div class="notif read-notif row container" data-notif="{notification_id}"><img class="{user_from_ppc} notif-img"  alt=""/><a href="#" ><span class="notif-subject">{subject}</span><span class="notif-date">{sent_date}</span></a><i class="fa fa-envelope-open"></i></div>'.format(**n)
                         not_list.append(notif)
+
+                    notif_total=db.query("""
+                        select count(*) from project.notification
+                        where project_id=%s and user_to=%s
+                    """%(data['project_id'],data['user_id'])).dictresult()[0]
+                    if int(notif_total['count'])%10!=0:
+                        num_buttons=int(int(notif_total['count'])/10)+1
+                    else:
+                        num_buttons=int(int(notif_total['count'])/10)
+                    buttons='<div class="btn-group btn-group-sm" role="group"><input class="paging-toolbar-number" type="text" readonly id="paging_toolbar_numberNotif"/>'
+                    for b in range(0,num_buttons):
+                        buttons+='<button type="button" class="btn btn-secondary form-paging-toolbar" data-number="%s">%s</button>'%(int(b+1),int(b+1))
+                    buttons+='</div>'
+                    response['paging_toolbar']=buttons
+
+
                 response['success']=True
                 response['data']=not_list
             else:
@@ -98,6 +118,7 @@ def showNotification():
                     select
                         msg,
                         subject,
+                        project_id,
                         (select a.name from system.user a where a.user_id=user_from) as user_from,
                         to_char(sent_date, 'DD-MM-YYYY HH24:MI:SS') as sent_date,
                         (select a.profile_picture_class from system.user a where a.user_id=user_from) as ppc,
@@ -108,7 +129,7 @@ def showNotification():
                     where
                         notification_id=%s
                 """%data['notification_id']).dictresult()
-                notif[0]['link']=os.path.join(cfg.host,notif[0]['link_content'])
+                notif[0]['link']=getNotifLink(notif[0]['link_content'],notif[0]['project_id'])
                 html='<div class="row notif-content-header"><div class="div-notif-content-img"><img class="{ppc} notif-content-img"  alt=""/></div><div class="div-notif-content-header-text"><p><b>De: </b>{user_from}</p><p><b>Fecha: </b>{sent_date}</p><p><b>Asunto: </b>{subject}</p></div></div><hr style="margin:0;"/><div class="notif-content-msg"><p>{msg}</p><p style="font-weight:bold;"><a href="{link}">{link_text}</a></p></div>'.format(**notif[0])
                 response['success']=True
                 response['data']=html
@@ -124,3 +145,12 @@ def showNotification():
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
     return json.dumps(response)
+
+def getNotifLink(link_content,project_id):
+    try:
+        project_factor=int(project_id)*int(cfg.project_factor)
+        link_content2=link_content.replace('<project_factor>',str(project_factor))
+        link=os.path.join(cfg.host,link_content2)
+        return link
+    except:
+        return "#"
