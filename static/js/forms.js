@@ -422,6 +422,42 @@ $(document).ready(function(){
         });
     });
 
+    $("#btnFinishCheckingForm").click(function(){
+        var data={};
+        data['msg']=$("#FCHFmessage").val();
+        data['form_id']=me.user_info['form_id'];
+        data['user_id']=me.user_info['user_id'];
+        data['project_id']=me.user_info['project_id'];
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
+        $.ajax({
+            url:'/project/finishCheckingForm',
+            type:'POST',
+            data:JSON.stringify(data),
+            success:function(response){
+                EasyLoading.hide();
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#mod_finish_checking_form").modal("hide");
+                }
+            },
+            error:function(){
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
 });
 
 

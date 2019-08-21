@@ -3,7 +3,11 @@
 {{ super() }}
 <div class="row" style="width:100%;">
     <div class="col-sm-12">
-        <span class="spnNotifsTitle">Mis notificaciones</span>
+        <div class="row div-notif-title">
+            <span class="spnNotifsTitle">Mis notificaciones</span>
+            <a class="notif-project-link" href="/project/{{g.project_factor}}">Ir a proyecto</a>
+        </div>
+
         <div class="row main-div-notif">
             <!-- <div> -->
                 <div class="notif-div" id="divNotificationList">

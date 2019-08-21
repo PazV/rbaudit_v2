@@ -12,6 +12,7 @@ import smtplib
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 import re
+import os
 from .db_connection import getDB
 db = getDB()
 app=Flask(__name__)
@@ -110,3 +111,108 @@ class GeneralFunctions:
         g.user_info=json.dumps(user_info)
         g.profile_picture_class=user_info['profile_picture_class']
         return g
+
+    def getNotifLink(self,link_content,project_id,form_id):
+        try:
+            project_factor=int(project_id)*int(cfg.project_factor)
+            link_content2=link_content.replace('<project_factor>',str(project_factor))
+            if form_id!=-1:
+                link_content3=link_content2.replace('<form_id>',str(form_id))
+                link=os.path.join(cfg.host,link_content3)
+            else:
+                link=os.path.join(cfg.host,link_content2)
+            return link
+        except:
+            app.logger.info(traceback.format_exc(sys.exc_info()))
+            return "#"
+
+    def createNotification(self,type,project_id,form_id,msg=None):
+        try:
+            form_info=db.query("""
+                select
+                    name,
+                    assigned_to,
+                    (select a.name from system.user a where a.user_id=assigned_to) as assigned_to_name,
+                    to_char(resolve_before,'DD-MM-YYYY') as resolve_before,
+                    user_last_update,
+                    (select a.name from system.user a where a.user_id=user_last_update) as user_last_update_name,
+                    revisions
+                from
+                    project.form
+                where project_id=%s
+                and form_id=%s
+            """%(project_id,form_id)).dictresult()[0]
+            notification={
+                'project_id':project_id,
+                'form_id':form_id,
+                'sent_date':'now',
+                'read':False
+            }
+            if type=='publish_form':
+                notification['subject']='Te han asignado un formulario'
+                notification['msg']='%s te ha asignado el formulario <b>%s</b>, que deberá ser resuelto a más tardar el día %s.'%(form_info['user_last_update_name'],form_info['name'],form_info['resolve_before'])
+                notification['user_from']=form_info['user_last_update']
+                notification['user_to']=form_info['assigned_to']
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
+
+            elif type=='send_to_revision1':
+                revs=form_info['revisions'].split(",")
+                notification['subject']='Formulario enviado a revisión'
+                notification['msg']='%s ha finalizado el formulario <b>%s</b> y te lo ha enviado a revisión.'%(form_info['user_last_update_name'],form_info['name'])
+                notification['user_from']=form_info['user_last_update']
+                notification['user_to']=int(revs[0].split(":")[1])
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
+
+            elif type=='return_form':
+                mensaje=''
+                if msg.strip()!='':
+                    mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(form_info['user_last_update_name'],msg.encode('utf-8'))
+                notification['subject']='Formulario regresado'
+                notification['msg']='%s ha terminado de revisar el formulario <b>%s</b> y te lo ha asignado nuevamente.<br>%s<br>'%(form_info['user_last_update_name'],form_info['name'],mensaje)
+                notification['user_from']=form_info['user_last_update']
+                notification['user_to']=form_info['assigned_to']
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
+
+            elif type=='finish_revision1_torev2':
+                #se revisa si hay un segundo revisor, en caso de no haber, se envía la notificación al gerente del proyecto
+                revs=form_info['revisions'].split(",")
+                if len(revs)>1:
+                    notification['user_to']=int(revs[1].split(":")[1])
+                else:
+                    manager=db.query("""
+                        select a.user_id from system.user a,
+                        project.project b
+                        where b.project_id=%s
+                        and a.user_id=b.manager
+                    """%project_id).dictresult()[0]
+                    notification['user_to']=manager['user_id']
+                mensaje=''
+                if msg.strip()!='':
+                    mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(form_info['user_last_update_name'],msg.encode('utf-8'))
+                notification['subject']='Formulario revisado'
+                notification['msg']='%s ha terminado de revisar el formulario <b>%s</b>.%s<br> Puedes agregar comentarios finales al formulario.'%(form_info['user_last_update_name'],form_info['name'],mensaje)
+                notification['user_from']=form_info['user_last_update']
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
+
+            elif type=='finish_revision1_toassignee':
+                notification['subject']='Formulario revisado'
+                mensaje=''
+                if msg.strip()!='':
+                    mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(form_info['user_last_update_name'],msg.encode('utf-8'))
+                notification['subject']='Formulario revisado'
+                notification['msg']='%s ha terminado de revisar el formulario <b>%s</b>.%s<br>'%(form_info['user_last_update_name'],form_info['name'],mensaje)
+                notification['user_from']=form_info['user_last_update']
+                notification['user_to']=form_info['assigned_to']
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
+
+            db.insert('project.notification',notification)
+            return True
+
+        except:
+            app.logger.info(traceback.format_exc(sys.exc_info()))
+            return False

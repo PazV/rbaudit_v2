@@ -119,6 +119,7 @@ def showNotification():
                         msg,
                         subject,
                         project_id,
+                        form_id,
                         (select a.name from system.user a where a.user_id=user_from) as user_from,
                         to_char(sent_date, 'DD-MM-YYYY HH24:MI:SS') as sent_date,
                         (select a.profile_picture_class from system.user a where a.user_id=user_from) as ppc,
@@ -129,10 +130,11 @@ def showNotification():
                     where
                         notification_id=%s
                 """%data['notification_id']).dictresult()
-                notif[0]['link']=getNotifLink(notif[0]['link_content'],notif[0]['project_id'])
+                notif[0]['link']=GF.getNotifLink(notif[0]['link_content'],notif[0]['project_id'],notif[0]['form_id'])
                 html='<div class="row notif-content-header"><div class="div-notif-content-img"><img class="{ppc} notif-content-img"  alt=""/></div><div class="div-notif-content-header-text"><p><b>De: </b>{user_from}</p><p><b>Fecha: </b>{sent_date}</p><p><b>Asunto: </b>{subject}</p></div></div><hr style="margin:0;"/><div class="notif-content-msg"><p>{msg}</p><p style="font-weight:bold;"><a href="{link}">{link_text}</a></p></div>'.format(**notif[0])
+
                 response['success']=True
-                response['data']=html
+                response['data']=html.decode('utf8')
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
@@ -145,12 +147,3 @@ def showNotification():
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
     return json.dumps(response)
-
-def getNotifLink(link_content,project_id):
-    try:
-        project_factor=int(project_id)*int(cfg.project_factor)
-        link_content2=link_content.replace('<project_factor>',str(project_factor))
-        link=os.path.join(cfg.host,link_content2)
-        return link
-    except:
-        return "#"

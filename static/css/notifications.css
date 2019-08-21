@@ -11,6 +11,24 @@
     /* margin-top:3px; */
 }
 
+.div-notif-title{
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+}
+
+.notif-project-link{
+    align-self: center;
+    margin-right: 5%;
+    font-size: x-large;
+    color: gray;
+}
+
+.notif-project-link:hover{
+    color: #626365;
+    text-decoration: none;
+}
+
 .spnNotifsTitle{
     margin-left: 6%;
     font-family: sans-serif;
@@ -31,7 +49,8 @@
     border:double #c6ccd2;
     border-radius: 5px;
     min-height:430px;
-    max-height:-webkit-fill-available;
+    max-height:430px;
+    overflow-y: scroll;
     margin-left:2%;
 }
 
@@ -152,4 +171,13 @@
 .notif-content-msg{
     padding:10px;
     font-size:0.9rem;
+}
+
+.notif-msg-quote{
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-evenly;
+    font-style: italic;
+    color: #93999e;
+    font-size: medium;
 }

@@ -568,6 +568,7 @@ def publishForm():
                 db.query("""
                     alter table %s add rev_1 text default ''
                 """%table_name)
+                GF.createNotification('publish_form',data['project_id'],data['form_id'])
                 response['success']=True
                 response['msg_response']='El formulario ha sido publicado, puede encontrarlo en el menú del lado izquierdo.'
             else:
@@ -593,7 +594,7 @@ def getFormToResolve():
             if valid:
                 page=(int(data['page'])*10)-10
                 form_info=db.query("""
-                    select form_id,project_id,columns_number, rows, columns, name, assigned_to,
+                    select form_id,project_id,columns_number, rows, columns, name, assigned_to, status_id,
                     to_char(last_updated, 'DD-MM-YYYY HH24:MI:SS') as last_updated,
                     (select u.name from system.user u where u.user_id=user_last_update) as user_last_update
                     from project.form
@@ -619,25 +620,37 @@ def getFormToResolve():
                     offset %s limit 10
                 """%(table_name,page)).dictresult()
 
-                rev_editable=True #columna de revisión es editable
-                if int(data['user_id'])==form_info[0]['assigned_to']: #en caso de que el usuario que va a ver el formulario sea a quien fue asignado
-                    rev_editable=False #no se permite editar columna de revisión
-                for t in table_info:
-                    keys=sorted(t.iteritems())
-                    table_str+='<tr>'
-                    for k in keys:
-                        if k[0].split('_')[0]=='col':
-                            if k[0] in editables:
-                                table_str+='<td class="pt-3-half" contenteditable="true" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
-                            else:
+                if form_info[0]['status_id']==7:
+                    for t in table_info:
+                        keys=sorted(t.iteritems())
+                        table_str+='<tr>'
+                        for k in keys:
+                            if k[0].split('_')[0]=='col':                                
                                 table_str+='<td class="pt-3-half" contenteditable="false" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
-                        else:
-                            if rev_editable==True:
-                                table_str+='<td class="pt-3-half" contenteditable="true" name="rev_1" data-entry="%s">%s</td>'%(t['entry_id'],t['rev_1'].decode('utf8'))
                             else:
                                 table_str+='<td class="pt-3-half" contenteditable="false" name="rev_1" data-entry="%s">%s</td>'%(t['entry_id'],t['rev_1'].decode('utf8'))
-                            table_str+='</tr>'
-                            break
+                                table_str+='</tr>'
+                                break
+                else:
+                    rev_editable=True #columna de revisión es editable
+                    if int(data['user_id'])==form_info[0]['assigned_to']: #en caso de que el usuario que va a ver el formulario sea a quien fue asignado
+                        rev_editable=False #no se permite editar columna de revisión
+                    for t in table_info:
+                        keys=sorted(t.iteritems())
+                        table_str+='<tr>'
+                        for k in keys:
+                            if k[0].split('_')[0]=='col':
+                                if k[0] in editables:
+                                    table_str+='<td class="pt-3-half" contenteditable="true" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
+                                else:
+                                    table_str+='<td class="pt-3-half" contenteditable="false" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
+                            else:
+                                if rev_editable==True:
+                                    table_str+='<td class="pt-3-half" contenteditable="true" name="rev_1" data-entry="%s">%s</td>'%(t['entry_id'],t['rev_1'].decode('utf8'))
+                                else:
+                                    table_str+='<td class="pt-3-half" contenteditable="false" name="rev_1" data-entry="%s">%s</td>'%(t['entry_id'],t['rev_1'].decode('utf8'))
+                                table_str+='</tr>'
+                                break
                 table_str+='</tbody></table>'
 
                 if int(form_info[0]['rows'])%10!=0:
@@ -866,6 +879,7 @@ def sendFormToRevision():
                         form_id=%s
                     and project_id=%s
                 """%(data['user_id'],data['form_id'],data['project_id']))
+                GF.createNotification('send_to_revision1',data['project_id'],data['form_id'])
                 response['success']=True
             else:
                 response['success']=False
@@ -995,6 +1009,7 @@ def returnFormToAssignee():
                     last_updated='now'
                     where form_id=%s
                 """%(data['user_id'],data['form_id']))
+                GF.createNotification('return_form',data['project_id'],data['form_id'],data['msg'])
                 response['success']=True
                 response['msg_response']='El formulario ha sido enviado a corregir.'
             else:
@@ -1008,4 +1023,35 @@ def returnFormToAssignee():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/finishCheckingForm', methods=['GET','POST'])
+@is_logged_in
+def finishCheckingForm():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update project.form
+                    set status_id=7,
+                    user_last_update=%s,
+                    last_updated='now'
+                    where form_id=%s
+                """%(data['user_id'],data['form_id']))
+                GF.createNotification('finish_revision1_torev2',data['project_id'],data['form_id'],data['msg'])
+                GF.createNotification('finish_revision1_toassignee',data['project_id'],data['form_id'],data['msg'])
+                response['success']=True
+                response['msg_response']='El formulario ha sido actualizado con éxito.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar validar la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
