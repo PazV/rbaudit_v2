@@ -625,7 +625,7 @@ def getFormToResolve():
                         keys=sorted(t.iteritems())
                         table_str+='<tr>'
                         for k in keys:
-                            if k[0].split('_')[0]=='col':                                
+                            if k[0].split('_')[0]=='col':
                                 table_str+='<td class="pt-3-half" contenteditable="false" name="%s" data-entry="%s">%s</td>'%(k[0],t['entry_id'],k[1].decode('utf8'))
                             else:
                                 table_str+='<td class="pt-3-half" contenteditable="false" name="rev_1" data-entry="%s">%s</td>'%(t['entry_id'],t['rev_1'].decode('utf8'))
@@ -1047,6 +1047,114 @@ def finishCheckingForm():
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar validar la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/checkAddComment', methods=['GET','POST'])
+@is_logged_in
+def checkAddComment():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                form_info=db.query("""
+                    select revisions,project_id
+                    from project.form
+                    where form_id=%s
+                """%data['form_id']).dictresult()[0]
+                user_list=[]
+                revs=form_info['revisions'].split(",")
+                for r in revs:
+                    user_list.append(int(r.split(":")[1]))
+                managers=db.query("""
+                    select manager,partner from project.project
+                    where project_id=%s
+                """%form_info['project_id']).dictresult()[0]
+                user_list.append(int(managers['manager']))
+                user_list.append(int(managers['partner']))
+                if int(data['user_id']) in user_list:
+                    response['access']=True
+                else:
+                    response['access']=False
+                    response['msg_response']='No tienes permisos para agregar comentarios a este formulario.'
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo más tarde.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/addFormComment', methods=['GET','POST'])
+@is_logged_in
+def addFormComment():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                comment={
+                    'comment':data['comment'].encode('utf-8'),
+                    'user_id':data['user_id'],
+                    'form_id':data['form_id'],
+                    'created':'now'
+                }
+                db.insert('project.form_comments',comment)
+                response['success']=True
+                response['msg_response']='El comentario ha sido agregado.'
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getFormComments', methods=['GET','POST'])
+@is_logged_in
+def getFormComments():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                comments=db.query("""
+                    select
+                        to_char(b.created, 'DD-MM-YYYY HH24:MI:SS') as created,
+                        b.comment,
+                        (select a.name from system.user a where a.user_id=b.user_id) as user
+                    from
+                        project.form_comments b
+                    where
+                        b.form_id=%s
+                    order by created desc
+                """%data['form_id']).dictresult()
+
+                if comments!=[]:
+                    for c in comments:
+                        c['author']='Agregado por {user} el {created}.'.format(**c)
+                response['data']=comments
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'

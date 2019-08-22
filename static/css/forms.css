@@ -36,3 +36,30 @@
     color:#606469;
     margin-bottom:5px;
 }
+
+.div-form-comment{
+    border: 1px solid #dcdada;
+    border-radius: 5px;
+    background-color: #f7f7f4;
+    height:fit-content;
+    margin: 8px 4px;
+    padding:10px;
+}
+
+.comment-content{
+    font-size:0.9em;
+    color:#4a4444;
+}
+
+.comment-author{
+    font-size:0.75em;
+    font-style:italic;
+    display:flex;
+    justify-content: flex-end;
+    color:#6b6666;
+}
+
+#divFormComments{
+    max-height: 450px;
+    overflow-y: scroll;
+}

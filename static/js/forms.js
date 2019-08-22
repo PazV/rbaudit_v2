@@ -458,6 +458,132 @@ $(document).ready(function(){
         });
     });
 
+    $("#btnFormAddComment").click(function(){
+        $.ajax({
+            url:'/project/checkAddComment',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    if (res.access){
+                        $("#mod_add_form_comment").modal("show");
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnAFMsaveComment").click(function(){
+        var data={};
+        data['comment']=$("#AFMcomment").val().trim();
+        if (data['comment']!==''){
+            data['user_id']=me.user_info['user_id'];
+            data['form_id']=me.user_info['form_id'];
+            $.ajax({
+                url:'/project/addFormComment',
+                type:'POST',
+                data:JSON.stringify(data),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                    if (res.success){
+                        $("#mod_add_form_comment").modal("hide");
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debes agregar un comentario.'
+            });
+        }
+    });
+
+    $("#mod_add_form_comment").on('hide.bs.modal',function(){
+        $("#AFMcomment").val("");
+    })
+
+    $("#btnFormSeeComments").click(function(){
+        $.ajax({
+            url:'/project/getFormComments',
+            type:'POST',
+            data:JSON.stringify({'form_id':me.user_info['form_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    //crear divs de comentarioss
+                    $("#divFormComments").empty();
+                    for (var x of res.data){
+                        $("#divFormComments").append('<div class="div-form-comment"><p class="comment-content">'+x['comment']+'</p><span class="comment-author">'+x['author']+'</span></div>');
+                    }
+                    $("#mod_see_form_comments").modal("show");
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+
+    });
+
 });
 
 
