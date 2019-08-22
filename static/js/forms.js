@@ -300,35 +300,73 @@ $(document).ready(function(){
                 confirm:{
                     text:'Sí',
                     action:function(){
-                        //se guardan cambios antes de enviar a revisión
-                        saveTableInfo("#grdFormToResolve",'/project/saveResolvingForm',me.user_info,false);
-                        var data={
-                            'form_id':me.user_info['form_id'],
-                            'project_id':me.user_info['project_id'],
-                            'user_id':me.user_info['user_id']
-                        };
-                        EasyLoading.show({
-                            text:'Cargando...',
-                            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
-                        })
+                        //Verificar si puede enviar a revisión
                         $.ajax({
-                            url:'/project/sendFormToRevision',
+                            url:'/project/checkSendToRevision',
                             type:'POST',
-                            data:JSON.stringify(data),
+                            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id']}),
                             success:function(response){
-                                EasyLoading.hide();
                                 try{
                                     var res=JSON.parse(response);
                                 }catch(err){
                                     ajaxError();
                                 }
-                                //cargar panel de pendientes por revisar
-                                window.location.pathname='/project/'+me.user_info.project_factor;
+                                if (res.success){
+                                    if (res.allowed){
+                                        //se guardan cambios antes de enviar a revisión
+                                        saveTableInfo("#grdFormToResolve",'/project/saveResolvingForm',me.user_info,false);
+                                        var data={
+                                            'form_id':me.user_info['form_id'],
+                                            'project_id':me.user_info['project_id'],
+                                            'user_id':me.user_info['user_id']
+                                        };
+                                        EasyLoading.show({
+                                            text:'Cargando...',
+                                            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                                        })
+                                        $.ajax({
+                                            url:'/project/sendFormToRevision',
+                                            type:'POST',
+                                            data:JSON.stringify(data),
+                                            success:function(response){
+                                                EasyLoading.hide();
+                                                try{
+                                                    var res=JSON.parse(response);
+                                                }catch(err){
+                                                    ajaxError();
+                                                }
+                                                //cargar panel de pendientes por revisar
+                                                window.location.pathname='/project/'+me.user_info.project_factor;
+                                            },
+                                            error:function(){
+                                                EasyLoading.hide();
+                                            }
+                                        });
+                                    }
+                                    else{
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res.msg_response
+                                        });
+                                    }
+                                }
+                                else{
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res.msg_response
+                                    });
+                                }
                             },
                             error:function(){
-                                EasyLoading.hide();
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                });
                             }
-                        })
+                        });
                     }
                 },
                 cancel:{
@@ -409,6 +447,8 @@ $(document).ready(function(){
                 }
                 if (res.success){
                     $("#mod_finish_checking_form").modal("hide");
+                    var location=window.location.pathname;
+                    loadFormsToCheck(me.user_info,location);
                 }
             },
             error:function(){
@@ -444,6 +484,8 @@ $(document).ready(function(){
                     ajaxError();
                 }
                 if (res.success){
+                    var location=window.location.pathname;
+                    loadFormsToCheck(me.user_info,location);
                     $("#mod_finish_checking_form").modal("hide");
                 }
             },

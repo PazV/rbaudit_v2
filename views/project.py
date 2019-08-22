@@ -783,15 +783,16 @@ def getFormDetails():
             if valid:
                 info=db.query("""
                     select
-                        (select a.name from system.user a where a.user_id=assigned_to) as assigned_to,
-                        revisions,
-                        to_char(create_date,'DD-MM-YYYY HH24:MI:SS') as create_date,
-                        (select a.name from system.user a where a.user_id=created_by) as created_by,
-                        to_char(resolve_before,'DD-MM-YYYY HH24:MI:SS') as resolve_before
+                        (select a.name from system.user a where a.user_id=f.assigned_to) as assigned_to,
+                        f.revisions,
+                        to_char(f.create_date,'DD-MM-YYYY HH24:MI:SS') as create_date,
+                        (select a.name from system.user a where a.user_id=f.created_by) as created_by,
+                        to_char(f.resolve_before,'DD-MM-YYYY HH24:MI:SS') as resolve_before,
+                        (select c.status from project.form_status c where c.status_id=f.status_id) as status
                     from
-                        project.form
+                        project.form f
                     where
-                        form_id=%s
+                        f.form_id=%s
                 """%data['form_id']).dictresult()[0]
 
                 html='<p><b>Asignado a: </b>%s<br><b>Resolver antes de: </b>%s<br>'%(info['assigned_to'].decode('utf-8'),info['resolve_before'])
@@ -805,7 +806,8 @@ def getFormDetails():
                     html+='<b>%s: </b>%s<br>'%(rev.decode('utf-8'),user_rev['name'].decode('utf-8'))
 
                 html+='<b>Creado: </b>%s<br>'%info['create_date']
-                html+='<b>Creado por: </b>%s</p>'%info['created_by'].decode('utf-8')
+                html+='<b>Creado por: </b>%s<br>'%info['created_by'].decode('utf-8')
+                html+='<b>Estado actual: </b>%s</p>'%info['status'].decode('utf-8')
 
                 response['success']=True
                 response['data']=html
@@ -1151,6 +1153,36 @@ def getFormComments():
                     for c in comments:
                         c['author']='Agregado por {user} el {created}.'.format(**c)
                 response['data']=comments
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/checkSendToRevision', methods=['GET','POST'])
+@is_logged_in
+def checkSendToRevision():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                check=db.query("""
+                    select assigned_to from project.form
+                    where form_id=%s
+                """%data['form_id']).dictresult()[0]
+                if int(check['assigned_to'])==int(data['user_id']):
+                    response['allowed']=True
+                else:
+                    response['allowed']=False
+                    response['msg_response']='No tienes permiso para enviar a revisión este formulario.'
                 response['success']=True
             else:
                 response['success']=False
