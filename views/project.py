@@ -4,18 +4,23 @@ from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 import logging
 from .login import is_logged_in
 import json
 import copy
 import sys
 import traceback
+import os
 from .db_connection import getDB
 db = getDB()
 from flask import current_app as app
 import app_config as cfg
 from . import general_functions
 GF = general_functions.GeneralFunctions()
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, Color, colors, PatternFill, Border, Alignment
+from openpyxl.cell import Cell
 
 
 bp = Blueprint('project', __name__, url_prefix='/project' )
@@ -134,6 +139,22 @@ def createformStep1(project_factor):
         g.notifications=True
     return render_template('createform_step1.html',g=g)
 
+@bp.route("/<int:project_factor>/createform/step-1-import", methods=['GET','POST'])
+@is_logged_in
+def createformStep1Import(project_factor):
+    project_id=int(project_factor)/int(cfg.project_factor)
+    g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
+    g.project_factor=project_factor
+    has_notifications=db.query("""
+        select count(*) from project.notification
+        where project_id=%s and user_to=%s and read=False
+    """%(project_id,session['user_id'])).dictresult()[0]
+    if has_notifications['count']==0:
+        g.notifications=False
+    else:
+        g.notifications=True
+    return render_template('createform_step1_import.html',g=g)
+
 
 
 @bp.route("/<int:project_factor>/createform/step-2/<int:form>", methods=['GET','POST'])
@@ -169,6 +190,7 @@ def saveFormStep1():
                     form_info['create_date']='now()'
                     form_info['status_id']=1
                     form_info['published']=False
+                    form_info['user_last_update']=form_info['user_id']
                     columns_info=form_info['columns_info']
                     columns=[]
                     dict_len=len(columns_info)/2
@@ -568,7 +590,9 @@ def publishForm():
                 db.query("""
                     alter table %s add rev_1 text default ''
                 """%table_name)
-                GF.createNotification('publish_form',data['project_id'],data['form_id'])
+                notif_info={'project_id':data['project_id'],'form_id':data['form_id']}
+                # GF.createNotification('publish_form',data['project_id'],data['form_id'])
+                GF.createNotification('publish_form',notif_info)
                 response['success']=True
                 response['msg_response']='El formulario ha sido publicado, puede encontrarlo en el menú del lado izquierdo.'
             else:
@@ -881,7 +905,9 @@ def sendFormToRevision():
                         form_id=%s
                     and project_id=%s
                 """%(data['user_id'],data['form_id'],data['project_id']))
-                GF.createNotification('send_to_revision1',data['project_id'],data['form_id'])
+                notif_info={'project_id':data['project_id'],'form_id':data['form_id']}
+                # GF.createNotification('send_to_revision1',data['project_id'],data['form_id'])
+                GF.createNotification('send_to_revision1',notif_info)
                 response['success']=True
             else:
                 response['success']=False
@@ -1011,7 +1037,9 @@ def returnFormToAssignee():
                     last_updated='now'
                     where form_id=%s
                 """%(data['user_id'],data['form_id']))
-                GF.createNotification('return_form',data['project_id'],data['form_id'],data['msg'])
+                notif_info={'project_id':data['project_id'],'form_info':data['form_id'],'msg':data['msg']}
+                # GF.createNotification('return_form',data['project_id'],data['form_id'],data['msg'])
+                GF.createNotification('return_form',notif_info)
                 response['success']=True
                 response['msg_response']='El formulario ha sido enviado a corregir.'
             else:
@@ -1042,8 +1070,11 @@ def finishCheckingForm():
                     last_updated='now'
                     where form_id=%s
                 """%(data['user_id'],data['form_id']))
-                GF.createNotification('finish_revision1_torev2',data['project_id'],data['form_id'],data['msg'])
-                GF.createNotification('finish_revision1_toassignee',data['project_id'],data['form_id'],data['msg'])
+                notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg']}
+                GF.createNotification('finish_revision1_torev2',notif_info)
+                GF.createNotification('finish_revision1_toassignee',notif_info)
+                # GF.createNotification('finish_revision1_torev2',data['project_id'],data['form_id'],data['msg'])
+                # GF.createNotification('finish_revision1_toassignee',data['project_id'],data['form_id'],data['msg'])
                 response['success']=True
                 response['msg_response']='El formulario ha sido actualizado con éxito.'
             else:
@@ -1190,6 +1221,85 @@ def checkSendToRevision():
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/importNewForm',methods=['GET','POST'])
+@is_logged_in
+def importNewForm():
+    response={}
+    try:
+        data=request.form.to_dict()
+
+        files=request.files
+        file_path=cfg.uploaded_forms_files_path
+        file=files[data['file_name']]
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(file_path, filename))
+        read_file=load_workbook(os.path.join(file_path,filename))
+        ws=read_file['Sheet1']
+
+        form={
+            'project_id':data['project_id'],
+            'name':data['name'],
+            'columns_number':int(ws.max_column),
+            'rows':int(ws.max_row),
+            'created_by':int(data['user_id']),
+            'create_date':'now',
+            'folder_id':int(data['folder_id']),
+            'status_id':2,
+            'user_last_update':int(data['user_id']),
+            'last_updated':'now'
+        }
+
+        columns=[]
+        for x in range(1,int(ws.max_column)+1):
+            column={
+                'order':x,
+                'name':ws.cell(row=1, column=x).value
+            }
+            if ws.cell(row=2, column=x).value is None:
+                column['editable']=True
+            else:
+                column['editable']=False
+            columns.append(column)
+        form['columns']=str(columns)
+        db.insert('project.form',form)
+
+        table_name='project_%s_form_%s'%(form['project_id'],form['form_id'])
+
+
+        columns_str=""
+        for c in columns:
+            columns_str+=" ,col_%s text default ''"%c['order']
+        db.query("""
+            CREATE TABLE form.%s(
+                entry_id serial not null primary key,
+                form_id integer not null,
+                project_id integer not null
+                %s
+            );
+        """%(table_name,columns_str))
+
+        for i in range(0,int(form['rows'])-1):
+            ins={
+                'form_id':form['form_id'],
+                'project_id':form['project_id']
+            }
+            for c in columns:
+                if c['editable']==False:
+                    if ws.cell(row=i+2, column=c['order']).value is not None:
+                        ins['col_%s'%c['order']]=(ws.cell(row=i+2, column=c['order']).value).encode('utf-8')
+                    else:
+                        ins['col_%s'%c['order']]=''            
+            db.insert('form.%s'%table_name,ins)
+        response['success']=True
+        response['msg_response']='El formulario ha sido agregado.'
+
+
     except:
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'

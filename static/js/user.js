@@ -485,6 +485,7 @@ $(document).ready(function(){
     });
 
     $("#mod_admin_project_users").on('shown.bs.modal',function(){
+        $("#APUuser").empty();
         $.ajax({
             url:'/users/getUserList',
             type:'POST',

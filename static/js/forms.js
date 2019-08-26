@@ -623,7 +623,101 @@ $(document).ready(function(){
                 });
             }
         });
+    });
 
+    $("#frmCreateformStep1Import .form-control,.custom-file-input").focusout(function(){
+        var id="#"+this.id;
+        var error_id="#err"+this.id;
+        emptyField(id,error_id);
+        if (this.id=='newFormImportFile'){
+            var pattern=$("#"+this.id)[0].pattern.split(",");
+            if (hasExtension(this.id,pattern)){
+                $("#"+this.id).parent('.custom-file').addClass('valid-file-field').removeClass('invalid-file-field');
+                $("#err"+this.id).removeClass('show-error-msg').addClass('hide-error-msg');
+            }
+            else{
+                $("#"+this.id).parent('.custom-file').removeClass('valid-file-field').addClass('invalid-file-field');
+                $("#err"+this.id).html("Formato incorrecto");
+                $("#err"+this.id).addClass('show-error-msg').removeClass('hide-error-msg');
+            }
+        }
+    });
+
+    $("#newFormImportFile").on('change',function(){
+        var pattern=$("#newFormImportFile")[0].pattern.split(",");
+        if (hasExtension("newFormImportFile",pattern)){
+            $("#newFormImportFile").parent('.custom-file').addClass('valid-file-field').removeClass('invalid-file-field');
+            $("#errnewFormImportFile").removeClass('show-error-msg').addClass('hide-error-msg');
+        }
+        else{
+            $("#newFormImportFile").parent('.custom-file').removeClass('valid-file-field').addClass('invalid-file-field');
+            $("#errnewFormImportFile").html("Formato incorrecto");
+            $("#errnewFormImportFile").addClass('show-error-msg').removeClass('hide-error-msg');
+        }
+        this.blur();
+    });
+
+    $("#btnImportNewForm").click(function(){
+        $("#frmCreateformStep1Import .form-control,.custom-file-input").focusout();
+        var valid=false;
+        var form_input=$("#frmCreateformStep1Import :input");
+        var valid=true;
+        for (var x in form_input){
+            if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                valid=false;
+                break
+            }
+        }
+        if (valid===true){
+            var data = new FormData();
+            data.append('user_id',me.user_info['user_id']);
+            data.append('project_id',me.user_info['project_id']);
+            data.append('form_id',-1);
+            data.append('folder_id',$(".file-tree").find('.selected').data('folder'));
+            data.append('name',$("#newFormImportName").val());
+            var file = $("#newFormImportFile")[0].files[0];
+            var file_name=$("#newFormImportFile")[0].files[0].name;
+            data.append(file_name,file);
+            data.append('file_name',file_name);
+            $.ajax({
+                url:'/project/importNewForm',
+                type:'POST',
+                processData:false,
+                contentType:false,
+                data:data,
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        window.location.pathname='/project/'+me.user_info.project_factor;
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Existen campos incorrectos o vacíos, favor de revisar.'
+            });
+        }
     });
 
 });

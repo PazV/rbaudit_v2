@@ -312,6 +312,8 @@ def addProjectUser():
                 if exists[0]['count']==0:
                     #agregar usuario
                     db.insert('project.project_users',data)
+                    notif_info={'project_id':data['project_id'],'user_id':data['user_id'],'form_id':-1}
+                    GF.createNotification('add_user_to_project',notif_info)
                     response['success']=True
                     response['msg_response']='Usuario agregado.'
                 else:

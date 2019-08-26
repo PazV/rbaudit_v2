@@ -107,7 +107,7 @@ $(document).ready(function(){
             if ($("#unpublished_panel").is(':visible')){
                 $($("#bodyContent").children().children()[1]).addClass('col-sm-6');
             }
-            else{                
+            else{
                 $($("#bodyContent").children().children()[1]).css("width","100%");
                 $($("#bodyContent").children().children()[1]).css("max-width","70%");
             }
@@ -218,6 +218,9 @@ function loadTreeMenu(project_id){
                     $(e.target.firstChild).addClass('selected');
                     if ($("#newFormFolder").is(':visible')){
                         $("#newFormFolder").val($(e.target.firstChild)[0].textContent);
+                    }
+                    if ($("#newFormImportFolder").is(":visible")){
+                        $("#newFormImportFolder").val($(e.target.firstChild)[0].textContent);
                     }
                     // if ($(e.target.firstChild).hasClass('selected')){
                     //     $(".file-tree").find('a').css('background-color','');
