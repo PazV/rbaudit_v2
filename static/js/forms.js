@@ -720,6 +720,87 @@ $(document).ready(function(){
         }
     });
 
+    $("#btnDownloadForm").click(function(){
+        $.ajax({
+            url:'/project/checkAllowedDownload',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id'],'form_id':me.user_info['form_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    if (res.allowed){
+                        $.ajax({
+                            url:'/project/doDownloadResolvedForm',
+                            type:'POST',
+                            data:JSON.stringify({'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
+                            success:function(response2){
+                                try{
+                                    var res2=JSON.parse(response2);
+                                }catch(err){
+                                    ajaxError();
+                                }
+                                if (res2.success){
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res2.msg_response,
+                                        buttons:{
+                                            confirm:{
+                                                text:'Descargar',
+                                                action:function(){
+                                                    window.open(res2.filename,"_blank");
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                                else{
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res2.msg_response
+                                    });
+                                }
+                            },
+                            error:function(){
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                });
+                            }
+                        });
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
 });
 
 
@@ -738,6 +819,7 @@ function loadFormTable(form_id,page){
             if (res.success){
                 $("#columnSettingsFormName").html(res.form_name);
                 $("#columnSettingsLastUpdated").html(res.last_updated);
+                $(".p-form-status").html(res.status);
                 $("#divColumnsSettings").append(res.html);
                 $("#divFormPagingToolbar").append(res.paging_toolbar);
                 $("#paging_toolbar_number").val(page);
@@ -830,6 +912,7 @@ function getFormToResolve(project_id,form_id,page,user_id){
                             if (res2.success){
                                 $("#resolveFormName").html(res2.form_name);
                                 $("#resolveFormLastUpdated").html(res2.last_updated);
+                                $(".p-form-status").html(res2.status);
                                 $("#divTableToResolve").append(res2.html);
                                 $("#divTableToResolvePagingToolbar").append(res2.paging_toolbar);
                                 $("#paging_toolbar_numberTR").val(page);

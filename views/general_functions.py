@@ -126,6 +126,15 @@ class GeneralFunctions:
             app.logger.info(traceback.format_exc(sys.exc_info()))
             return "#"
 
+    def as_text(self,value):
+        if value is None:
+            return ""
+        else:
+            try:
+                return str(value)
+            except:
+                return value
+
     # def createNotification(self,type,project_id,form_id,msg=None):
     def createNotification(self,type,data):
         try:

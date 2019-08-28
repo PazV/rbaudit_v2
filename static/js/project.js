@@ -6,7 +6,7 @@ $(document).ready(function(){
     split_date[2]="01";
     var first_day=split_date.join("-");
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
-    loadProjects(); //carga de inicio los proyectos
+    loadProjects(me.user_info); //carga de inicio los proyectos
 
     var location=window.location.pathname;
     if (location.split('/')[1]=='project'){
@@ -105,7 +105,7 @@ $(document).ready(function(){
                                     text:'Ok',
                                     action:function(){
                                         $("#mod_new_project").modal("hide");
-                                        loadProjects();
+                                        loadProjects(me.user_info);
                                         //mandar a llamar función que vuelva a cargar el div de proyectos
                                     }
                                 }
@@ -172,11 +172,11 @@ $(document).ready(function(){
     });
 });
 
-function loadProjects(){
+function loadProjects(user_info){
     $.ajax({
         url:'/project/getProjects',
         type:'POST',
-        data:{},
+        data:JSON.stringify({'user_id':user_info['user_id']}),
         success:function(response){
             try{
                 var res=JSON.parse(response);

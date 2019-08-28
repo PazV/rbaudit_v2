@@ -34,7 +34,14 @@
 .p-last-updated{
     font-size:small;
     color:#606469;
-    margin-bottom:5px;
+    margin-bottom:2px;
+}
+
+.p-form-status{
+    margin: 0px 5px 2px;
+    color: #484646;
+    font-size: small;
+    font-style: italic;
 }
 
 .div-form-comment{

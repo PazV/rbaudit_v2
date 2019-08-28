@@ -1,5 +1,5 @@
 #--*-- coding: utf-8 --*--
-from flask import Flask, render_template, flash, redirect, url_for, session, request, logging, Blueprint, g
+from flask import Flask, render_template, flash, redirect, url_for, session, request, logging, Blueprint, g, send_file
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
@@ -19,9 +19,9 @@ import app_config as cfg
 from . import general_functions
 GF = general_functions.GeneralFunctions()
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Font, Color, colors, PatternFill, Border, Alignment
+from openpyxl.styles import Font, Color, colors, PatternFill, Border, Alignment, Side, NamedStyle
 from openpyxl.cell import Cell
-
+from time import gmtime, strftime
 
 bp = Blueprint('project', __name__, url_prefix='/project' )
 
@@ -104,14 +104,25 @@ def getProjects():
     response={}
     try:
         if request.method=='POST':
-            projects=db.query("""
-                select project_id, name, (project_id*%d) as project_factor
-                from project.project
-                order by created desc
-            """%int(cfg.project_factor)).dictresult()
-            # app.logger.info(projects)
-            response['success']=True
-            response['data']=projects
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                projects=db.query("""
+                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    from project.project a
+                    where a.manager=%s or a.partner=%s
+                    union
+                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    from project.project a, project.project_users b
+                    where a.project_id=b.project_id
+                    and b.user_id=%s)
+                    order by created desc
+                """%(int(cfg.project_factor),data['user_id'],data['user_id'],int(cfg.project_factor),data['user_id'])).dictresult()
+                # app.logger.info(projects)
+                response['success']=True
+                response['data']=projects
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
@@ -406,11 +417,12 @@ def createFormTable():
             if valid:
                 page=(int(data['page'])*10)-10
                 form_info=db.query("""
-                    select form_id,project_id,columns_number, rows, columns,name,
-                    to_char(last_updated, 'DD-MM-YYYY HH24:MI:SS') as last_updated,
-                    (select u.name from system.user u where u.user_id=user_last_update) as user_last_update
-                    from project.form
-                    where form_id=%s
+                    select a.form_id,a.project_id,a.columns_number, a.rows, a.columns,a.name,
+                    to_char(a.last_updated, 'DD-MM-YYYY HH24:MI:SS') as last_updated,
+                    (select u.name from system.user u where u.user_id=a.user_last_update) as user_last_update, b.status
+                    from project.form_status b, project.form a
+                    where a.form_id=%s
+                    and a.status_id=b.status_id
                 """%data['form_id']).dictresult()
                 columns=eval(form_info[0]['columns'])
                 #check if table exists
@@ -470,6 +482,7 @@ def createFormTable():
                 response['success']=True
                 response['html']=table_str
                 response['paging_toolbar']=buttons
+                response['status']="(%s)"%form_info[0]['status']
                 response['last_updated']='Actualizado %s por %s'%(form_info[0]['last_updated'],form_info[0]['user_last_update'])
             else:
                 response['success']=False
@@ -618,11 +631,12 @@ def getFormToResolve():
             if valid:
                 page=(int(data['page'])*10)-10
                 form_info=db.query("""
-                    select form_id,project_id,columns_number, rows, columns, name, assigned_to, status_id,
-                    to_char(last_updated, 'DD-MM-YYYY HH24:MI:SS') as last_updated,
-                    (select u.name from system.user u where u.user_id=user_last_update) as user_last_update
-                    from project.form
-                    where form_id=%s
+                    select a.form_id,a.project_id,a.columns_number, a.rows, a.columns, a.name, a.assigned_to, a.status_id,
+                    to_char(a.last_updated, 'DD-MM-YYYY HH24:MI:SS') as last_updated,
+                    (select u.name from system.user u where u.user_id=a.user_last_update) as user_last_update, b.status
+                    from  project.form_status b, project.form a
+                    where a.form_id=%s
+                    and a.status_id=b.status_id
                 """%data['form_id']).dictresult()
                 columns=eval(form_info[0]['columns'])
 
@@ -689,6 +703,7 @@ def getFormToResolve():
                 response['success']=True
                 response['html']=table_str
                 response['paging_toolbar']=buttons
+                response['status']="(%s)"%form_info[0]['status']
                 response['last_updated']='Actualizado %s por %s'%(form_info[0]['last_updated'],form_info[0]['user_last_update'])
             else:
                 response['success']=False
@@ -900,7 +915,8 @@ def sendFormToRevision():
                     set
                         status_id=5,
                         user_last_update=%s,
-                        last_updated='now'
+                        last_updated='now',
+                        resolved_date='now'
                     where
                         form_id=%s
                     and project_id=%s
@@ -1034,7 +1050,8 @@ def returnFormToAssignee():
                     update project.form
                     set status_id=3,
                     user_last_update=%s,
-                    last_updated='now'
+                    last_updated='now',
+                    first_revision_date='now'
                     where form_id=%s
                 """%(data['user_id'],data['form_id']))
                 notif_info={'project_id':data['project_id'],'form_info':data['form_id'],'msg':data['msg']}
@@ -1067,7 +1084,8 @@ def finishCheckingForm():
                     update project.form
                     set status_id=7,
                     user_last_update=%s,
-                    last_updated='now'
+                    last_updated='now',
+                    first_revision_date='now'
                     where form_id=%s
                 """%(data['user_id'],data['form_id']))
                 notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg']}
@@ -1294,7 +1312,7 @@ def importNewForm():
                     if ws.cell(row=i+2, column=c['order']).value is not None:
                         ins['col_%s'%c['order']]=(ws.cell(row=i+2, column=c['order']).value).encode('utf-8')
                     else:
-                        ins['col_%s'%c['order']]=''            
+                        ins['col_%s'%c['order']]=''
             db.insert('form.%s'%table_name,ins)
         response['success']=True
         response['msg_response']='El formulario ha sido agregado.'
@@ -1305,3 +1323,271 @@ def importNewForm():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+@bp.route('/checkAllowedDownload', methods=['GET','POST'])
+@is_logged_in
+def checkAllowedDownload():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                status=db.query("""
+                    select status_id from project.form where form_id=%s
+                """%data['form_id']).dictresult()
+                #debe ser el último status
+                if int(status[0]['status_id'])==7:
+                    manager=db.query("""
+                        select * from project.project where project_id=%s and (manager=%s or partner=%s)
+                    """%(data['project_id'],data['user_id'],data['user_id'])).dictresult()
+                    if manager!=[]:
+                        response['allowed']=True
+                    else:
+                        users=db.query("""
+                            select a.* from project.project_users a, system.user b where
+                            b.download_forms=True and a.user_id=b.user_id and a.project_id=%s and a.user_id=%s
+                        """%(data['project_id'],data['user_id'])).dictresult()
+                        if users!=[]:
+                            response['allowed']=True
+                        else:
+                            response['allowed']=False
+                            response['msg_response']='No tienes permisos para descargar este formulario.'
+                else:
+                    response['allowed']=False
+                    response['msg_response']='Este formulario no puede ser descargado aún.'
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/doDownloadResolvedForm', methods=['GET','POST'])
+@is_logged_in
+def downloadResolvedForm():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                project=db.query("""
+                    select
+                        name,
+                        company_name,
+                        (select a.name from system.user a where a.user_id=manager) as manager,
+                        (select a.name from system.user a where a.user_id=partner) as partner,
+                        comments
+                    from
+                        project.project
+                    where project_id=%s
+                """%data['project_id']).dictresult()[0]
+                form=db.query("""
+                    select
+                        name,
+                        columns_number,
+                        rows,
+                        columns,
+                        (select a.name from system.user a where a.user_id=assigned_to) as assigned_to,
+                        to_char(resolved_date,'DD-MM-YYYY HH24:MI:SS') as resolved_date,
+                        to_char(first_revision_date,'DD-MM-YYYY HH24:MI:SS') as first_revision_date,
+                        revisions
+                    from
+                        project.form
+                    where
+                        form_id=%s
+                """%data['form_id']).dictresult()[0]
+                wb = Workbook()
+                ws = wb.create_sheet('Hoja1',0)
+
+                company_style=Font(
+                    name='Times New Roman',
+                    size=14,
+                    bold=True,
+                    italic=False,
+                    color='FF000080'
+                )
+                project_style=Font(
+                    name='Times New Roman',
+                    size=14,
+                    bold=False,
+                    italic=True,
+                    color='FF000080'
+                )
+                formname_style=Font(
+                    name='Times New Roman',
+                    size=14,
+                    bold=False,
+                    italic=False,
+                    color='FF000080'
+                )
+
+                header_style=NamedStyle(name='header_style')
+                header_style.font=Font(
+                    name='Times New Roman',
+                    size=14,
+                    bold=True,
+                    italic=False,
+                    color='FFFFFFFF'
+                )
+                header_style.fill=PatternFill("solid", fgColor="FF000099")
+                header_style.alignment=Alignment(horizontal='center')
+                header_style.border=Border(
+                    left=Side(border_style='thin',color='FF000000'),
+                    right=Side(border_style='thin',color='FF000000'),
+                    top=Side(border_style='thin',color='FF000000'),
+                    bottom=Side(border_style='thin',color='FF000000')
+                )
+
+                content_style=NamedStyle(name='content_style')
+                content_style.font=Font(
+                    name='Times New Roman',
+                    size=12,
+                    bold=False,
+                    italic=False,
+                    color='FF000000'
+                )
+                content_style.alignment=Alignment(
+                    horizontal='justify',
+                    vertical='center',
+                    text_rotation=0,
+                    wrap_text=True,
+                    shrink_to_fit=False,
+                    indent=0)
+                # wrap_text=True,shrink_to_fit=False,vertical='justify',horizontal='left')
+                content_style.border=Border(
+                    left=Side(border_style='thin',color='FF000000'),
+                    right=Side(border_style='thin',color='FF000000'),
+                    top=Side(border_style='thin',color='FF000000'),
+                    bottom=Side(border_style='thin',color='FF000000')
+                )
+
+                ws.sheet_view.showGridLines = False #ocultar líneas
+
+                ws['B2']=project['company_name']
+                ws['B2'].font=company_style
+                ws['B3']=project['name']
+                ws['B3'].font=project_style
+                ws['B4']=form['name']
+                ws['B4'].font=formname_style
+
+                columns=eval(form['columns'])
+                col_num=2
+                for c in columns:
+                    ws.cell(column=col_num,row=6,value=c['name'])
+                    ws.cell(column=col_num,row=6).style=header_style
+                    col_num+=1
+                ws.cell(column=col_num,row=6,value='Revisión')
+                ws.cell(column=col_num,row=6).style=header_style
+
+                form_info=db.query("""
+                    select * from form.project_%s_form_%s order by entry_id
+                """%(data['project_id'],data['form_id'])).dictresult()
+                row=7
+
+                for x in form_info:
+                    keys=sorted(x.iteritems())
+                    col_num=2
+                    for k in keys:
+                        if k[0].split('_')[0]=='col':
+                            ws.cell(column=col_num,row=row,value=k[1].decode('utf-8'))
+                            ws.cell(column=col_num,row=row).style=content_style
+
+                            col_num+=1
+                    ws.cell(column=col_num,row=row,value=x['rev_1'].decode('utf-8'))
+                    ws.cell(column=col_num,row=row).style=content_style
+                    row+=1
+
+
+                #agregar quién realizó el formulario
+                bd = Side(style='thick', color="000000")
+                th = Side(style='thin', color="000000")
+
+                col_num+=2
+                ws.cell(column=col_num,row=6).border=Border(left=bd,top=bd,bottom=th)
+                ws.cell(column=col_num+1,row=6,value='Nombre')
+                ws.cell(column=col_num+1,row=6).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num+1,row=6).border=Border(top=bd,bottom=th)
+                ws.cell(column=col_num+2,row=6,value='Fecha')
+                ws.cell(column=col_num+2,row=6).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num+2,row=6).border=Border(top=bd,right=bd,bottom=th)
+
+                ws.cell(column=col_num,row=7,value='Encargado')
+                ws.cell(column=col_num,row=7).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num,row=7).border=Border(left=bd)
+                ws.cell(column=col_num+1,row=7,value=form['assigned_to'])
+                ws.cell(column=col_num+1,row=7).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=7,value=form['resolved_date'])
+                ws.cell(column=col_num+2,row=7).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=7).border=Border(right=bd)
+
+                ws.cell(column=col_num,row=8,value='Revisor')
+                ws.cell(column=col_num,row=8).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num,row=8).border=Border(left=bd)
+                revisor=db.query("""
+                    select name from system.user where user_id=%s
+                """%int(form['revisions'].split(",")[0].split(":")[1])).dictresult()[0]
+                ws.cell(column=col_num+1,row=8,value=revisor['name'])
+                ws.cell(column=col_num+1,row=8).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=8,value=form['first_revision_date'])
+                ws.cell(column=col_num+2,row=8).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=8).border=Border(right=bd)
+
+                ws.cell(column=col_num,row=9,value='Gerente')
+                ws.cell(column=col_num,row=9).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num,row=9).border=Border(left=bd)
+                ws.cell(column=col_num+1,row=9,value=project['manager'])
+                ws.cell(column=col_num+1,row=9).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=9).border=Border(right=bd)
+
+                ws.cell(column=col_num,row=10,value='Socio')
+                ws.cell(column=col_num,row=10).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num,row=10).border=Border(left=bd,bottom=bd)
+                ws.cell(column=col_num+1,row=10).border=Border(bottom=bd)
+                ws.cell(column=col_num+1,row=10,value=project['partner'])
+                ws.cell(column=col_num+1,row=10).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=10).border=Border(right=bd,bottom=bd)
+
+
+                for column_cells in ws.columns:
+                    length = max(len(GF.as_text(cell.value))+5 for cell in column_cells)
+                    ws.column_dimensions[column_cells[0].column].width = length
+
+
+                #Descarga de archivo
+                time=strftime("%H_%M_%S", gmtime())
+                path=os.path.join(cfg.uploaded_forms_files_path,'Reporte%s.xlsx'%time)
+                wb.save(path)
+                response['success']=True
+                response['msg_response']='El formulario ha sido generado.'
+                response['filename']='/project/downloadFile/Reporte%s.xlsx'%time
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar validar la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/downloadFile/<filename>', methods=['GET','POST'])
+@is_logged_in
+def downloadReport(filename):
+    response={}
+    try:
+        path=os.path.join(cfg.uploaded_forms_files_path,filename)
+        name="%s"%filename
+        return send_file(path,attachment_filename=name)
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        return response
