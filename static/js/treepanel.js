@@ -22,7 +22,7 @@ $(document).ready(function(){
         console.log(me.user_info);
         if (valid){
             var data={};
-            data['name']=$("#FIname").val();
+            data['name']=encodeURIComponent($("#FIname").val());
             data['mode']=$("#mod_add_folder").data('mode');
             if (data['mode']=='new'){
                 data['parent_id']=$("#mod_add_folder").data('parent_id');
