@@ -45,8 +45,8 @@ def saveUser():
                     user_data['enabled']=True
                     user_data['profile_picture_class']='generic-user-img'
                     new_user=db.insert("system.user",user_data)
-                    mail_body='nuevo usuario con el correo: %s, contraseña: %s'%(new_user['email'],passwd)
-                    GF.sendMail('Nuevo usuario',mail_body,'pgarcia@russellbedford.mx')
+                    mail_body='Se ha registrado al usuario %s. <br><br> <b>Correo:</b> %s, <br> <b>Contraseña:</b> %s<br><br><a href="%s">Acceder</a>'%(new_user['name'],new_user['email'],passwd,cfg.host)
+                    GF.sendMail('Nuevo usuario',mail_body,user_data['email'])
                     response['success']=True
                     response['msg_response']='El usuario ha sido registrado.'
 
