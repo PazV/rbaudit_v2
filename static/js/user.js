@@ -490,7 +490,7 @@ $(document).ready(function(){
         $.ajax({
             url:'/users/getUserList',
             type:'POST',
-            data:{},
+            data:JSON.stringify({'workspace_id':me.user_info['workspace_id']}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);

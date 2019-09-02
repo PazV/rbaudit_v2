@@ -200,13 +200,22 @@ def getUserList():
     response={}
     try:
         if request.method=='POST':
-            users=db.query("""
-                select user_id, name
-                from system.user
-                order by name asc
-            """).dictresult()
-            response['data']=users
-            response['success']=True
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                if int(data['workspace_id'])==-1:
+                    workspace=""
+                else:
+                    workspace=" where workspace_id=%s "%data['workspace_id']
+                users=db.query("""
+                    select user_id, name
+                    from system.user %s
+                    order by name asc
+                """%workspace).dictresult()
+                response['data']=users
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
