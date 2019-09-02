@@ -64,6 +64,54 @@ def resolveForm(project_factor,form_id):
         g.notifications=True
     return render_template('resolve_form.html',g=g)
 
+@bp.route("/<int:project_factor>/createform/step-1", methods=['GET','POST'])
+@is_logged_in
+def createformStep1(project_factor):
+    project_id=int(project_factor)/int(cfg.project_factor)
+    g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
+    g.project_factor=project_factor
+    has_notifications=db.query("""
+        select count(*) from project.notification
+        where project_id=%s and user_to=%s and read=False
+    """%(project_id,session['user_id'])).dictresult()[0]
+    if has_notifications['count']==0:
+        g.notifications=False
+    else:
+        g.notifications=True
+    return render_template('createform_step1.html',g=g)
+
+@bp.route("/<int:project_factor>/createform/step-1-import", methods=['GET','POST'])
+@is_logged_in
+def createformStep1Import(project_factor):
+    project_id=int(project_factor)/int(cfg.project_factor)
+    g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
+    g.project_factor=project_factor
+    has_notifications=db.query("""
+        select count(*) from project.notification
+        where project_id=%s and user_to=%s and read=False
+    """%(project_id,session['user_id'])).dictresult()[0]
+    if has_notifications['count']==0:
+        g.notifications=False
+    else:
+        g.notifications=True
+    return render_template('createform_step1_import.html',g=g)
+
+@bp.route("/<int:project_factor>/createform/step-2/<int:form>", methods=['GET','POST'])
+@is_logged_in
+def createformStep2(form,project_factor):
+    project_id=int(project_factor)/int(cfg.project_factor)
+    g=GF.userInfo([{'form_id':form},{'project_id':project_id},{'project_factor':project_factor}])
+    # g.form_id=form
+    g.project_factor=project_factor
+    has_notifications=db.query("""
+        select count(*) from project.notification
+        where project_id=%s and user_to=%s and read=False
+    """%(project_id,session['user_id'])).dictresult()[0]
+    if has_notifications['count']==0:
+        g.notifications=False
+    else:
+        g.notifications=True
+    return render_template('createform_step2.html',g=g)
 
 @bp.route('/saveProject', methods=['GET','POST'])
 @is_logged_in
@@ -132,58 +180,6 @@ def getProjects():
         exc_info=sys.exc_info
         app.logger.info(traceback.format_exc(exc_info))
     return json.dumps(response)
-
-
-@bp.route("/<int:project_factor>/createform/step-1", methods=['GET','POST'])
-@is_logged_in
-def createformStep1(project_factor):
-    project_id=int(project_factor)/int(cfg.project_factor)
-    g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
-    g.project_factor=project_factor
-    has_notifications=db.query("""
-        select count(*) from project.notification
-        where project_id=%s and user_to=%s and read=False
-    """%(project_id,session['user_id'])).dictresult()[0]
-    if has_notifications['count']==0:
-        g.notifications=False
-    else:
-        g.notifications=True
-    return render_template('createform_step1.html',g=g)
-
-@bp.route("/<int:project_factor>/createform/step-1-import", methods=['GET','POST'])
-@is_logged_in
-def createformStep1Import(project_factor):
-    project_id=int(project_factor)/int(cfg.project_factor)
-    g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
-    g.project_factor=project_factor
-    has_notifications=db.query("""
-        select count(*) from project.notification
-        where project_id=%s and user_to=%s and read=False
-    """%(project_id,session['user_id'])).dictresult()[0]
-    if has_notifications['count']==0:
-        g.notifications=False
-    else:
-        g.notifications=True
-    return render_template('createform_step1_import.html',g=g)
-
-
-
-@bp.route("/<int:project_factor>/createform/step-2/<int:form>", methods=['GET','POST'])
-@is_logged_in
-def createformStep2(form,project_factor):
-    project_id=int(project_factor)/int(cfg.project_factor)
-    g=GF.userInfo([{'form_id':form},{'project_id':project_id},{'project_factor':project_factor}])
-    # g.form_id=form
-    g.project_factor=project_factor
-    has_notifications=db.query("""
-        select count(*) from project.notification
-        where project_id=%s and user_to=%s and read=False
-    """%(project_id,session['user_id'])).dictresult()[0]
-    if has_notifications['count']==0:
-        g.notifications=False
-    else:
-        g.notifications=True
-    return render_template('createform_step2.html',g=g)
 
 
 @bp.route("/saveFormStep1", methods=['GET','POST'])

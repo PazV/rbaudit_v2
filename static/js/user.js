@@ -63,6 +63,7 @@ $(document).ready(function(){
                 if (validateMail("#NUemail","#errNUemail")){
                     var frm = getForm('#frmNewUser',null,true);
                     frm['user_id']=-1;
+                    frm['workspace_id']=me.user_info['workspace_id'];
                     var data = new FormData();
                     if ($("#NUuser_image")[0].files.length==1){
                         if ($("#NUuser_image").parent('.custom-file').hasClass('valid-file-field')){
@@ -124,7 +125,7 @@ $(document).ready(function(){
                                             text:'OK',
                                             action:function(){
                                                 $("#mod_new_user").modal("hide");
-                                                getUserTable();
+                                                getUserTable(me.user_info);
                                             }
                                         }
                                     }
@@ -181,7 +182,7 @@ $(document).ready(function(){
     });
 
     $("#mod_admin_users").on('shown.bs.modal',function(){
-        getUserTable();
+        getUserTable(me.user_info);
     });
 
     $("#btnSignOut").click(function(){
@@ -782,7 +783,8 @@ $(document).ready(function(){
     });
 });
 
-function getUserTable(){
+function getUserTable(user_info){
+    console.log(user_info);
     $("#grdAdminUsers").DataTable({
         "scrollY":"225px",
         "scrollCollapse":true,
@@ -790,7 +792,7 @@ function getUserTable(){
         serverSide:true,
         destroy:true,
         ajax:{
-            data:{},
+            data:{'workspace_id':user_info['workspace_id']},
             url:'/users/getUserTable',
             dataSrc:'data',
             type:'POST',

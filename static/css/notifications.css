@@ -1,15 +1,26 @@
 .bell-notif{
-    content:url('../images/bell-notif.png');
+    content:url('/static/images/bell-notif.png');
+    background-image: url('/static/images/bell-notif.png');
     height:40px;
     width:40px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
+
 .bell-no-notif{
-    content:url('../images/bell-no-notif.png');
+    content:url('/static/images/bell-no-notif.png');
+    background-image: url('/static/images/bell-no-notif.png');
     height:40px;
     width:40px;
-    /* margin-top:3px; */
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
+
 
 .div-notif-title{
     display: flex;

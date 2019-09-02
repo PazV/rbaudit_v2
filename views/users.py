@@ -153,6 +153,10 @@ def getUserTable():
     response={}
     try:
         if request.method=='POST':
+            if int(request.form['workspace_id'])==-1:
+                workspace=""
+            else:
+                workspace=" and workspace_id=%s"%int(request.form['workspace_id'])
             users=db.query("""
                 select
                     user_id,
@@ -163,21 +167,22 @@ def getUserTable():
                 from
                     system.user
                 where
-                    enabled=True
+                    enabled=True %s
                     order by name
                 offset %s limit %s
-            """%(int(request.form['start']),int(request.form['length']))).dictresult()
+            """%(workspace,int(request.form['start']),int(request.form['length']))).dictresult()
             for u in users:
                 u['profile_picture']='<img class="%s user-topnavbar-size"  alt=""/>'%u['profile_picture_class']
             users_count=db.query("""
                 select count(*)
                 from system.user
-                where enabled=True
-            """).dictresult()
+                where enabled=True %s
+            """%workspace).dictresult()
             response['data']=users
             response['recordsTotal']=users_count[0]['count']
             response['recordsFiltered']=users_count[0]['count']
             response['success']=True
+
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'

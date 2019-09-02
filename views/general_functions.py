@@ -102,7 +102,7 @@ class GeneralFunctions:
 
     def userInfo(self,extras=None):
         user_info=db.query("""
-            select user_id,profile_picture_class
+            select user_id,profile_picture_class,workspace_id
             from system.user where user_id=%s
         """%session['user_id']).dictresult()[0]
         if extras!=None:

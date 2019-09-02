@@ -19,7 +19,7 @@ bp = Blueprint('home', __name__,  url_prefix='/home' )
 @is_logged_in
 def home():
     user_info=db.query("""
-        select user_id,profile_picture_class
+        select user_id,profile_picture_class,workspace_id
         from system.user where user_id=%s
     """%session['user_id']).dictresult()[0]
     g.user_info=json.dumps(user_info)
