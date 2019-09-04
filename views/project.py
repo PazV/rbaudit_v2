@@ -12,6 +12,7 @@ import copy
 import sys
 import traceback
 import os
+import glob
 from .db_connection import getDB
 db = getDB()
 from flask import current_app as app
@@ -1561,7 +1562,7 @@ def downloadResolvedForm():
                 wb.save(path)
                 response['success']=True
                 response['msg_response']='El formulario ha sido generado.'
-                response['filename']='/project/downloadFile/Reporte%s.xlsx'%time
+                response['filename']='/project/downloadFile/report/Reporte%s.xlsx'%time
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar validar la información.'
@@ -1574,12 +1575,150 @@ def downloadResolvedForm():
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
-@bp.route('/downloadFile/<filename>', methods=['GET','POST'])
+@bp.route('/downloadFile/<type>/<filename>', methods=['GET','POST'])
 @is_logged_in
-def downloadReport(filename):
+def downloadReport(type,filename):
     response={}
     try:
-        path=os.path.join(cfg.uploaded_forms_files_path,filename)
+        if type=='report':
+            path=os.path.join(cfg.uploaded_forms_files_path,filename)
+        name="%s"%filename
+        return send_file(path,attachment_filename=name)
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        return response
+
+@bp.route('/uploadFormZipFile', methods=['GET','POST'])
+@is_logged_in
+def uploadFormZipFile():
+    response={}
+    try:
+        if request.method=='POST':
+            data=request.form.to_dict()
+
+            file=request.files[data['file_name'].encode('utf-8')]
+            filename=secure_filename(file.filename)
+            folder_path=os.path.join(cfg.zip_main_folder,'project_%s'%int(data['project_id']),'form_%s'%int(data['form_id']))
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+            else:
+                existing_files = glob.glob(folder_path+'/*')
+                for f in existing_files:
+                    os.remove(f)
+            file.save(os.path.join(folder_path,filename))
+            db.query("""
+                update project.form
+                set zip_file_name='%s',
+                zip_last_upload_user=%s,
+                zip_last_upload_date='now'
+                where form_id=%s and project_id=%s
+            """%(filename,data['user_id'],data['form_id'],data['project_id']))
+            response['success']=True
+            response['msg_response']='El archivo zip ha sido cargado.'
+
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/allowedFormZip',methods=['GET','POST'])
+@is_logged_in
+def allowedFormZip():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                response['success']=True
+                form_users=db.query("""
+                    select assigned_to, revisions, project_id from project.form
+                    where form_id=%s
+                """%data['form_id']).dictresult()[0]
+                if int(data['user_id'])==int(form_users['assigned_to']):
+                    response['allowed']=True
+                else:
+                    rev_list=form_users['revisions'].split(",")
+                    for x in rev_list:
+                        if int(x.split(":")[1])==int(data['user_id']):
+                            response['allowed']=True
+                            break
+                        else:
+                            response['allowed']=False
+                            if data['from']=='upload':
+                                response['msg_response']='No tienes permitido subir un archivo relacionado a este formulario.'
+                            else:
+                                response['msg_response']='No tienes permitido descargar archivos de este formulario.'
+                    if response['allowed']==False:
+                        project_users=db.query("""
+                            select manager,partner from project.project
+                            where project_id=%s
+                        """%form_users['project_id']).dictresult()[0]
+                        if int(data['user_id'])==int(project_users['manager']) or int(data['user_id'])==int(project_users['partner']):
+                            response['allowed']=True
+                        else:
+                            response['allowed']=False
+                            if data['from']=='upload':
+                                response['msg_response']='No tienes permitido subir un archivo relacionado a este formulario.'
+                            else:
+                                response['msg_response']='No tienes permitido descargar archivos de este formulario.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getZipDownloadLink', methods=["GET","POST"])
+@is_logged_in
+def getZipDownloadLink():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                zip_file=db.query("""
+                    select zip_file_name
+                    from project.form
+                    where form_id=%s
+                """%data['form_id']).dictresult()[0]
+                response['success']=True
+                if zip_file['zip_file_name']!='':
+                    file_link='/project/downloadZipFile/%s/%s/%s'%(data['project_id'],data['form_id'],zip_file['zip_file_name'])
+                    response['file']=file_link
+                    response['has_file']=True
+                    response['msg_response']='El archivo se encuentra disponible.'
+                else:
+                    response['has_file']=False
+                    response['msg_response']='No hay ningún archivo por descargar.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/downloadZipFile/<project_id>/<form_id>/<filename>', methods=['GET','POST'])
+@is_logged_in
+def downloadZipFile(project_id,form_id,filename):
+    response={}
+    try:
+        path=os.path.join(cfg.zip_main_folder,'project_%s'%project_id,'form_%s'%form_id,filename)
         name="%s"%filename
         return send_file(path,attachment_filename=name)
     except:

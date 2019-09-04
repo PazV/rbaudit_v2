@@ -801,6 +801,216 @@ $(document).ready(function(){
         });
     });
 
+    $("#btnUploadFormFolder").click(function(){
+        $.ajax({
+            url:'/project/allowedFormZip',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id'],'from':'upload'}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    if (res.allowed){
+                        $("#mod_upload_form_folder").modal("show");
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#mod_upload_form_folder").on('hide.bs.modal',function(){
+        $("#UFFzip_file").parent('.custom-file').removeClass('valid-file-field');
+        $("#UFFzip_file").parent('.custom-file').removeClass('invalid-file-field');
+        $("#errUFFzip_file").addClass('hide-error-msg').removeClass('show-error-msg');
+        $("#UFFzip_file").siblings("label").html('Seleccione archivo');
+    });
+
+    $("#UFFzip_file").on('change',function(){
+        var path=$("#UFFzip_file")[0].value.split("\\").pop();
+        $("#UFFzip_file").siblings("label").html(path);
+        var pattern=$("#UFFzip_file")[0].pattern.split(",");
+        if (hasExtension("UFFzip_file",pattern)){
+            $("#UFFzip_file").parent('.custom-file').addClass('valid-file-field').removeClass('invalid-file-field');
+            $("#errUFFzip_file").removeClass('show-error-msg').addClass('hide-error-msg');
+        }
+        else{
+            $("#UFFzip_file").parent('.custom-file').removeClass('valid-file-field').addClass('invalid-file-field');
+            $("#errUFFzip_file").html("Formato incorrecto");
+            $("#errUFFzip_file").addClass('show-error-msg').removeClass('hide-error-msg');
+        }
+        this.blur();
+    });
+
+    $("#btnUploadZip").click(function(){
+        if ($("#UFFzip_file")[0].files.length==1){
+            if ($("#UFFzip_file").parent('.custom-file').hasClass('valid-file-field')){
+                var data=new FormData();
+                data.append('form_id',me.user_info['form_id']);
+                data.append('user_id',me.user_info['user_id']);
+                data.append('project_id',me.user_info['project_id']);
+                var file=$("#UFFzip_file")[0].files[0];
+                var file_name=$("#UFFzip_file")[0].files[0].name;
+                data.append(file_name,file);
+                data.append('file_name',file_name);
+                EasyLoading.show({
+                    text:'Cargando...',
+                    type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                });
+                $.ajax({
+                    url:'/project/uploadFormZipFile',
+                    type:'POST',
+                    data:data,
+                    processData:false,
+                    contentType:false,
+                    success:function(response){
+                        try{
+                            var res=JSON.parse(response);
+                        }catch(err){
+                            ajaxError();
+                        }
+                        EasyLoading.hide();
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                        if (res.success){
+                            $("#mod_upload_form_folder").modal("hide");
+                        }
+                    },
+                    error:function(){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                        });
+                    }
+                });
+            }
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debe seleccionar un archivo para cargarlo.'
+            });
+        }
+    });
+
+    $("#btnDownloadFormFolder").click(function(){
+        $.ajax({
+            url:'/project/allowedFormZip',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id'],'from':'download'}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    if (res.allowed){
+                        $.ajax({
+                            url:'/project/getZipDownloadLink',
+                            type:'POST',
+                            data:JSON.stringify({'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
+                            success:function(response2){
+                                try{
+                                    var res2=JSON.parse(response2);
+                                }catch(err){
+                                    ajaxError();
+                                }
+                                if (res2.success){
+                                    if (res2.has_file){
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res2.msg_response,
+                                            buttons:{
+                                                confirm:{
+                                                    text:'Descargar',
+                                                    action:function(){
+                                                        window.open(res2.file,"_blank");
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+                                    else{
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res2.msg_response
+                                        });
+                                    }
+                                }
+                                else{
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res2.msg_response
+                                    });
+                                }
+                            },
+                            error:function(){
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                });
+                            }
+                        });
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
 });
 
 

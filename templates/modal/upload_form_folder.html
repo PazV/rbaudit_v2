@@ -1,0 +1,25 @@
+<div class="modal fade" id="mod_upload_form_folder" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header green-modal">
+                <span class="spn-modal-header">Cargar archivo zip</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row no-space-button" style="margin:inherit;">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="UFFzip_file" name="zip_file" data-required="true" pattern=".zip,.ZIP,.Zip"/>
+                        <label class="custom-file-label" for="UFFzip_file" style="overflow:hidden;">Seleccionar archivo</label>
+                    </div>
+                </div>
+                <div class="hide-error-msg" id="errUFFzip_file">
+                    Campo inválido
+                </div>                
+            </div>
+            <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark" id="btnUploadZip" data-toggle="tooltip" title="Cargar archivo zip"><span class="hide-text">Cargar </span><i class="fa fa-upload"></i></button>
+                <button type="button" class="btn btn-outline-dark close-modal"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
