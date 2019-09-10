@@ -70,3 +70,11 @@
     max-height: 450px;
     overflow-y: scroll;
 }
+
+#grdFormToResolve td{
+    text-align:left;
+}
+
+#grdPrefilledForm td{
+    text-align:left;
+}
