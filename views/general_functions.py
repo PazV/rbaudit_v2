@@ -232,6 +232,23 @@ class GeneralFunctions:
                 notification['user_to']=data['user_id']
                 notification['link_content']='/project/<project_factor>'
                 notification['link_text']='Ir a proyecto'
+            elif type=='close_form':
+                notification['subject']='Formulario cerrado'
+                mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(form_info['user_last_update_name'],data['msg'].encode('utf-8'))
+                notification['msg']='El formulario %s ha sido cerrado.%s'%(form_info['name'],mensaje)
+                notification['user_from']=form_info['user_last_update']
+                notification['user_to']=data['user_to']
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
+
+            elif type=='send_next_revision':
+                notification['subject']='Enviado a revisión'
+                mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(form_info['user_last_update_name'],data['msg'].encode('utf-8'))
+                notification['msg']='El formulario %s ha sido revisado, y te ha sido asignado para su siguiente revisión. %s'%(form_info['name'],mensaje)
+                notification['user_from']=form_info['user_last_update']
+                notification['user_to']=data['user_to']
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
 
 
             db.insert('project.notification',notification)

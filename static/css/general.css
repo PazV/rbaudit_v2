@@ -22,7 +22,9 @@ body{
     min-height:inherit;
 }
 
-
+.modal-content{
+    border:0;
+}
 
 .generic-user-img{
     content:url('../images/default-user.png');

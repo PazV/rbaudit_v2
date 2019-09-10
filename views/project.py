@@ -582,6 +582,12 @@ def publishForm():
                 revisions=[]
                 for k,v in data.iteritems():
                     if k.split('_')[0]=='revision':
+                        rev={
+                            'form_id':data['form_id'],
+                            'user_id':v,
+                            'revision_number':k.split("_")[1]
+                        }
+                        db.insert("project.form_revisions",rev)
                         revisions.append('%s:%s'%(k,v))
                 str_revisions=','.join(e for e in revisions)
 
@@ -726,7 +732,7 @@ def checkUserIsAllowed():
                 allowed_users=db.query("""
                     select
                         f.assigned_to,
-                        f.revisions,
+                        --f.revisions,
                         p.manager,
                         p.partner,
                         p.project_id,
@@ -739,6 +745,10 @@ def checkUserIsAllowed():
                     and f.project_id=p.project_id
                 """%data['form_id']).dictresult()[0]
 
+                revisions=db.query("""
+                    select user_id from project.form_revisions where form_id=%s
+                """%data['form_id']).dictresult()
+
                 match=False
                 readonly=False
                 if int(allowed_users['partner'])==int(data['user_id']) or int(allowed_users['manager'])==int(data['user_id']): #si es socio o gerente del proyecto, tiene acceso a editar y/o ver formularios en todo momento
@@ -747,39 +757,55 @@ def checkUserIsAllowed():
                 else:
                     if int(allowed_users['status_id'])<5: #si está en proceso de llenado o configuración del formulario
                         for k,v in allowed_users.iteritems():
-                            if k=='revisions':
-                                revision_list=v.split(",")
-                                for r in revision_list:
-                                    if int(r.split(":")[1])==int(data['user_id']):
-                                        match=True #si es revisor, tiene permiso de ver el formulario y editarlo
-                                        break
+                            if v!='project_id' or v!='status_id': #verifica si es socio, gerente o tiene asignado el formulario
+                                if int(v)==int(data['user_id']):
+                                    match=True #si tiene asignado el formulario, tiene permisos para verlo
                                     break
-                            else:
-                                if v!='project_id' or v!='status_id':
-                                    if int(v)==int(data['user_id']):
-                                        match=True #si tiene asignado el formulario, tiene permisos para verlo
-                                        break
-                        if match==False: #si no se encuentra entre los usuarios del formulario
-                            #se busca si el usuario tiene permisos para ver todos los formularios
-                            allowed_seeing=db.query("""
-                                select see_all_forms
-                                from system.user where user_id=%s
-                            """%data['user_id']).dictresult()
-                            if allowed_seeing[0]['see_all_forms']==True:
-                                match=True #si tiene permiso, se le permite verlo
-                                readonly=True #pero no puede editarlo
+                        if match==False:
+                            for r in revisions:
+                                if int(r['user_id'])==int(data['user_id']):
+                                    match=True
+                                    break
+                            if match==False: #si no se encuentra entre los usuarios del formulario
+                                #se busca si el usuario tiene permisos para ver todos los formularios
+                                allowed_seeing=db.query("""
+                                    select see_all_forms
+                                    from system.user where user_id=%s
+                                """%data['user_id']).dictresult()
+                                if allowed_seeing[0]['see_all_forms']==True:
+                                    match=True #si tiene permiso, se le permite verlo
+                                    readonly=True #pero no puede editarlo
+
+
+                            # if k=='revisions':
+                            #     revision_list=v.split(",")
+                            #     for r in revision_list:
+                            #         if int(r.split(":")[1])==int(data['user_id']):
+                            #             match=True #si es revisor, tiene permiso de ver el formulario y editarlo
+                            #             break
+                            #         break
+                            # else:
+                            #     if v!='project_id' or v!='status_id':
+                            #         if int(v)==int(data['user_id']):
+                            #             match=True #si tiene asignado el formulario, tiene permisos para verlo
+                            #             break
+
                     else: #si se encuentra en la etapa de revisión
                         if int(data['user_id'])==int(allowed_users['assigned_to']): #si es el usuario a quien fue asignado el formulario
                             match=True #puede verlo
                             readonly=True #no puede editarlo
-                        else:
-                            rev_list=allowed_users['revisions'].split(",") #se busca si está entre los revisores
-                            app.logger.info(rev_list)
-                            for r in rev_list:
-                                if int(r.split(":")[1])==int(data['user_id']):
+                        else: #se busca si está entre los revisores
+                            for r in revisions:
+                                if int(r['user_id'])==int(data['user_id']):
                                     match=True #si está entre los revisores, puede verlo
                                     readonly=False #y puede editarlo
-                                    break
+                            # rev_list=allowed_users['revisions'].split(",") #se busca si está entre los revisores
+                            # app.logger.info(rev_list)
+                            # for r in rev_list:
+                            #     if int(r.split(":")[1])==int(data['user_id']):
+                            #         match=True #si está entre los revisores, puede verlo
+                            #         readonly=False #y puede editarlo
+                            #         break
                             if match==False: #si no se encuentra entre los usuarios del formulario
                                 #se busca si el usuario tiene permisos para ver todos los formularios
                                 allowed_seeing=db.query("""
@@ -820,7 +846,7 @@ def getFormDetails():
                 info=db.query("""
                     select
                         (select a.name from system.user a where a.user_id=f.assigned_to) as assigned_to,
-                        f.revisions,
+                        --f.revisions,
                         to_char(f.create_date,'DD-MM-YYYY HH24:MI:SS') as create_date,
                         (select a.name from system.user a where a.user_id=f.created_by) as created_by,
                         to_char(f.resolve_before,'DD-MM-YYYY HH24:MI:SS') as resolve_before,
@@ -833,13 +859,23 @@ def getFormDetails():
 
                 html='<p><b>Asignado a: </b>%s<br><b>Resolver antes de: </b>%s<br>'%(info['assigned_to'].decode('utf-8'),info['resolve_before'])
 
-                rev_list=info['revisions'].split(',')
-                for r in rev_list:
-                    rev='Revisión %s'%((r.split(":")[0]).split("_")[1])
-                    user_rev=db.query("""
-                        select name from system.user where user_id=%s
-                    """%r.split(":")[1]).dictresult()[0]
-                    html+='<b>%s: </b>%s<br>'%(rev.decode('utf-8'),user_rev['name'].decode('utf-8'))
+                revisions=db.query("""
+                    select b.user_id,
+                    (select a.name from system.user a where a.user_id=b.user_id) as user_name,
+                    b.revision_number
+                    from project.form_revisions b
+                    where b.form_id=%s order by b.revision_number asc
+                """%data['form_id']).dictresult()
+                for r in revisions:
+                    rev='Revisión %s'%(r['revision_number'])
+                    html+='<b>%s: </b>%s<br>'%(rev.decode('utf-8'),r['user_name'].decode('utf-8'))
+                # rev_list=info['revisions'].split(',')
+                # for r in rev_list:
+                #     rev='Revisión %s'%((r.split(":")[0]).split("_")[1])
+                #     user_rev=db.query("""
+                #         select name from system.user where user_id=%s
+                #     """%r.split(":")[1]).dictresult()[0]
+                #     html+='<b>%s: </b>%s<br>'%(rev.decode('utf-8'),user_rev['name'].decode('utf-8'))
 
                 html+='<b>Creado: </b>%s<br>'%info['create_date']
                 html+='<b>Creado por: </b>%s<br>'%info['created_by'].decode('utf-8')
@@ -918,6 +954,10 @@ def sendFormToRevision():
                         form_id=%s
                     and project_id=%s
                 """%(data['user_id'],data['form_id'],data['project_id']))
+                db.query("""
+                    update project.form_revisions set currently_assigned=True
+                    where form_id=%s and revision_number=1
+                """%data['form_id'])
                 notif_info={'project_id':data['project_id'],'form_id':data['form_id']}
                 # GF.createNotification('send_to_revision1',data['project_id'],data['form_id'])
                 GF.createNotification('send_to_revision1',notif_info)
@@ -964,9 +1004,16 @@ def getFormsToCheck(subpath):
                 else:
                     showing_forms=[]
                     for f in forms:
-                        revs=f['revisions'].split(",")
-                        for r in revs:
-                            if int(r.split(":")[1])==int(data['user_id']):
+                        # revs=f['revisions'].split(",")
+                        revisions=db.query("""
+                            select user_id from project.form_revisions where form_id=%s
+                        """%f['form_id']).dictresult()
+                        # for r in revs:
+                        #     if int(r.split(":")[1])==int(data['user_id']):
+                        #         showing_forms.append(f)
+                        #         break
+                        for r in revisions:
+                            if int(r['user_id'])==int(data['user_id']):
                                 showing_forms.append(f)
                                 break
                     response['data']=showing_forms
@@ -994,7 +1041,8 @@ def checkToDoRevision():
             if valid:
                 form=db.query("""
                     select
-                        status_id, revisions
+                        status_id
+                        --, revisions
                     from
                         project.form
                     where form_id=%s
@@ -1009,14 +1057,22 @@ def checkToDoRevision():
                     if int(data['user_id'])==int(users['manager']) or int(data['user_id'])==int(users['partner']): #verifica si el usuario es el gerente o socio del proyecto
                         response['allowed']=True
                     else:
-                        rev_list=form[0]['revisions'].split(",")
-                        app.logger.info("rev_list")
-                        app.logger.info(rev_list)
-                        for r in rev_list: #verifica si el usuario es alguno de los revisores
-                            if int(data['user_id'])==int(r.split(":")[1]):
-                                app.logger.info("allowed")
-                                response['allowed']=True
-                                break
+                        revisions=db.query("""
+                            select user_id from project.form_revisions where form_id=%s
+                            and currently_assigned=True
+                        """%data['form_id']).dictresult()[0]
+                        # rev_list=form[0]['revisions'].split(",")
+                        # app.logger.info("rev_list")
+                        # app.logger.info(rev_list)
+                        # for r in rev_list: #verifica si el usuario es alguno de los revisores
+                        # for r in revisions: #verifica si el usuario es alguno de los revisores
+                        #     # if int(data['user_id'])==int(r.split(":")[1]):
+                        #     if int(data['user_id'])==int(r['user_id']):
+                        #         app.logger.info("allowed")
+                        #         response['allowed']=True
+                        #         break
+                        if int(revisions['user_id'])==int(data['user_id']):
+                            response['allowed']=True
                         if 'allowed' not in response:
                             response['allowed']=False
                             response['msg_response']='Usted no tiene permisos para revisar este formulario.'
@@ -1035,75 +1091,6 @@ def checkToDoRevision():
         app.logger.info(traceback.format_exc(exc_info))
     return json.dumps(response)
 
-@bp.route('/returnFormToAssignee', methods=['GET','POST'])
-@is_logged_in
-def returnFormToAssignee():
-    response={}
-    try:
-        if request.method=='POST':
-            valid,data=GF.getDict(request.form,'post')
-            if valid:
-                db.query("""
-                    update project.form
-                    set status_id=3,
-                    user_last_update=%s,
-                    last_updated='now',
-                    first_revision_date='now'
-                    where form_id=%s
-                """%(data['user_id'],data['form_id']))
-                notif_info={'project_id':data['project_id'],'form_info':data['form_id'],'msg':data['msg']}
-                # GF.createNotification('return_form',data['project_id'],data['form_id'],data['msg'])
-                GF.createNotification('return_form',notif_info)
-                response['success']=True
-                response['msg_response']='El formulario ha sido enviado a corregir.'
-            else:
-                response['success']=False
-                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
-        else:
-            response['success']=False
-            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
-    except:
-        response['success']=False
-        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
-        exc_info=sys.exc_info()
-        app.logger.info(traceback.format_exc(exc_info))
-    return json.dumps(response)
-
-@bp.route('/finishCheckingForm', methods=['GET','POST'])
-@is_logged_in
-def finishCheckingForm():
-    response={}
-    try:
-        if request.method=='POST':
-            valid,data=GF.getDict(request.form,'post')
-            if valid:
-                db.query("""
-                    update project.form
-                    set status_id=7,
-                    user_last_update=%s,
-                    last_updated='now',
-                    first_revision_date='now'
-                    where form_id=%s
-                """%(data['user_id'],data['form_id']))
-                notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg']}
-                GF.createNotification('finish_revision1_torev2',notif_info)
-                GF.createNotification('finish_revision1_toassignee',notif_info)
-                # GF.createNotification('finish_revision1_torev2',data['project_id'],data['form_id'],data['msg'])
-                # GF.createNotification('finish_revision1_toassignee',data['project_id'],data['form_id'],data['msg'])
-                response['success']=True
-                response['msg_response']='El formulario ha sido actualizado con éxito.'
-            else:
-                response['success']=False
-                response['msg_response']='Ocurrió un error al intentar validar la información.'
-        else:
-            response['success']=False
-            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
-    except:
-        response['success']=False
-        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
-        app.logger.info(traceback.format_exc(sys.exc_info()))
-    return json.dumps(response)
-
 @bp.route('/checkAddComment', methods=['GET','POST'])
 @is_logged_in
 def checkAddComment():
@@ -1112,19 +1099,24 @@ def checkAddComment():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
-                form_info=db.query("""
-                    select revisions,project_id
-                    from project.form
-                    where form_id=%s
-                """%data['form_id']).dictresult()[0]
+                # form_info=db.query("""
+                #     select project_id
+                #     from project.form
+                #     where form_id=%s
+                # """%data['form_id']).dictresult()[0]
                 user_list=[]
-                revs=form_info['revisions'].split(",")
-                for r in revs:
-                    user_list.append(int(r.split(":")[1]))
+                # revs=form_info['revisions'].split(",")
+                revisions=db.query("""
+                    select user_id from project.form_revisions where form_id=%s
+                """%data['form_id']).dictresult()
+                # for r in revs:
+                #     user_list.append(int(r.split(":")[1]))
+                for r in revisions:
+                    user_list.append(int(r['user_id']))
                 managers=db.query("""
-                    select manager,partner from project.project
-                    where project_id=%s
-                """%form_info['project_id']).dictresult()[0]
+                    select a.manager,a.partner from project.project a, project.form b
+                    where a.project_id=b.project_id and b.form_id=%s
+                """%data['form_id']).dictresult()[0]
                 user_list.append(int(managers['manager']))
                 user_list.append(int(managers['partner']))
                 if int(data['user_id']) in user_list:
@@ -1221,14 +1213,18 @@ def checkSendToRevision():
             valid,data=GF.getDict(request.form,'post')
             if valid:
                 check=db.query("""
-                    select assigned_to from project.form
+                    select assigned_to,status_id from project.form
                     where form_id=%s
                 """%data['form_id']).dictresult()[0]
-                if int(check['assigned_to'])==int(data['user_id']):
-                    response['allowed']=True
+                if check['status_id']==3:
+                    if int(check['assigned_to'])==int(data['user_id']):
+                        response['allowed']=True
+                    else:
+                        response['allowed']=False
+                        response['msg_response']='No tienes permiso para enviar a revisión este formulario.'
                 else:
                     response['allowed']=False
-                    response['msg_response']='No tienes permiso para enviar a revisión este formulario.'
+                    response['msg_response']='Este formulario no puede ser enviado a revisión'
                 response['success']=True
             else:
                 response['success']=False
@@ -1392,8 +1388,8 @@ def downloadResolvedForm():
                         columns,
                         (select a.name from system.user a where a.user_id=assigned_to) as assigned_to,
                         to_char(resolved_date,'DD-MM-YYYY HH24:MI:SS') as resolved_date,
-                        to_char(first_revision_date,'DD-MM-YYYY HH24:MI:SS') as first_revision_date,
-                        revisions
+                        to_char(first_revision_date,'DD-MM-YYYY HH24:MI:SS') as first_revision_date
+                        --,revisions
                     from
                         project.form
                     where
@@ -1502,6 +1498,11 @@ def downloadResolvedForm():
 
 
                 #agregar quién realizó el formulario
+                revisions=db.query("""
+                    select (select a.name from system.user a where a.user_id=b.user_id) as user_name,
+                    b.revision_number, to_char(b.revision_date,'DD-MM-YYYY HH24:MI:SS') as revision_date
+                    from project.form_revisions b where b.form_id=%s order by b.revision_number asc
+                """%data['form_id']).dictresult()
                 bd = Side(style='thick', color="000000")
                 th = Side(style='thin', color="000000")
 
@@ -1523,32 +1524,36 @@ def downloadResolvedForm():
                 ws.cell(column=col_num+2,row=7).font=Font(name='Times New Roman', size=12, bold=False)
                 ws.cell(column=col_num+2,row=7).border=Border(right=bd)
 
-                ws.cell(column=col_num,row=8,value='Revisor')
-                ws.cell(column=col_num,row=8).font=Font(name='Times New Roman', size=12, bold=True)
-                ws.cell(column=col_num,row=8).border=Border(left=bd)
-                revisor=db.query("""
-                    select name from system.user where user_id=%s
-                """%int(form['revisions'].split(",")[0].split(":")[1])).dictresult()[0]
-                ws.cell(column=col_num+1,row=8,value=revisor['name'])
-                ws.cell(column=col_num+1,row=8).font=Font(name='Times New Roman', size=12, bold=False)
-                ws.cell(column=col_num+2,row=8,value=form['first_revision_date'])
-                ws.cell(column=col_num+2,row=8).font=Font(name='Times New Roman', size=12, bold=False)
-                ws.cell(column=col_num+2,row=8).border=Border(right=bd)
+                current_row=8
+                for r in revisions:
+                    ws.cell(column=col_num,row=current_row,value='Revisor')
+                    ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
+                    ws.cell(column=col_num,row=current_row).border=Border(left=bd)
+                    # revisor=db.query("""
+                    #     select name from system.user where user_id=%s
+                    # """%int(form['revisions'].split(",")[0].split(":")[1])).dictresult()[0]
+                    ws.cell(column=col_num+1,row=current_row,value=r['user_name'])
+                    ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
+                    ws.cell(column=col_num+2,row=current_row,value=r['revision_date'])
+                    ws.cell(column=col_num+2,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
+                    ws.cell(column=col_num+2,row=current_row).border=Border(right=bd)
+                    current_row+=1
 
-                ws.cell(column=col_num,row=9,value='Gerente')
-                ws.cell(column=col_num,row=9).font=Font(name='Times New Roman', size=12, bold=True)
-                ws.cell(column=col_num,row=9).border=Border(left=bd)
-                ws.cell(column=col_num+1,row=9,value=project['manager'])
-                ws.cell(column=col_num+1,row=9).font=Font(name='Times New Roman', size=12, bold=False)
-                ws.cell(column=col_num+2,row=9).border=Border(right=bd)
+                ws.cell(column=col_num,row=current_row,value='Gerente')
+                ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num,row=current_row).border=Border(left=bd)
+                ws.cell(column=col_num+1,row=current_row,value=project['manager'])
+                ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=current_row).border=Border(right=bd)
+                current_row+=1
 
-                ws.cell(column=col_num,row=10,value='Socio')
-                ws.cell(column=col_num,row=10).font=Font(name='Times New Roman', size=12, bold=True)
-                ws.cell(column=col_num,row=10).border=Border(left=bd,bottom=bd)
-                ws.cell(column=col_num+1,row=10).border=Border(bottom=bd)
-                ws.cell(column=col_num+1,row=10,value=project['partner'])
-                ws.cell(column=col_num+1,row=10).font=Font(name='Times New Roman', size=12, bold=False)
-                ws.cell(column=col_num+2,row=10).border=Border(right=bd,bottom=bd)
+                ws.cell(column=col_num,row=current_row,value='Socio')
+                ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
+                ws.cell(column=col_num,row=current_row).border=Border(left=bd,bottom=bd)
+                ws.cell(column=col_num+1,row=current_row).border=Border(bottom=bd)
+                ws.cell(column=col_num+1,row=current_row,value=project['partner'])
+                ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
+                ws.cell(column=col_num+2,row=current_row).border=Border(right=bd,bottom=bd)
 
 
                 for column_cells in ws.columns:
@@ -1637,15 +1642,22 @@ def allowedFormZip():
             if valid:
                 response['success']=True
                 form_users=db.query("""
-                    select assigned_to, revisions, project_id from project.form
+                    select assigned_to,
+                    --revisions,
+                    project_id from project.form
                     where form_id=%s
                 """%data['form_id']).dictresult()[0]
                 if int(data['user_id'])==int(form_users['assigned_to']):
                     response['allowed']=True
                 else:
-                    rev_list=form_users['revisions'].split(",")
-                    for x in rev_list:
-                        if int(x.split(":")[1])==int(data['user_id']):
+                    revisions=db.query("""
+                        select user_id from project.form_revisions where form_id=%s
+                    """%data['form_id']).dictresult()
+                    # rev_list=form_users['revisions'].split(",")
+                    # for x in rev_list:
+                    for r in revisions:
+                        # if int(x.split(":")[1])==int(data['user_id']):
+                        if int(r['user_id'])==int(data['user_id']):
                             response['allowed']=True
                             break
                         else:
@@ -1726,3 +1738,159 @@ def downloadZipFile(project_id,form_id,filename):
         response['msg_response']='Ocurrió un error.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
         return response
+
+@bp.route('/getUsersForRevision', methods=['GET','POST'])
+@is_logged_in
+def getUsersForRevision():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                revisions=db.query("""
+                    select a.user_id, b.name, a.revision_number, a.currently_assigned
+                    from system.user b,
+                    project.form_revisions a
+                    where form_id=%s
+                    and a.user_id=b.user_id order by revision_number asc
+                """%data['form_id']).dictresult()
+                assignee=db.query("""
+                    select a.assigned_to as user_id, b.name from system.user b, project.form a
+                    where a.form_id=%s
+                    and a.assigned_to=b.user_id
+                """%data['form_id']).dictresult()[0]
+                send_to=[]
+                return_to=[]
+                assignee['name']='%s - Asignado'%assignee['name']
+                return_to.append(assignee)
+                one_more=False
+                for r in revisions:
+                    if one_more==True:
+                        send_to.append({'user_id':r['user_id'],'name':"%s - Revisión %s"%(r['name'],r['revision_number'])})
+                        break
+                    else:
+                        if r['currently_assigned']==True:
+                            one_more=True
+                        else:
+                            return_to.append({'user_id':r['user_id'],'name':"%s - Revisión %s"%(r['name'],r['revision_number'])})
+                if send_to==[]:
+                    send_to.append({'user_id':-101,'name':'Cerrar formulario'})
+
+                response['success']=True
+                response['send_to']=send_to
+                response['return_to']=return_to
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/doRevision', methods=['GET','POST'])
+@is_logged_in
+def doRevision():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                if int(data['user_to'])==-101: #revisar si va a cerrar el formulario
+                    #buscar el usuario que tiene la última revisión del formulario
+                    last_revision=db.query("""
+                        select revision_id, user_id
+                        from project.form_revisions
+                        where form_id=%s order by revision_number desc limit 1
+                    """%data['form_id']).dictresult()[0]
+                    if int(last_revision['user_id'])==int(data['user_id']): # si es el usuario de la última revisión, se cambia el status del formulario a cerrado
+                        db.query("""
+                            update project.form set
+                            status_id=7,
+                            user_last_update=%s,
+                            last_updated='now'
+                            where form_id=%s
+                        """%(data['user_id'],data['form_id']))
+                        #se actualiza la fecha de la revisión
+                        db.query("""
+                            update project.form_revisions
+                            set revision_date='now'
+                            where form_id=%s and user_id=%s
+                        """%(data['form_id'],data['user_id']))
+
+                        users_notif=db.query("""
+                            select user_id from project.form_revisions where user_id!=%s and form_id=%s
+                            union select assigned_to as user_id from project.form where form_id=%s
+                        """%(data['user_id'],data['form_id'],data['form_id'])).dictresult()
+                        info={
+                            'form_id':data['form_id'],
+                            'project_id':data['project_id'],
+                            'msg':data['msg']
+                        }
+                        for un in users_notif:
+                            info['user_to']=un['user_id']
+                            # se envía notificación a usuarios correspondientes
+                            GF.createNotification('close_form',info)
+                else:
+                    #si no se va a cerrar el formulario
+                    #se revisa si se va a regresar al usuario asignado a resolver el formulario
+                    check_assignee=db.query("""
+                        select assigned_to from project.form
+                        where form_id=%s
+                    """%data['form_id']).dictresult()[0]
+                    if int(check_assignee['assigned_to'])==int(data['user_to']):
+                        #si es el usuario asignado, se cambia status a publicado
+                        db.query("""
+                            update project.form
+                            set status_id=3, user_last_update=%s,
+                            last_updated='now' where form_id=%s
+                        """%(data['user_id'],data['form_id']))
+                        #se actualiza a quien está asignada la revisión
+                        db.query("""
+                            update project.form_revisions set
+                            currently_assigned=False where form_id=%s
+                        """%(data['form_id']))
+                        notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg']}
+                        GF.createNotification('return_form',notif_info)
+                    else:                        
+                        #en caso de que se cambie de revisor
+                        current_revision=db.query("""
+                            select * from project.form_revisions where
+                            form_id=%s and currently_assigned=True
+                        """%data['form_id']).dictresult()[0]
+                        #se actualiza quien y cuando fue la última vez que se actualizó el formulario
+                        db.query("""
+                            update project.form set
+                            user_last_update=%s, last_updated='now', status_id=6
+                            where form_id=%s
+                        """%(data['user_id'],data['form_id']))
+                        user_update=""
+                        if int(current_revision['user_id'])!=int(data['user_id']):
+                            user_update=",user_update=%s"%data['user_id']
+                        db.query("""
+                            update project.form_revisions set currently_assigned=False,
+                            revision_date='now' %s where form_id=%s and currently_assigned=True
+                        """%(user_update,data['form_id']))
+                        db.query("""
+                            update project.form_revisions set currently_assigned=True
+                            where form_id=%s and user_id=%s
+                        """%(data['form_id'],data['user_to']))
+                        notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg'],'user_to':data['user_to']}
+                        GF.createNotification('send_next_revision',notif_info)
+
+                response['success']=True
+                response['msg_response']='El formulario ha sido actualizado.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
