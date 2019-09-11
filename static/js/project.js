@@ -35,7 +35,7 @@ $(document).ready(function(){
         $.ajax({
             url:'/users/getUserList',
             type:'POST',
-            data:JSON.stringify({'workspace_id':me.user_info['workspace_id']}),
+            data:JSON.stringify({'workspace_id':me.user_info['workspace_id'],'user_id':me.user_info['user_id']}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -80,6 +80,7 @@ $(document).ready(function(){
             var data=getForm('#frmNewProject',[{'id':'#NPpartner','name':'partner'},{'id':'#NPmanager','name':'manager'}]);
             data['created_by']=me.user_info['user_id'];
             data['project_id']=-1;
+            data['user_id']=me.user_info['user_id'];
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -214,7 +215,7 @@ function loadFormPanel(user_info,location){
     $.ajax({
         url:url,
         type:'POST',
-        data:JSON.stringify({'project_id':user_info.project_id}),
+        data:JSON.stringify({'project_id':user_info.project_id,'user_id':user_info.user_id}),
         success:function(response){
             try{
                 var res=JSON.parse(response);

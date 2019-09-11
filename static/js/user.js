@@ -64,6 +64,7 @@ $(document).ready(function(){
                     var frm = getForm('#frmNewUser',null,true);
                     frm['user_id']=-1;
                     frm['workspace_id']=me.user_info['workspace_id'];
+                    frm['this_user']=me.user_info['user_id'];
                     var data = new FormData();
                     if ($("#NUuser_image")[0].files.length==1){
                         if ($("#NUuser_image").parent('.custom-file').hasClass('valid-file-field')){
@@ -535,7 +536,8 @@ $(document).ready(function(){
             type:'POST',
             data:JSON.stringify({
                 'user_id':$("#APUuser").find("option:selected").attr("name"),
-                'project_id':me.user_info['project_id']
+                'project_id':me.user_info['project_id'],
+                'this_user':me.user_info['user_id']
             }),
             success:function(response){
                 try{
@@ -682,6 +684,7 @@ $(document).ready(function(){
             var data = getForm('#frmEditUser',null,true);
             data['name']=data['name'].trim();
             data['user_id']=$("#mod_edit_user").data('user_id');
+            data['this_user']=me.user_info['user_id'];
             console.log(data);
             EasyLoading.show({
                 text:'Cargando...',

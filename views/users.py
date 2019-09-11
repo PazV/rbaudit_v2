@@ -26,117 +26,126 @@ bp = Blueprint('users', __name__,  url_prefix='/users' )
 @bp.route('/saveUser',methods=['GET','POST'])
 @is_logged_in
 def saveUser():
+    #guardar los datos de un usuario
     response={}
     try:
         if request.method=='POST':
             data=request.form.to_dict()
-            user_data=copy.deepcopy(data) #deepcopy significa que los cambios en el nuevo dict no afectarán el dict original
-            if str(data['user_id'])=='-1': #nuevo usuario
-                mail_exists=db.query("""
-                    select count(*) from system.user
-                    where email='%s'
-                """%data['email']).dictresult()[0]['count']
-                mail_exists=0 #salta validación de correo
-                if mail_exists==0:
-                    del user_data['user_id']
-                    passwd_success,passwd=GF.generateRandomPassword(7)
-                    user_data['password']=generate_password_hash(passwd)
-                    user_data['created']='now()'
-                    user_data['enabled']=True
-                    user_data['profile_picture_class']='generic-user-img'
-                    new_user=db.insert("system.user",user_data)
-                    mail_body='Se ha registrado al usuario %s. <br><br> <b>Correo:</b> %s, <br> <b>Contraseña:</b> %s<br><br><a href="%s">Acceder</a>'%(new_user['name'],new_user['email'],passwd,cfg.host)
-                    GF.sendMail('Nuevo usuario',mail_body,user_data['email'])
-                    response['success']=True
-                    response['msg_response']='El usuario ha sido registrado.'
+            success,allowed=GF.checkPermission({'user_id':data['this_user'],'permission':'create_users'})
+            if success:
+                if allowed:
+                    user_data=copy.deepcopy(data) #deepcopy significa que los cambios en el nuevo dict no afectarán el dict original
+                    if str(data['user_id'])=='-1': #nuevo usuario
+                        mail_exists=db.query("""
+                            select count(*) from system.user
+                            where email='%s'
+                        """%data['email']).dictresult()[0]['count']
+                        mail_exists=0 #salta validación de correo
+                        if mail_exists==0:
+                            del user_data['user_id']
+                            passwd_success,passwd=GF.generateRandomPassword(7)
+                            user_data['password']=generate_password_hash(passwd)
+                            user_data['created']='now()'
+                            user_data['enabled']=True
+                            user_data['profile_picture_class']='generic-user-img'
+                            new_user=db.insert("system.user",user_data)
+                            mail_body='Se ha registrado al usuario %s. <br><br> <b>Correo:</b> %s, <br> <b>Contraseña:</b> %s<br><br><a href="%s">Acceder</a>'%(new_user['name'],new_user['email'],passwd,cfg.host)
+                            GF.sendMail('Nuevo usuario',mail_body,user_data['email'])
+                            response['success']=True
+                            response['msg_response']='El usuario ha sido registrado.'
 
-                    if data['file_name']!="false":
-                        files=request.files
-                        file_path=cfg.profile_img_path
-                        file=files[data['file_name']]
-                        filename=secure_filename(file.filename)
-                        file.save(os.path.join(file_path,filename))
-                        fname,ext=os.path.splitext(os.path.join(file_path,filename))
-                        os.rename(os.path.join(file_path,filename),os.path.join(file_path,'img_user_%s%s'%(new_user['user_id'],ext)))
-                        class_name='profileimage-user-%s-'%new_user['user_id']
-                        db.query("""
-                            update system.user
-                            set profile_picture='%s',
-                            profile_picture_class='%s'
-                            where user_id=%s
-                        """%('img_user_%s%s'%(new_user['user_id'],ext),class_name,new_user['user_id']))
-                        # css_class=".%s{content:url('%s');}"%(class_name,os.path.join(cfg.class_img_path,'img_user_%s%s'%(new_user['user_id'],ext)))
-                        img_path=os.path.join(cfg.class_img_path,'img_user_%s%s'%(new_user['user_id'],ext))
-                        style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
-                        css_class=cssutils.css.CSSStyleRule(selectorText='.'+class_name,style=style)
-                        with open(cfg.profile_css_file, "a") as f:
-                            f.write(css_class.cssText)
+                            if data['file_name']!="false":
+                                files=request.files
+                                file_path=cfg.profile_img_path
+                                file=files[data['file_name']]
+                                filename=secure_filename(file.filename)
+                                file.save(os.path.join(file_path,filename))
+                                fname,ext=os.path.splitext(os.path.join(file_path,filename))
+                                os.rename(os.path.join(file_path,filename),os.path.join(file_path,'img_user_%s%s'%(new_user['user_id'],ext)))
+                                class_name='profileimage-user-%s-'%new_user['user_id']
+                                db.query("""
+                                    update system.user
+                                    set profile_picture='%s',
+                                    profile_picture_class='%s'
+                                    where user_id=%s
+                                """%('img_user_%s%s'%(new_user['user_id'],ext),class_name,new_user['user_id']))
+                                # css_class=".%s{content:url('%s');}"%(class_name,os.path.join(cfg.class_img_path,'img_user_%s%s'%(new_user['user_id'],ext)))
+                                img_path=os.path.join(cfg.class_img_path,'img_user_%s%s'%(new_user['user_id'],ext))
+                                style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
+                                css_class=cssutils.css.CSSStyleRule(selectorText='.'+class_name,style=style)
+                                with open(cfg.profile_css_file, "a") as f:
+                                    f.write(css_class.cssText)
 
+                        else:
+                            response['success']=False
+                            response['msg_response']='Ya existe un usuario registrado con el correo %s.'%data['email']
+                    else: #editar usuario
+                        response['success']=False
+                        if data['password_data']!='false':
+                            password_info=json.loads(data['password_data'])
+                            user_info=db.query("""
+                                select password,
+                                profile_picture, profile_picture_class
+                                from system.user
+                                where user_id=%s
+                            """%data['user_id']).dictresult()
+
+                            if check_password_hash(user_info[0]['password'],password_info['old_password']):
+                                if password_info['new_password'].replace(" ","")==password_info['confirm_password'].replace(" ",""):
+                                    if len(password_info['new_password'])>=6:
+                                        if password_info['new_password']!=password_info['old_password']:
+                                            new_pass=" ,password='%s'"%generate_password_hash(password_info['new_password'])
+                                        else:
+                                            response['msg_response']='La nueva contraseña debe ser diferente de la anterior.'
+                                    else:
+                                        response['msg_response']='La contraseña debe tener al menos 6 caracteres.'
+                                else:
+                                    response['msg_response']='Las contraseñas no coinciden, favor de revisar.'
+                            else:
+                                response['msg_response']='La contraseña actual es incorrecta, favor de revisar.'
+                        else:
+                            new_pass=""
+                        if data['file_name']!='false':
+                            files=request.files
+                            file_path=cfg.profile_img_path
+                            file=files[data['file_name']]
+                            filename=secure_filename(file.filename)
+                            file.save(os.path.join(file_path,filename))
+                            fname,ext=os.path.splitext(os.path.join(file_path,filename))
+                            os.rename(os.path.join(file_path,filename),os.path.join(file_path,'img_user_%s%s'%(data['user_id'],ext)))
+                            class_name='profileimage-user-%s-'%data['user_id']
+                            profile_picture=" ,profile_picture='img_user_%s%s'"%(data['user_id'],ext)
+                            profile_picture_class=" ,profile_picture_class='%s'"%class_name
+
+                            img_path=os.path.join(cfg.class_img_path,'img_user_%s%s'%(data['user_id'],ext))
+                            style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
+                            css_class=cssutils.css.CSSStyleRule(selectorText='.'+class_name,style=style)
+                            with open(cfg.profile_css_file, "a") as f:
+                                f.write(css_class.cssText)
+                        else:
+                            profile_picture=""
+                            profile_picture_class=""
+
+                        mail=db.query("""
+                            select count(*) from system.user where email='%s' and user_id <>%s
+                        """%(data['email'].strip(),data['user_id'])).dictresult()[0]
+                        mail['count']=0
+                        if mail['count']>0:
+                            response['msg_response']='Este correo ya se encuentra registrado, favor de ingresar otro.'
+                        else:
+                            db.query("""
+                                update system.user
+                                set name='%s', email='%s' %s %s %s
+                                where user_id=%s
+                            """%(data['name'],data['email'],new_pass,profile_picture,profile_picture_class,data['user_id']))
+                            response['msg_response']='El usuario ha sido actualizado.'
+                            response['success']=True
                 else:
                     response['success']=False
-                    response['msg_response']='Ya existe un usuario registrado con el correo %s.'%data['email']
-            else: #editar usuario
+                    response['msg_response']='No tienes permisos para realizar esta acción.'
+            else:
                 response['success']=False
-                if data['password_data']!='false':
-                    password_info=json.loads(data['password_data'])
-                    user_info=db.query("""
-                        select password,
-                        profile_picture, profile_picture_class
-                        from system.user
-                        where user_id=%s
-                    """%data['user_id']).dictresult()
-
-                    if check_password_hash(user_info[0]['password'],password_info['old_password']):
-                        if password_info['new_password'].replace(" ","")==password_info['confirm_password'].replace(" ",""):
-                            if len(password_info['new_password'])>=6:
-                                if password_info['new_password']!=password_info['old_password']:
-                                    new_pass=" ,password='%s'"%generate_password_hash(password_info['new_password'])
-                                else:
-                                    response['msg_response']='La nueva contraseña debe ser diferente de la anterior.'
-                            else:
-                                response['msg_response']='La contraseña debe tener al menos 6 caracteres.'
-                        else:
-                            response['msg_response']='Las contraseñas no coinciden, favor de revisar.'
-                    else:
-                        response['msg_response']='La contraseña actual es incorrecta, favor de revisar.'
-                else:
-                    new_pass=""
-                if data['file_name']!='false':
-                    files=request.files
-                    file_path=cfg.profile_img_path
-                    file=files[data['file_name']]
-                    filename=secure_filename(file.filename)
-                    file.save(os.path.join(file_path,filename))
-                    fname,ext=os.path.splitext(os.path.join(file_path,filename))
-                    os.rename(os.path.join(file_path,filename),os.path.join(file_path,'img_user_%s%s'%(data['user_id'],ext)))
-                    class_name='profileimage-user-%s-'%data['user_id']
-                    profile_picture=" ,profile_picture='img_user_%s%s'"%(data['user_id'],ext)
-                    profile_picture_class=" ,profile_picture_class='%s'"%class_name
-
-                    img_path=os.path.join(cfg.class_img_path,'img_user_%s%s'%(data['user_id'],ext))
-                    style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
-                    css_class=cssutils.css.CSSStyleRule(selectorText='.'+class_name,style=style)
-                    with open(cfg.profile_css_file, "a") as f:
-                        f.write(css_class.cssText)
-                else:
-                    profile_picture=""
-                    profile_picture_class=""
-
-                mail=db.query("""
-                    select count(*) from system.user where email='%s' and user_id <>%s
-                """%(data['email'].strip(),data['user_id'])).dictresult()[0]
-                mail['count']=0
-                if mail['count']>0:
-                    response['msg_response']='Este correo ya se encuentra registrado, favor de ingresar otro.'
-                else:
-                    db.query("""
-                        update system.user
-                        set name='%s', email='%s' %s %s %s
-                        where user_id=%s
-                    """%(data['name'],data['email'],new_pass,profile_picture,profile_picture_class,data['user_id']))
-                    response['msg_response']='El usuario ha sido actualizado.'
-                    response['success']=True
-
+                response['msg_response']='Ocurrió un error al intentar validar la información.'
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error al intentar obtener los datos, favor de intentarlo de nuevo.'
@@ -150,6 +159,8 @@ def saveUser():
 @bp.route('/getUserTable', methods=['GET','POST'])
 @is_logged_in
 def getUserTable():
+    #obtener los usuarios del espacio de trabajo correspondiente
+    #no requiere validación de permisos
     response={}
     try:
         if request.method=='POST':
@@ -197,6 +208,8 @@ def getUserTable():
 @bp.route('/getUserList', methods=['GET','POST'])
 @is_logged_in
 def getUserList():
+    #obtener lista de usuarios disponibles para agregar a un proyecto
+    #no requiere validación de permisos
     response={}
     try:
         if request.method=='POST':
@@ -229,6 +242,8 @@ def getUserList():
 @bp.route('/getAccountInfo', methods=['GET','POST'])
 @is_logged_in
 def getAccountInfo():
+    #obtener la información de la cuenta del usuario de la sesión
+    #no requiere validación de permisos
     response={}
     try:
         valid,data=GF.getDict(request.form,'post')
@@ -253,6 +268,8 @@ def getAccountInfo():
 @bp.route('/removeProfileImage', methods=['GET','POST'])
 @is_logged_in
 def removeProfileImage():
+    #quitar la imagen de perfil del usuario y reemplazarla por la imagen genérica
+    #no requiere validación de permisos
     response={}
     try:
         if request.method=='POST':
@@ -314,25 +331,35 @@ def removeProfileImage():
 @bp.route('/addProjectUser',methods=['GET','POST'])
 @is_logged_in
 def addProjectUser():
+    #agregar un usuario a un proyecto
     response={}
     try:
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
-                exists=db.query("""
-                    select count(*) from project.project_users
-                    where user_id=%s and project_id=%s
-                """%(data['user_id'],data['project_id'])).dictresult()
-                if exists[0]['count']==0:
-                    #agregar usuario
-                    db.insert('project.project_users',data)
-                    notif_info={'project_id':data['project_id'],'user_id':data['user_id'],'form_id':-1}
-                    GF.createNotification('add_user_to_project',notif_info)
-                    response['success']=True
-                    response['msg_response']='Usuario agregado.'
+                success,allowed=GF.checkPermission({'user_id':data['this_user'],'permission':'create_users'})
+                if success:
+                    if allowed:
+                        exists=db.query("""
+                            select count(*) from project.project_users
+                            where user_id=%s and project_id=%s
+                        """%(data['user_id'],data['project_id'])).dictresult()
+                        if exists[0]['count']==0:
+                            #agregar usuario
+                            db.insert('project.project_users',data)
+                            notif_info={'project_id':data['project_id'],'user_id':data['user_id'],'form_id':-1}
+                            GF.createNotification('add_user_to_project',notif_info)
+                            response['success']=True
+                            response['msg_response']='Usuario agregado.'
+                        else:
+                            response['success']=False
+                            response['msg_response']='El usuario ya se encuentra agregado al proyecto.'
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
                 else:
                     response['success']=False
-                    response['msg_response']='El usuario ya se encuentra agregado al proyecto.'
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
@@ -349,6 +376,8 @@ def addProjectUser():
 @bp.route('/getProjectUsers', methods=['GET','POST'])
 @is_logged_in
 def getProjectUsers():
+    #obtener los usuarios que se encuentran agregados al proyecto
+    #no requiere validación de permisos
     response={}
     try:
         if request.method=='POST':
@@ -402,6 +431,8 @@ def getProjectUsers():
 @bp.route('/getProjectUserPermits', methods=['GET','POST'])
 @is_logged_in
 def getProjectUserPermits():
+    #obtiene los permisos que tiene asignados el usuario
+    #no requiere validación de permisos
     response={}
     try:
         if request.method=='POST':
@@ -453,6 +484,8 @@ def getProjectUserPermits():
 @bp.route('/getUserPermits', methods=['GET','POST'])
 @is_logged_in
 def getUserPermits():
+    #obtiene los permisos del usuario, para poder editarlos
+    #no requiere validación de permisos
     response={}
     try:
         if request.method=='POST':
@@ -489,27 +522,37 @@ def getUserPermits():
 @bp.route('/editUser', methods=['GET','POST'])
 @is_logged_in
 def editUser():
+    #editar datos de un usuario
     response={}
     try:
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
-                data['name']=data['name'].encode('utf-8')
-                db.query("""
-                    update system.user
-                    set name='{name}',
-                    email='{email}',
-                    resolve_forms={resolve_forms},
-                    create_forms={create_forms},
-                    create_projects={create_projects},
-                    create_folders={create_folders},
-                    download_forms={download_forms},
-                    create_users={create_users},
-                    see_all_forms={see_all_forms}
-                    where user_id={user_id}
-                """.format(**data))
-                response['success']=True
-                response['msg_response']='El usuario ha sido actualizado.'
+                success,allowed=GF.checkPermission({'user_id':data['this_user'],'permission':'create_users'})
+                if success:
+                    if allowed:
+                        data['name']=data['name'].encode('utf-8')
+                        db.query("""
+                            update system.user
+                            set name='{name}',
+                            email='{email}',
+                            resolve_forms={resolve_forms},
+                            create_forms={create_forms},
+                            create_projects={create_projects},
+                            create_folders={create_folders},
+                            download_forms={download_forms},
+                            create_users={create_users},
+                            see_all_forms={see_all_forms}
+                            where user_id={user_id}
+                        """.format(**data))
+                        response['success']=True
+                        response['msg_response']='El usuario ha sido actualizado.'
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['success']=False
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información.'

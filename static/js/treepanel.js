@@ -24,6 +24,7 @@ $(document).ready(function(){
             var data={};
             data['name']=encodeURIComponent($("#FIname").val());
             data['mode']=$("#mod_add_folder").data('mode');
+            data['user_id']=me.user_info['user_id'];
             if (data['mode']=='new'){
                 data['parent_id']=$("#mod_add_folder").data('parent_id');
                 data['project_id']=me.user_info['project_id'];

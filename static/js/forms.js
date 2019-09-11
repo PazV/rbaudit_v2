@@ -2,7 +2,7 @@ $(document).ready(function(){
     var me = this;
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
     if (window.location.pathname.includes('/step-2/')){
-        loadFormTable(me.user_info['form_id'],1);
+        loadFormTable(me.user_info['form_id'],1,me.user_info['user_id']);
     }
 
     if (window.location.pathname=='/project/'+me.user_info['project_factor']+'/'+me.user_info['form_id']){
@@ -56,7 +56,7 @@ $(document).ready(function(){
                             if (res.success){
 
                                 window.location.pathname='/project/'+me.user_info.project_factor+'/createform/step-2/'+res.form_id;
-                                loadFormTable(res.form_id,1);
+                                loadFormTable(res.form_id,1,me.user_info['user_id']);
                             }
                             else{
                                 $.alert({
@@ -202,6 +202,7 @@ $(document).ready(function(){
             var data=getForm("#frmFormToPublish",sel_list,true);
             data['project_id']=me.user_info['project_id'];
             data['form_id']=me.user_info['form_id'];
+            data['user_id']=me.user_info['user_id'];
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -268,7 +269,7 @@ $(document).ready(function(){
         $.ajax({
             url:'/project/getFormDetails',
             type:'POST',
-            data:JSON.stringify({'form_id':me.user_info['form_id']}),
+            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id']}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -661,7 +662,7 @@ $(document).ready(function(){
         $.ajax({
             url:'/project/getFormComments',
             type:'POST',
-            data:JSON.stringify({'form_id':me.user_info['form_id']}),
+            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id']}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -753,6 +754,10 @@ $(document).ready(function(){
             var file_name=$("#newFormImportFile")[0].files[0].name;
             data.append(file_name,file);
             data.append('file_name',file_name);
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
             $.ajax({
                 url:'/project/importNewForm',
                 type:'POST',
@@ -760,6 +765,7 @@ $(document).ready(function(){
                 contentType:false,
                 data:data,
                 success:function(response){
+                    EasyLoading.hide();
                     try{
                         var res=JSON.parse(response);
                     }catch(err){
@@ -777,6 +783,7 @@ $(document).ready(function(){
                     }
                 },
                 error:function(){
+                    EasyLoading.hide();
                     $.alert({
                         theme:'dark',
                         title:'Atención',
@@ -810,7 +817,7 @@ $(document).ready(function(){
                         $.ajax({
                             url:'/project/doDownloadResolvedForm',
                             type:'POST',
-                            data:JSON.stringify({'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
+                            data:JSON.stringify({'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id'],'user_id':me.user_info['user_id']}),
                             success:function(response2){
                                 try{
                                     var res2=JSON.parse(response2);
@@ -1011,7 +1018,7 @@ $(document).ready(function(){
                         $.ajax({
                             url:'/project/getZipDownloadLink',
                             type:'POST',
-                            data:JSON.stringify({'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
+                            data:JSON.stringify({'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id'],'user_id':me.user_info['user_id']}),
                             success:function(response2){
                                 try{
                                     var res2=JSON.parse(response2);
@@ -1138,12 +1145,12 @@ $(document).ready(function(){
 });
 
 
-function loadFormTable(form_id,page){
+function loadFormTable(form_id,page,user_id){
     var me = this;
     $.ajax({
         url:'/project/createFormTable',
         type:'POST',
-        data:JSON.stringify({'form_id':form_id,'page':page}),
+        data:JSON.stringify({'form_id':form_id,'page':page,'user_id':user_id}),
         success:function(response){
             try{
                 var res=JSON.parse(response);
@@ -1161,7 +1168,7 @@ function loadFormTable(form_id,page){
                     $("#divColumnsSettings").empty();
                     $("#divFormPagingToolbar").empty();
                     // console.log($(this).data('number'));
-                    loadFormTable(form_id,$(this).data('number'));
+                    loadFormTable(form_id,$(this).data('number'),me.user_info['user_id']);
                 });
             }
             else{

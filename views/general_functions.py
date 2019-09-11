@@ -257,3 +257,17 @@ class GeneralFunctions:
         except:
             app.logger.info(traceback.format_exc(sys.exc_info()))
             return False
+
+
+    def checkPermission(self,data):
+        try:
+            allowed=db.query("""
+                select %s from system.user where user_id=%s
+            """%(data['permission'],data['user_id'])).dictresult()
+            if allowed[0][data['permission']]==True:
+                return True,True
+            else:
+                return True,False
+        except:
+            app.logger.info(traceback.format_exc(sys.exc_info()))
+            return False,False
