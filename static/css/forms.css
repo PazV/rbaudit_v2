@@ -78,3 +78,9 @@
 #grdPrefilledForm td{
     text-align:left;
 }
+
+#divResolveFormPrintingInfo p{
+    margin-bottom:0;
+    font-family:serif;
+    color:#434a4c;
+}

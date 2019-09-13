@@ -1142,6 +1142,66 @@ $(document).ready(function(){
         });
     });
 
+    $("#btnPrintingMode").click(function(){
+        if (!$("#divResolveFormPrintingInfo").is(":visible")){
+            $.ajax({
+                url:'/project/getPrintingInfo',
+                type:'POST',
+                data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $("#divResolveFormPrintingInfo").empty();
+                        $("#divResolveFormPrintingInfo").append(res.html);
+                        $("#divResolveFormFormInfo").css("display","none");
+                        $("#divResolveFormPrintingInfo").css("display","initial");
+                        if ($("#divCollapseTreepanel").is(":visible")){
+                            $("#divCollapseTreepanel").collapse("toggle");
+                            $("#ibtnCollapseTreepanel").addClass('treepanel-pin-collapsed');
+                            $($("#bodyContent").children().children()[0]).css("max-width","5%");
+                            $($("#bodyContent").children().children()[0]).removeClass('col-sm-3');
+                            $($("#bodyContent").children().children()[1]).removeClass('col-sm-6');
+                            $($("#bodyContent").children().children()[1]).css("width","100%");
+                            $($("#bodyContent").children().children()[1]).css("max-width","90%");
+                        }
+                        if ($("#unpublished_panel").is(":visible")){
+                            $("#unpublished_panel").collapse("toggle");
+                            $("#ibtnCollapseUnpublishedPanel").addClass('unpublished-pin-collapsed');
+                            $($("#bodyContent").children().children()[2]).removeClass('col-sm-3');
+                            $($("#bodyContent").children().children()[2]).css("max-width","5%");
+                            $($("#bodyContent").children().children()[1]).removeClass('col-sm-6');
+                            $($("#bodyContent").children().children()[1]).css("width","100%");
+                            $($("#bodyContent").children().children()[1]).css("max-width","90%");
+                        }
+
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+                    });
+                }
+            });
+        }
+        else{
+            $("#divResolveFormPrintingInfo").css("display","none");
+            $("#divResolveFormFormInfo").css("display","initial");
+        }
+    });
+
 });
 
 

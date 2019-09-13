@@ -2116,3 +2116,86 @@ def doRevision():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+@bp.route('/getPrintingInfo', methods=['GET','POST'])
+@is_logged_in
+def getPrintingInfo():
+    #regresa la información del formulario para su vista de impresión
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'download_forms'})
+                if success:
+                    if allowed:
+                        form=db.query("""
+                            select name, (select a.name from system.user a where a.user_id=assigned_to) as assigned_to,
+                            to_char(resolved_date,'DD/MM/YYYY HH24:MI:SS') as resolved_date
+                            from project.form where form_id=%s
+                        """%data['form_id']).dictresult()[0]
+                        project=db.query("""
+                            select name, company_name, (select a.name from system.user a where a.user_id=manager)  as manager,
+                            (select a.name from system.user a where a.user_id=partner) as partner
+                            from project.project where project_id=%s
+                        """%data['project_id']).dictresult()[0]
+                        revisions=db.query("""
+                            select user_id, revision_number, to_char(revision_date,'DD/MM/YYYY HH24:MI:SS') as revision_date
+                            from project.form_revisions where form_id=%s order by revision_number asc
+                        """%data['form_id']).dictresult()
+                        html='<p style="font-size:1.6em;">{name}</p><p style="font-size:1.4em;">{company_name}</p>'.format(**project)
+                        html+='<p style="font-size:1.2em; font-weight:bold;">{name}</p><p><b>Realizado por:</b> {assigned_to} - {resolved_date}</p>'.format(**form)
+                        for x in revisions:
+                            name=db.query("select name from system.user where user_id=%s"%x['user_id']).dictresult()[0]['name']
+                            x['name']=name
+                            html+='<p><b>Revisión {revision_number}:</b> {name} - {revision_date}</p>'.format(**x)
+                        html+='<p><b>Gerente:</b> {manager}</p><p><b>Socio:</b> {partner}</p>'.format(**project)
+                        response['success']=True
+                        response['html']=html
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permiso para realizar esta acción.'
+                else:
+                    response['success']=False
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/checkRightPanelPermission', methods=['GET','POST'])
+@is_logged_in
+def checkRightPanelPermission():
+    #revisar si tiene permisos para crear formularios, para mostrar el panel derecho de formularios por revisar y formularios por publicar
+    #no requiere validación
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                permission=db.query("""
+                    select create_forms from system.user where user_id=%s
+                """%data['user_id']).dictresult()[0]
+                if permission['create_forms']==True:
+                    response['allowed']=True
+                else:
+                    response['allowed']=False
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)

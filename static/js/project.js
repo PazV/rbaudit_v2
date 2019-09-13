@@ -210,30 +210,69 @@ function loadProjects(user_info){
 
 function loadFormPanel(user_info,location){
     var me = this;
-    var url=location+'/getUnpublishedForms';
-    // console.log(user_info);
     $.ajax({
-        url:url,
+        url:'/project/checkRightPanelPermission',
         type:'POST',
-        data:JSON.stringify({'project_id':user_info.project_id,'user_id':user_info.user_id}),
-        success:function(response){
+        data:JSON.stringify({'user_id':user_info['user_id']}),
+        success:function(first_response){
             try{
-                var res=JSON.parse(response);
+                var first_res=JSON.parse(first_response);
             }catch(err){
                 ajaxError();
             }
-            if (res.success){
-                $("#divFormPanel ul").children().remove();
-                $.each(res.data,function(i,item){
-                    url='/project/'+user_info['project_factor']+'/createform/step-2/'+item['form_id'];
-                    $("#divFormPanel ul").append('<li class="unpublished-form-li"><a class="unpublished-form-a" href="'+url+'" data-toggle="tooltip" title="'+item.name+'">'+item.name+'</a></li>')
-                });
+            if (first_res.success){
+                if (first_res.allowed){
+                    var url=location+'/getUnpublishedForms';
+                    $.ajax({
+                        url:url,
+                        type:'POST',
+                        data:JSON.stringify({'project_id':user_info.project_id,'user_id':user_info.user_id}),
+                        success:function(response){
+                            try{
+                                var res=JSON.parse(response);
+                            }catch(err){
+                                ajaxError();
+                            }
+                            if (res.success){
+                                $("#divFormPanel ul").children().remove();
+                                $.each(res.data,function(i,item){
+                                    url='/project/'+user_info['project_factor']+'/createform/step-2/'+item['form_id'];
+                                    $("#divFormPanel ul").append('<li class="unpublished-form-li"><a class="unpublished-form-a" href="'+url+'" data-toggle="tooltip" title="'+item.name+'">'+item.name+'</a></li>')
+                                });
+                            }
+                            else{
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:res.msg_response
+                                });
+                            }
+                        },
+                        error:function(){
+                            $.alert({
+                                theme:'dark',
+                                title:'Atención',
+                                content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+                            });
+                        }
+                    });
+                }
+                else{
+                    $("#unpublished_panel").collapse("toggle");
+                    $("#ibtnCollapseUnpublishedPanel").addClass('unpublished-pin-collapsed');
+                    $($("#bodyContent").children().children()[2]).removeClass('col-sm-3');
+                    $($("#bodyContent").children().children()[2]).css("max-width","5%");
+                    $($("#bodyContent").children().children()[1]).removeClass('col-sm-6');
+                    $($("#bodyContent").children().children()[1]).css("width","100%");
+                    $($("#bodyContent").children().children()[1]).css("max-width","70%");
+                    $("#btnCollapseUnpublishedPanel").css("display","none");
+                }
             }
             else{
                 $.alert({
                     theme:'dark',
                     title:'Atención',
-                    content:res.msg_response
+                    content:first_res.msg_response
                 });
             }
         },
@@ -241,10 +280,13 @@ function loadFormPanel(user_info,location){
             $.alert({
                 theme:'dark',
                 title:'Atención',
-                content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
             });
         }
     });
+
+
+
 }
 
 function loadFormsToCheck(user_info,location){

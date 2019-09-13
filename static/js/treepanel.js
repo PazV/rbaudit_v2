@@ -99,7 +99,7 @@ $(document).ready(function(){
     });
 
     $("#btnCollapseTreepanel").click(function(){
-        if ($("#ibtnCollapseTreepanel").hasClass('treepanel-pin-collapsed')){
+        if ($("#ibtnCollapseTreepanel").hasClass('treepanel-pin-collapsed')){            
             $("#ibtnCollapseTreepanel").removeClass('treepanel-pin-collapsed');
             $($("#bodyContent").children().children()[0]).addClass('col-sm-3');
             $($("#bodyContent").children().children()[0]).css("max-width","");
@@ -125,7 +125,6 @@ $(document).ready(function(){
             else{
                 $($("#bodyContent").children().children()[1]).css("max-width","90%");
             }
-
         }
     });
 
