@@ -114,6 +114,22 @@ def createformStep2(form,project_factor):
         g.notifications=True
     return render_template('createform_step2.html',g=g)
 
+@bp.route("/<int:project_factor>/createform/clone", methods=['GET','POST'])
+@is_logged_in
+def createformClone(project_factor):
+    project_id=int(project_factor)/int(cfg.project_factor)
+    g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
+    g.project_factor=project_factor
+    has_notifications=db.query("""
+        select count(*) from project.notification
+        where project_id=%s and user_to=%s and read=False
+    """%(project_id,session['user_id'])).dictresult()[0]
+    if has_notifications['count']==0:
+        g.notifications=False
+    else:
+        g.notifications=True
+    return render_template('clone_form.html',g=g)
+
 @bp.route('/saveProject', methods=['GET','POST'])
 @is_logged_in
 def saveProject():
@@ -391,7 +407,7 @@ def getMenuNodes(folder_id, fh_html,sh_html,project_id):
                 for f in forms:
                     project_factor=int(project_id)*int(cfg.project_factor)
                     url='/project/%s/%s'%(project_factor,f['form_id'])
-                    forms_str+='<li><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
+                    forms_str+='<li class="selectable-form"><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
                 return fh_html+forms_str+sh_html
         else:
             forms_str=""
@@ -399,7 +415,7 @@ def getMenuNodes(folder_id, fh_html,sh_html,project_id):
                 for f in forms:
                     project_factor=int(project_id)*int(cfg.project_factor)
                     url='/project/%s/%s'%(project_factor,f['form_id'])
-                    forms_str+='<li><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
+                    forms_str+='<li class="selectable-form"><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
             current_level=""
             for x in folders:
                 fh_new_node='<li class="selectable-folder"><a href="#" data-folder="%s">%s</a><ul>'%(x['folder_id'],x['name'])
@@ -1530,7 +1546,7 @@ def checkAllowedDownload():
 @bp.route('/doDownloadResolvedForm', methods=['GET','POST'])
 @is_logged_in
 def downloadResolvedForm():
-    #descargar formulario resuelto
+    #crear archivo de excel de formulario resuelto para su descarga
     response={}
     try:
         if request.method=='POST':
@@ -1557,8 +1573,8 @@ def downloadResolvedForm():
                                 rows,
                                 columns,
                                 (select a.name from system.user a where a.user_id=assigned_to) as assigned_to,
-                                to_char(resolved_date,'DD-MM-YYYY HH24:MI:SS') as resolved_date,
-                                to_char(first_revision_date,'DD-MM-YYYY HH24:MI:SS') as first_revision_date
+                                to_char(resolved_date,'DD/MM/YYYY HH24:MI:SS') as resolved_date,
+                                to_char(first_revision_date,'DD/MM/YYYY HH24:MI:SS') as first_revision_date
                                 --,revisions
                             from
                                 project.form
@@ -1666,11 +1682,12 @@ def downloadResolvedForm():
                             ws.cell(column=col_num,row=row).style=content_style
                             row+=1
 
+                        last_info_row=row
 
                         #agregar quién realizó el formulario
                         revisions=db.query("""
                             select (select a.name from system.user a where a.user_id=b.user_id) as user_name,
-                            b.revision_number, to_char(b.revision_date,'DD-MM-YYYY HH24:MI:SS') as revision_date
+                            b.revision_number, to_char(b.revision_date,'DD/MM/YYYY HH24:MI:SS') as revision_date
                             from project.form_revisions b where b.form_id=%s order by b.revision_number asc
                         """%data['form_id']).dictresult()
                         bd = Side(style='thick', color="000000")
@@ -1729,6 +1746,54 @@ def downloadResolvedForm():
                         for column_cells in ws.columns:
                             length = max(len(GF.as_text(cell.value))+5 for cell in column_cells)
                             ws.column_dimensions[column_cells[0].column].width = length
+
+
+                        #revisar si hay observaciones del formulario
+                        comments=db.query("""
+                            select b.comment, to_char(b.created,'DD/MM/YYYY HH24:MI:SS') as created, (select a.name from system.user a where a.user_id=b.user_id) as user_name from project.form_comments b where b.form_id=%s
+                        """%data['form_id']).dictresult()
+                        if comments!=[]:
+                            comm_header_style=NamedStyle(name='comm_header_style')
+                            comm_header_style.font=Font(
+                                name='Times New Roman',
+                                size=14,
+                                bold=True,
+                                italic=False,
+                                color='FFFFFFFF'
+                            )
+                            comm_header_style.fill=PatternFill("solid", fgColor="FF7082D4")
+                            comm_header_style.alignment=Alignment(horizontal='center')
+                            comm_header_style.border=Border(
+                                left=Side(border_style='thin',color='FF000000'),
+                                right=Side(border_style='thin',color='FF000000'),
+                                top=Side(border_style='thin',color='FF000000'),
+                                bottom=Side(border_style='thin',color='FF000000')
+                            )
+
+                            wo = wb.create_sheet('Observaciones',1)
+                            row=2
+                            wo.cell(column=2, row=row, value='Por')
+                            wo.cell(column=2, row=row).style=comm_header_style
+                            wo.cell(column=3, row=row, value='Fecha')
+                            wo.cell(column=3, row=row).style=comm_header_style
+                            wo.cell(column=4, row=row, value='Observación')
+                            wo.cell(column=4, row=row).style=comm_header_style
+                            row+=1
+                            for x in comments:
+                                wo.cell(column=2,row=row,value=x['user_name'])
+                                wo.cell(column=2,row=row).style=content_style
+                                wo.cell(column=3,row=row,value=x['created'])
+                                wo.cell(column=3,row=row).style=content_style
+                                wo.cell(column=4,row=row,value=x['comment'])
+                                wo.cell(column=4,row=row).style=content_style
+                                row+=1
+
+                            for column_cells in wo.columns:
+                                length = max(len(GF.as_text(cell.value))+5 for cell in column_cells)
+                                wo.column_dimensions[column_cells[0].column].width = length
+
+
+
 
 
                         #Descarga de archivo
@@ -1835,7 +1900,7 @@ def allowedFormZip():
                             project_id from project.form
                             where form_id=%s
                         """%data['form_id']).dictresult()[0]
-                        if form_users['status_id']<7:
+                        if (form_users['status_id']<7 and data['from']=='upload') or data['from']=='download':
                             if int(data['user_id'])==int(form_users['assigned_to']):
                                 response['allowed']=True
                             else:
