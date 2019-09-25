@@ -94,6 +94,7 @@ $(document).ready(function(){
                         var file_name=false;
                     }
                     data.append('file_name',file_name);
+
                     for (var key in frm){
                         if (frm.hasOwnProperty(key)){
                             data.append(key,frm[key]);
@@ -103,6 +104,7 @@ $(document).ready(function(){
                         text:'Cargando...',
                         type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
                     });
+
                     $.ajax({
                         url:'/users/saveUser',
                         data:data,
@@ -361,6 +363,7 @@ $(document).ready(function(){
                 data.append('user_id',me.user_info['user_id']);
                 data.append('name',frm_gen['name']);
                 data.append('email',frm_gen['email']);
+                data.append('this_user',me.user_info['user_id']);
                 if (w_pass===true){
                     data['password_data']=getForm("#frmMApassword");
                     data.append('password_data',JSON.stringify(getForm("#frmMApassword")));

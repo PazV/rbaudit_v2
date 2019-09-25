@@ -39,7 +39,8 @@ $(document).ready(function(){
                     data['user_id']=me.user_info['user_id'];
                     data['project_id']=me.user_info['project_id'];
                     data['form_id']=-1;
-                    data['folder_id']=$(".file-tree").find('.selected').data('folder');
+                    // data['folder_id']=$(".file-tree").find('.selected').data('folder');
+                    data['folder_id']=$("#newFormFolder").data('folderid');
                     console.log(data);
                     var form_2=getForm("#frmColumnsSettings",null,true);
                     data['columns_info']=form_2;
@@ -748,7 +749,8 @@ $(document).ready(function(){
             data.append('user_id',me.user_info['user_id']);
             data.append('project_id',me.user_info['project_id']);
             data.append('form_id',-1);
-            data.append('folder_id',$(".file-tree").find('.selected').data('folder'));
+            // data.append('folder_id',$(".file-tree").find('.selected').data('folder'));
+            data.append('folder_id',$("#newFormImportFolder").data('folderid'));
             data.append('name',$("#newFormImportName").val());
             var file = $("#newFormImportFile")[0].files[0];
             var file_name=$("#newFormImportFile")[0].files[0].name;
@@ -1202,6 +1204,72 @@ $(document).ready(function(){
         }
     });
 
+    $("#frmCloneForm .form-control").focusout(function(){
+        emptyField("#"+$(this)[0].id,"#err"+$(this)[0].id);
+    });
+
+    $("#btnCreateClonedForm").click(function(){
+        var inputs=$("#frmCloneForm .form-control");
+        var valid=true;
+        for (var i of inputs){
+            if (i.type=='text'){
+                if ($(i).hasClass('invalid-field')){
+                    valid=false;
+                    break
+                }
+            }
+        }
+        if (valid===true){
+            var data={};
+            data['old_form_id']=$("#oldClonedForm").data('formid');
+            data['new_folder_id']=$("#clonedFormFolder").data('folderid');
+            data['form_name']=$("#clonedFormName").val();
+            data['user_id']=me.user_info['user_id'];
+            data['project_id']=me.user_info['project_id'];
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
+            $.ajax({
+                url:'/project/cloneForm',
+                type:'POST',
+                data:JSON.stringify(data),
+                success:function(response){
+                    EasyLoading.hide();
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        window.location.pathname='/project/'+me.user_info.project_factor;
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Existen campos vacíos o incorrectos, favor de revisar.'
+            });
+        }
+    });
+
 });
 
 
@@ -1228,7 +1296,7 @@ function loadFormTable(form_id,page,user_id){
                     $("#divColumnsSettings").empty();
                     $("#divFormPagingToolbar").empty();
                     // console.log($(this).data('number'));
-                    loadFormTable(form_id,$(this).data('number'),me.user_info['user_id']);
+                    loadFormTable(form_id,$(this).data('number'),user_id);
                 });
             }
             else{

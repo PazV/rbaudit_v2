@@ -125,3 +125,38 @@ def signout():
     """%(session['session_id'],session['user_id']))
     session.clear()
     return redirect(url_for('login.login'))
+
+@bp.route('/recoverPassword', methods=['GET','POST'])
+def recoverPassword():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                exists=db.query("""
+                    select user_id from system.user where email='%s' order by user_id limit 1
+                """%data['email']).dictresult()
+                if exists!=[]:
+                    passwd_success,passwd=GF.generateRandomPassword(7)
+                    if passwd_success:
+                        db.query("""
+                            update system.user set password='%s' where user_id=%s
+                        """%(generate_password_hash(passwd),exists[0]['user_id']))
+                        mail_body='Se ha solicitado una nueva contrase&ntilde;a para el correo <b>%s</b><br><b>Contrase&ntilde;a:</b> %s<br><br><a href="%s">Acceder</a>'%(data['email'],passwd,cfg.host)
+                        GF.sendMail('Recuperar contraseña',mail_body,data['email'])
+                        response['success']=True
+                        response['msg_response']='La contraseña ha sido enviada a su correo.'
+                else:
+                    response['success']=False
+                    response['msg_response']='El correo ingresado no se encuentra registrado.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener los datos.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)

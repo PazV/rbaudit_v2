@@ -1,5 +1,10 @@
 .selectable-folder{
     cursor:pointer;
+    margin-left:7px;
+}
+
+.selectable-form{
+    margin-left:7px;
 }
 
 .treepanel-pin-collapsed{
@@ -9,4 +14,8 @@
  .btn-collapse-treepanel:hover, .btn-collapse-treepanel:visited, .btn-collapse-treepanel:active, .btn-collapse-treepanel:focus {
     outline:none !important;
     box-shadow:none !important;
+}
+
+.form-check-input.tree-menu-checkbox{
+    margin-left:-1.5rem !important;
 }

@@ -96,3 +96,46 @@ input[type="password"] {
 .hide-login-error{
     display:none;
 }
+
+.spn-modal-header-login{
+    font-size:large;
+    font-weight:bolder;
+}
+
+.orange-modal{
+    background-color: var(--azul-cielo);
+    color:white;
+}
+
+:root{
+    --morado:#981d97;
+    --azul-cielo: #00a9ce;
+    --azul-marino: #253381;
+    --verde: #00bfb3;
+    --naranja: #ed8b00;
+}
+
+.modal-content{
+    border-radius:10px;
+}
+
+.modal-header, .modal-footer{
+    padding:0.5rem;
+}
+
+.hide-error-msg{
+    visibility:hidden;
+}
+
+.valid-field{
+    border:1px solid #0eab0e;
+}
+
+.invalid-field{
+    border: 1px solid #ea480b;
+}
+
+.form-group.no-space-bottom{
+    padding-bottom:0 !important;
+    margin-bottom:0 !important;
+}

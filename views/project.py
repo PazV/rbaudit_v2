@@ -357,7 +357,7 @@ def getMenu():
                 final_html=""
                 if folders!=[]:
                     for f in folders:
-                        fh_node='<li class="selectable-folder"><a href="#" data-folder="%s">%s</a><ul>'%(f['folder_id'],f['name'])
+                        fh_node='<input type="checkbox" class="form-check-input tree-menu-checkbox folder-checkbox"><li class="selectable-folder"><a href="#" data-folder="%s">%s</a><ul>'%(f['folder_id'],f['name'])
                         sh_node='</ul></li>'
                         res_html=getMenuNodes(f['folder_id'],fh_node,sh_node,data['project_id'])
                         final_html+=res_html
@@ -407,7 +407,7 @@ def getMenuNodes(folder_id, fh_html,sh_html,project_id):
                 for f in forms:
                     project_factor=int(project_id)*int(cfg.project_factor)
                     url='/project/%s/%s'%(project_factor,f['form_id'])
-                    forms_str+='<li class="selectable-form"><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
+                    forms_str+='<input type="checkbox" class="form-check-input tree-menu-checkbox form-checkbox"><li class="selectable-form"><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
                 return fh_html+forms_str+sh_html
         else:
             forms_str=""
@@ -415,10 +415,10 @@ def getMenuNodes(folder_id, fh_html,sh_html,project_id):
                 for f in forms:
                     project_factor=int(project_id)*int(cfg.project_factor)
                     url='/project/%s/%s'%(project_factor,f['form_id'])
-                    forms_str+='<li class="selectable-form"><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
+                    forms_str+='<input type="checkbox" class="form-check-input tree-menu-checkbox form-checkbox"><li class="selectable-form"><a href="%s" id="%s">%s</a></li>'%(url,f['form_id'],f['name'])
             current_level=""
             for x in folders:
-                fh_new_node='<li class="selectable-folder"><a href="#" data-folder="%s">%s</a><ul>'%(x['folder_id'],x['name'])
+                fh_new_node='<input type="checkbox" class="form-check-input tree-menu-checkbox folder-checkbox"><li class="selectable-folder"><a href="#" data-folder="%s">%s</a><ul>'%(x['folder_id'],x['name'])
                 sh_new_node='</ul></li>'
                 res_node=getMenuNodes(x['folder_id'],fh_new_node,sh_new_node,project_id)
                 current_level+=res_node
@@ -2219,7 +2219,7 @@ def getPrintingInfo():
                         response['html']=html
                     else:
                         response['success']=False
-                        response['msg_response']='No tienes permiso para realizar esta acción.'
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
                 else:
                     response['success']=False
                     response['msg_response']='Ocurrió un error al intentar validar la información.'
@@ -2256,6 +2256,87 @@ def checkRightPanelPermission():
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/cloneForm', methods=['GET','POST'])
+@is_logged_in
+def cloneForm():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_forms'})
+                if success:
+                    if allowed:
+                        ofi=db.query("""
+                            select * from project.form where form_id=%s
+                        """%data['old_form_id']).dictresult()[0]
+                        new_form={
+                            'project_id':ofi['project_id'],
+                            'name':data['form_name'],
+                            'columns_number':ofi['columns_number'],
+                            'rows':ofi['rows'],
+                            'columns':ofi['columns'],
+                            'created_by':data['user_id'],
+                            'create_date':'now',
+                            'folder_id':data['new_folder_id'],
+                            'status_id':2,
+                            'user_last_update':data['user_id'],
+                            'last_updated':'now'
+                        }
+                        inserted_form=db.insert('project.form',new_form)
+
+                        columns=eval(ofi['columns'])
+
+                        table_name='project_%s_form_%s'%(inserted_form['project_id'],inserted_form['form_id'])
+                        columns_str=""
+                        including_columns=[]
+                        for x in columns:
+                            columns_str+=" ,col_%s text default ''"%x['order']
+                            if x['editable']==False:
+                                including_columns.append("col_%s"%x['order'])
+
+                        db.query("""
+                            CREATE TABLE form.%s(
+                                entry_id serial not null primary key,
+                                form_id integer not null,
+                                project_id integer not null
+                                %s
+                            );
+                        """%(table_name,columns_str))
+
+                        old_form_table='project_%s_form_%s'%(ofi['project_id'],ofi['form_id'])
+                        old_info=db.query("""
+                            select * from form.%s order by entry_id
+                        """%old_form_table).dictresult()
+                        for oi in old_info:
+                            entry={
+                                'form_id':inserted_form['form_id'],
+                                'project_id':inserted_form['project_id']
+                            }
+                            if including_columns!=[]:
+                                for ic in including_columns:
+                                    entry[ic]=oi[ic]
+                            db.insert('form.%s'%table_name,entry)
+                        response['success']=True
+                        response['msg_response']='El formulario ha sido clonado exitosamente.'
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['success']=False
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error obtener la información.'
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
