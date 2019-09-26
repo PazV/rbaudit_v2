@@ -13,6 +13,7 @@ import sys
 import traceback
 import os
 import glob
+import re
 from .db_connection import getDB
 db = getDB()
 from flask import current_app as app
@@ -1026,8 +1027,8 @@ def saveResolvingForm():
                         for x in data['table_data']:
                             update_list=[]
                             for key,value in x.iteritems():
-                                if key.split("_")[0]=='col' or key.split("_")[0]=='rev':
-                                    update_list.append("%s='%s'"%(key,value))
+                                if key.split("_")[0]=='col' or key.split("_")[0]=='rev':                                
+                                    update_list.append("%s=$$%s$$"%(key,value))
                             update_str=','.join(e for e in update_list)
                             query="""
                                 update form.project_%s_form_%s set %s where entry_id=%s
