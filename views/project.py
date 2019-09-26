@@ -150,8 +150,10 @@ def saveProject():
                             new_project=db.insert('project.project',project_info)
                             user_1={'user_id':project_info['manager'],'project_id':new_project['project_id']}
                             user_2={'user_id':project_info['partner'],'project_id':new_project['project_id']}
+                            user_3={'user_id':project_info['created_by'],'project_id':new_project['project_id']}
                             db.insert('project.project_users',user_1)
                             db.insert('project.project_users',user_2)
+                            db.insert('project.project_users',user_3)
                             response['msg_response']='El proyecto ha sido creado.'
                         response['success']=True
                     else:
