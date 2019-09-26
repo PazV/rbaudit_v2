@@ -271,3 +271,5 @@ class GeneralFunctions:
         except:
             app.logger.info(traceback.format_exc(sys.exc_info()))
             return False,False
+
+    

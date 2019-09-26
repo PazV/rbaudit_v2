@@ -1027,7 +1027,7 @@ def saveResolvingForm():
                         for x in data['table_data']:
                             update_list=[]
                             for key,value in x.iteritems():
-                                if key.split("_")[0]=='col' or key.split("_")[0]=='rev':                                
+                                if key.split("_")[0]=='col' or key.split("_")[0]=='rev':
                                     update_list.append("%s=$$%s$$"%(key,value))
                             update_str=','.join(e for e in update_list)
                             query="""
@@ -1419,7 +1419,8 @@ def importNewForm():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(file_path, filename))
                 read_file=load_workbook(os.path.join(file_path,filename))
-                ws=read_file['Sheet1']
+                ws = read_file.worksheets[0]
+                # ws=read_file['Sheet1']
 
                 form={
                     'project_id':data['project_id'],
