@@ -26,7 +26,7 @@ GF = general_functions.GeneralFunctions()
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Color, colors, PatternFill, Border, Alignment, Side, NamedStyle
 from openpyxl.cell import Cell
-from time import gmtime, strftime
+from time import gmtime, strftime, localtime
 
 bp = Blueprint('project', __name__, url_prefix='/project' )
 
@@ -2388,7 +2388,7 @@ def getFormDocuments():
                         name,ext=os.path.splitext(x['file_name'])
                         if ext in extensions:
                             doc_class=extensions[ext]
-                        else:                            
+                        else:
                             doc_class='icon-generic-file'
                         file_display,ext=os.path.splitext(x['file_name_display'])
                         file_link='/project/downloadZipFile/%s/%s/%s'%(data['project_id'],data['form_id'],x['file_name'])
@@ -2418,14 +2418,14 @@ def getDownloadFolderLink():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
-                app.logger.info(data)
+
                 file_ids=','.join(str(e) for e in data['file_list'])
                 files=db.query("""
                     select file_name from project.form_files
                     where file_id in (%s) and project_id=%s and form_id=%s
                 """%(file_ids,data['project_id'],data['form_id'])).dictresult()
-                app.logger.info(files)
-                temp_folder='temp_folder_%s.zip'%(int(random.random()*10000))
+
+                temp_folder='Descarga_%s.zip'%strftime("%H_%M_%S", localtime())
                 folder_path=os.path.join(cfg.download_zip_path,temp_folder)
                 origin_path=os.path.join(cfg.zip_main_folder,'project_%s'%int(data['project_id']),'form_%s'%int(data['form_id']))
                 with zipfile.ZipFile(folder_path, 'w') as new_zip:
