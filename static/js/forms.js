@@ -930,70 +930,69 @@ $(document).ready(function(){
         $("#UFFzip_file").parent('.custom-file').removeClass('invalid-file-field');
         $("#errUFFzip_file").addClass('hide-error-msg').removeClass('show-error-msg');
         $("#UFFzip_file").siblings("label").html('Seleccione archivo');
+        $("#UFFzip_file").val("");
     });
 
     $("#UFFzip_file").on('change',function(){
         var path=$("#UFFzip_file")[0].value.split("\\").pop();
         $("#UFFzip_file").siblings("label").html(path);
-        var pattern=$("#UFFzip_file")[0].pattern.split(",");
-        if (hasExtension("UFFzip_file",pattern)){
-            $("#UFFzip_file").parent('.custom-file').addClass('valid-file-field').removeClass('invalid-file-field');
-            $("#errUFFzip_file").removeClass('show-error-msg').addClass('hide-error-msg');
-        }
-        else{
-            $("#UFFzip_file").parent('.custom-file').removeClass('valid-file-field').addClass('invalid-file-field');
-            $("#errUFFzip_file").html("Formato incorrecto");
-            $("#errUFFzip_file").addClass('show-error-msg').removeClass('hide-error-msg');
-        }
+        // var pattern=$("#UFFzip_file")[0].pattern.split(",");
+        // if (hasExtension("UFFzip_file",pattern)){
+        //     $("#UFFzip_file").parent('.custom-file').addClass('valid-file-field').removeClass('invalid-file-field');
+        //     $("#errUFFzip_file").removeClass('show-error-msg').addClass('hide-error-msg');
+        // }
+        // else{
+        //     $("#UFFzip_file").parent('.custom-file').removeClass('valid-file-field').addClass('invalid-file-field');
+        //     $("#errUFFzip_file").html("Formato incorrecto");
+        //     $("#errUFFzip_file").addClass('show-error-msg').removeClass('hide-error-msg');
+        // }
         this.blur();
     });
 
     $("#btnUploadZip").click(function(){
         if ($("#UFFzip_file")[0].files.length==1){
-            if ($("#UFFzip_file").parent('.custom-file').hasClass('valid-file-field')){
-                var data=new FormData();
-                data.append('form_id',me.user_info['form_id']);
-                data.append('user_id',me.user_info['user_id']);
-                data.append('project_id',me.user_info['project_id']);
-                var file=$("#UFFzip_file")[0].files[0];
-                var file_name=$("#UFFzip_file")[0].files[0].name;
-                data.append(file_name,file);
-                data.append('file_name',file_name);
-                EasyLoading.show({
-                    text:'Cargando...',
-                    type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
-                });
-                $.ajax({
-                    url:'/project/uploadFormZipFile',
-                    type:'POST',
-                    data:data,
-                    processData:false,
-                    contentType:false,
-                    success:function(response){
-                        try{
-                            var res=JSON.parse(response);
-                        }catch(err){
-                            ajaxError();
-                        }
-                        EasyLoading.hide();
-                        $.alert({
-                            theme:'dark',
-                            title:'Atención',
-                            content:res.msg_response
-                        });
-                        if (res.success){
-                            $("#mod_upload_form_folder").modal("hide");
-                        }
-                    },
-                    error:function(){
-                        $.alert({
-                            theme:'dark',
-                            title:'Atención',
-                            content:'Ocurrió un error, favor de intentarlo de nuevo.'
-                        });
+            var data=new FormData();
+            data.append('form_id',me.user_info['form_id']);
+            data.append('user_id',me.user_info['user_id']);
+            data.append('project_id',me.user_info['project_id']);
+            var file=$("#UFFzip_file")[0].files[0];
+            var file_name=$("#UFFzip_file")[0].files[0].name;
+            data.append(file_name,file);
+            data.append('file_name',file_name);
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
+            $.ajax({
+                url:'/project/uploadFormZipFile',
+                type:'POST',
+                data:data,
+                processData:false,
+                contentType:false,
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
                     }
-                });
-            }
+                    EasyLoading.hide();
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                    if (res.success){
+                        $("#mod_upload_form_folder").modal("hide");
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
         }
         else{
             $.alert({
@@ -1018,9 +1017,9 @@ $(document).ready(function(){
                 if (res.success){
                     if (res.allowed){
                         $.ajax({
-                            url:'/project/getZipDownloadLink',
+                            url:'/project/getFormDocuments',
                             type:'POST',
-                            data:JSON.stringify({'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id'],'user_id':me.user_info['user_id']}),
+                            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
                             success:function(response2){
                                 try{
                                     var res2=JSON.parse(response2);
@@ -1028,28 +1027,9 @@ $(document).ready(function(){
                                     ajaxError();
                                 }
                                 if (res2.success){
-                                    if (res2.has_file){
-                                        $.alert({
-                                            theme:'dark',
-                                            title:'Atención',
-                                            content:res2.msg_response,
-                                            buttons:{
-                                                confirm:{
-                                                    text:'Descargar',
-                                                    action:function(){
-                                                        window.open(res2.file,"_blank");
-                                                    }
-                                                }
-                                            }
-                                        });
-                                    }
-                                    else{
-                                        $.alert({
-                                            theme:'dark',
-                                            title:'Atención',
-                                            content:res2.msg_response
-                                        });
-                                    }
+                                    $("#divDownloadFilesContainer").empty();
+                                    $("#divDownloadFilesContainer").append(res2.data);
+                                    $("#mod_download_form_files").modal("show");
                                 }
                                 else{
                                     $.alert({
@@ -1068,20 +1048,6 @@ $(document).ready(function(){
                             }
                         });
                     }
-                    else{
-                        $.alert({
-                            theme:'dark',
-                            title:'Atención',
-                            content:res.msg_response
-                        });
-                    }
-                }
-                else{
-                    $.alert({
-                        theme:'dark',
-                        title:'Atención',
-                        content:res.msg_response
-                    });
                 }
             },
             error:function(){
@@ -1092,6 +1058,183 @@ $(document).ready(function(){
                 });
             }
         });
+    });
+
+    $("#mod_download_form_files").on('hide.bs.modal',function(){
+        $("#divDownloadFilesContainer").empty();
+        $("#DFFcheck_select_all").prop("checked",false);
+    });
+
+    $("#btnDownloadFormFile").click(function(){
+        if ($(".checkbox-download-files:checked").length>0){
+            var file_list=[];
+            for (var x of $(".checkbox-download-files:checked")){
+                file_list.push($(x).data('document'));
+            }
+            $.ajax({
+                url:'/project/getDownloadFolderLink',
+                type:'POST',
+                data:JSON.stringify({'file_list':file_list,'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id'],'user_id':me.user_info['user_id']}),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:'La carpeta ha sido creada.',
+                            buttons:{
+                                confirm:{
+                                    text:'Descargar',
+                                    action:function(){
+                                        var link='/project/downloadFile/form_zip/'+res.link;
+                                        window.open(link,"_blank");
+                                    }
+                                },
+                                cancel:{
+                                    text:'Salir'
+                                }
+                            }
+                        });
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debes seleccionar al menos un archivo.'
+            });
+        }
+    });
+
+    $("#DFFcheck_select_all").on('change',function(e){
+        if (e.target.checked==true){
+            $(".checkbox-download-files").prop("checked",true);
+        }
+        else{
+            $(".checkbox-download-files").prop("checked",false);
+        }
+    });
+
+    $("#btnDeleteFormFile").click(function(){
+        if ($(".checkbox-download-files:checked").length>0){
+            html='<ul>'
+            for (x of $(".checkbox-download-files:checked")){
+                html+='<li>'+$(x).next()[0].textContent+'</li>'
+            }
+            html+='</ul>'
+            if ($(".checkbox-download-files:checked").length==1){
+                msg='¿Estás seguro que deseas eliminar el siguiente archivo? :<br>'+html;
+            }
+            else{
+                msg='¿Estás seguro que deseas eliminar los siguientes archivos? :<br>'+html;
+            }
+            $.confirm({
+                theme:'dark',
+                title:'Atención',
+                content:msg,
+                buttons:{
+                    confirm:{
+                        text:'Sí',
+                        action:function(){
+                            var files=[];
+                            for (x of $(".checkbox-download-files:checked")){
+                                files.push($(x).data('document'));
+                            }
+                            $.ajax({
+                                url:'/project/deleteFormFile',
+                                type:'POST',
+                                data:JSON.stringify({'user_id':me.user_info['user_id'],'files':files,'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
+                                success:function(response){
+                                    try{
+                                        var res=JSON.parse(response);
+                                    }catch(err){
+                                        ajaxError();
+                                    }
+                                    if (res.success){
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res.msg_response,
+                                            buttons:{
+                                                confirm:{
+                                                    text:'Aceptar',
+                                                    action:function(){
+                                                        $.ajax({
+                                                            url:'/project/getFormDocuments',
+                                                            type:'POST',
+                                                            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id'],'project_id':me.user_info['project_id']}),
+                                                            success:function(response2){
+                                                                try{
+                                                                    var res2=JSON.parse(response2);
+                                                                }catch(err){
+                                                                    ajaxError();
+                                                                }
+                                                                if (res2.success){
+                                                                    $("#divDownloadFilesContainer").empty();
+                                                                    $("#divDownloadFilesContainer").append(res2.data);
+                                                                    $("#DFFcheck_select_all").prop("checked",false);
+                                                                }
+                                                                else{
+                                                                    $.alert({
+                                                                        theme:'dark',
+                                                                        title:'Atención',
+                                                                        content:res2.msg_response
+                                                                    });
+                                                                }
+                                                            },
+                                                            error:function(){
+                                                                $.alert({
+                                                                    theme:'dark',
+                                                                    title:'Atención',
+                                                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                                                });
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                            }
+                                        })
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    cancel:{
+                        text:'No',
+                        action:function(){
+
+                        }
+                    }
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debe seleccionar al menos un archivo para eliminarlo.'
+            });
+        }
     });
 
     $(".revision-radio input[type=radio]").click(function(){
@@ -1269,6 +1412,8 @@ $(document).ready(function(){
             });
         }
     });
+
+
 
 });
 

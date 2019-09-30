@@ -84,3 +84,79 @@
     font-family:serif;
     color:#434a4c;
 }
+
+#divDownloadFilesContainer{
+    min-height: 100px;
+    max-height: 250px;
+    padding: 5px;
+    border-radius: 10px;
+    background-color: #f3f1f1;
+    margin: 3px;
+    overflow-y: scroll;
+}
+
+.icon-pdf{
+    content: url(../images/pdf.png);
+    width:50px;
+    height:50px;
+}
+
+.icon-excel{
+    content:url(../images/excel.png);
+    width:50px;
+    height:50px;
+}
+
+.icon-powerpoint{
+    content:url(../images/power_point.png);
+    width:50px;
+    height:50px;
+}
+
+.icon-word{
+    content:url(../images/word.png);
+    width:50px;
+    height:50px;
+}
+
+.icon-zip{
+    content:url(../images/zip_icon.png);
+    width:50px;
+    height:50px;
+}
+
+.icon-generic-file{
+    content:url(../images/generic_file.png);
+    width:50px;
+    height:50px;
+}
+
+.download-file{
+    margin:6px 8px;
+}
+
+.download-icon-div{
+    /* display: grid; */
+    display: flex;
+    width: 90px;
+    margin:2px 8px;
+    line-height: 80%;
+
+}
+
+.spn-icon-text{
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    /*white-space: nowrap;*/
+    font-size:0.7em;
+    text-align: center;
+    display:flex;
+}
+
+.checkbox-download-files{
+    /* position:absolute; */
+    position: sticky;
+    /* margin-right: inherit;
+    margin-top: 8px; */
+    margin: initial;
+}
