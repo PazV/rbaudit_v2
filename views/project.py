@@ -1866,25 +1866,35 @@ def uploadFormZipFile():
                     #     existing_files = glob.glob(folder_path+'/*')
                     #     for f in existing_files:
                     #         os.remove(f)
-                    file.save(os.path.join(folder_path,filename))
-                    file_insert={
-                        'file_name':filename,
-                        'form_id':data['form_id'],
-                        'project_id':data['project_id'],
-                        'uploaded_by':data['user_id'],
-                        'upload_date':'now',
-                        'file_name_display':data['file_name'].encode('utf-8')
-                    }
-                    db.insert('project.form_files',file_insert)
-                    # db.query("""
-                    #     update project.form
-                    #     set zip_file_name='%s',
-                    #     zip_last_upload_user=%s,
-                    #     zip_last_upload_date='now'
-                    #     where form_id=%s and project_id=%s
-                    # """%(filename,data['user_id'],data['form_id'],data['project_id']))
-                    response['success']=True
-                    response['msg_response']='El archivo ha sido cargado.'
+
+                    #revisar si ya existe un archivo con ese nombre
+                    file_exists=db.query("""
+                        select count(*) from project.form_files where file_name='%s' and form_id=%s and project_id=%s
+                    """%(filename,data['form_id'],data['project_id'])).dictresult()
+
+                    if file_exists[0]['count']==0:
+                        file.save(os.path.join(folder_path,filename))
+                        file_insert={
+                            'file_name':filename,
+                            'form_id':data['form_id'],
+                            'project_id':data['project_id'],
+                            'uploaded_by':data['user_id'],
+                            'upload_date':'now',
+                            'file_name_display':data['file_name'].encode('utf-8')
+                        }
+                        db.insert('project.form_files',file_insert)
+                        # db.query("""
+                        #     update project.form
+                        #     set zip_file_name='%s',
+                        #     zip_last_upload_user=%s,
+                        #     zip_last_upload_date='now'
+                        #     where form_id=%s and project_id=%s
+                        # """%(filename,data['user_id'],data['form_id'],data['project_id']))
+                        response['success']=True
+                        response['msg_response']='El archivo ha sido cargado.'
+                    else:
+                        response['success']=False
+                        response['msg_response']='Ya existe un archivo con ese nombre, favor de cambiarlo.'
                 else:
                     response['success']=False
                     response['msg_response']='No tienes permisos para realizar esta acción.'
