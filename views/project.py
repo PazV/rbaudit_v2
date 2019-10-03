@@ -2493,3 +2493,108 @@ def deleteFormFile():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+@bp.route('/deleteMenuElements', methods=['GET','POST'])
+@is_logged_in
+def deleteMenuElements():
+    #eliminar carpetas o formularios listados en el proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'delete_foldersandforms'})
+                if success:
+                    if allowed:
+                        folder_list=[]
+                        form_list=[]
+                        if data['folders']!=[]:
+                            for y in data['folders']:
+                                folder_list,form_list=getFormsToDelete(y,folder_list,form_list)
+                        if data['forms']!=[]:
+                            for f in data['forms']:
+                                form_list.append(f)
+
+                        if form_list!=[]:
+                            for x in form_list:
+                                #1. eliminar comentarios
+                                db.query("""
+                                    delete from project.form_comments
+                                    where form_id=%s
+                                """%(x))
+                                #2. eliminar archivos (tabla y en carpeta)
+                                db.query("""
+                                    delete from project.form_files
+                                    where form_id=%s
+                                """%x)
+                                if os.path.exists(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id'],'form_%s'%x)):
+                                    shutil.rmtree(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id'],'form_%s'%x))
+                                #3. notificaciones
+                                db.query("""
+                                    delete from project.notification
+                                    where form_id=%s and project_id=%s
+                                """%(x,data['project_id']))
+                                #4. revisores
+                                db.query("""
+                                    delete from project.form_revisions
+                                    where form_id=%s
+                                """%x)
+                                #5. tabla form
+                                db.query("""
+                                    drop table form.project_%s_form_%s ;
+                                """%(data['project_id'],x))
+                                #6. registro de formulario de project.form
+                                db.query("""
+                                    delete from project.form where form_id=%s
+                                """%x)
+
+                        if folder_list!=[]:
+                            folder_str=','.join(str(e) for e in folder_list)
+                            db.query("""
+                                delete from project.folder where project_id=%s and folder_id in (%s)
+                            """%(data['project_id'],folder_str))
+
+                        response['success']=True
+
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['success']=False
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+def getFormsToDelete(folder_id,folder_list,form_list):
+    response={}
+    #1. obtener subfolders con folder_id como parent_id
+    #2. al final buscar todos los formularios de las carpetas del listado de carpetas
+    try:
+        if folder_id not in folder_list:
+            folder_list.append(folder_id)
+        folders=db.query("""
+            select folder_id from project.folder
+            where parent_id=%s
+        """%folder_id).dictresult()
+        forms=db.query("""
+            select form_id from project.form where folder_id=%s
+        """%folder_id).dictresult()
+        for x in forms:
+            if x not in form_list:
+                form_list.append(x['form_id'])
+        if folders!=[]:
+            for f in folders:
+                folder_list,form_list=getFormsToDelete(f['folder_id'],folder_list,form_list)
+        return folder_list,form_list
+    except:
+        False,False

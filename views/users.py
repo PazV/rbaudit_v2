@@ -445,14 +445,16 @@ def getProjectUserPermits():
                         create_projects,
                         create_folders,
                         download_forms,
-                        create_users
+                        create_users,
+                        see_all_forms,
+                        delete_foldersandforms
                     from
                         system.user
                     where
                         user_id=%s
                 """%data['user_id']).dictresult()[0]
                 p="<ul>"
-                app.logger.info(permits)
+                
                 if permits['resolve_forms']==True:
                     p+='<li>Resolver formularios</li>'
                 if permits['create_forms']==True:
@@ -465,6 +467,10 @@ def getProjectUserPermits():
                     p+='<li>Descargar formularios</li>'
                 if permits['create_users']==True:
                     p+='<li>Crear usuarios</li>'
+                if permits['see_all_forms']==True:
+                    p+='<li>Ver todos los formularios</li>'
+                if permits['delete_foldersandforms']==True:
+                    p+='<li>Eliminar carpetas/formularios</li>'
                 p+='</ul>'
                 response['success']=True
                 response['data']=p
@@ -499,7 +505,8 @@ def getUserPermits():
                         create_folders,
                         download_forms,
                         create_users,
-                        see_all_forms
+                        see_all_forms,
+                        delete_foldersandforms
                     from
                         system.user
                     where user_id=%s
@@ -542,7 +549,8 @@ def editUser():
                             create_folders={create_folders},
                             download_forms={download_forms},
                             create_users={create_users},
-                            see_all_forms={see_all_forms}
+                            see_all_forms={see_all_forms},
+                            delete_foldersandforms={delete_foldersandforms}
                             where user_id={user_id}
                         """.format(**data))
                         response['success']=True

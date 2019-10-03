@@ -6,17 +6,30 @@ $(document).ready(function(){
         $("#mod_add_folder").data('mode','new');
         $("#divFIparent").css('display','flex');
         $("#mod_add_folder").find('.spn-modal-header').html('Crear carpeta')
-        $("#mod_add_folder").modal("show");
+
         // if ($(".file-tree").find('.selected').length==0){
-        if ($(".file-tree").find('input:checked').length==0){
+        // if ($(".file-tree").find('input:checked').length==0){
+        // if ($(".folder-checkbox").find('input:checked').length==0){
+        if ($(".file-tree").find(".folder-checkbox:checked").length==0){
             $("#FIparent").val('Raíz');
             $("#mod_add_folder").data('parent_id',-1);
+            $("#mod_add_folder").modal("show");
         }
         else{
-            // $("#FIparent").val($(".file-tree").find('.selected')[0].textContent);
-            // $("#mod_add_folder").data('parent_id',$(".file-tree").find('.selected').data('folder'));
-            $("#FIparent").val($(".file-tree").find('input:checked').next('li').children('a')[0].textContent);
-            $("#mod_add_folder").data('parent_id',$(".file-tree").find('input:checked').next('li').children('a').data('folder'));
+            if ($(".file-tree").find(".folder-checkbox:checked").length==1){
+                // $("#FIparent").val($(".file-tree").find('.selected')[0].textContent);
+                // $("#mod_add_folder").data('parent_id',$(".file-tree").find('.selected').data('folder'));
+                $("#FIparent").val($(".file-tree").find('input:checked').next('li').children('a')[0].textContent);
+                $("#mod_add_folder").data('parent_id',$(".file-tree").find('input:checked').next('li').children('a').data('folder'));
+                $("#mod_add_folder").modal("show");
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Debe seleccionar solo una carpeta.'
+                });
+            }
         }
     });
 
@@ -134,68 +147,77 @@ $(document).ready(function(){
         }
     });
 
-    // $("#btnDeleteMenuFolder").click(function(){
-    //     if ($(".file-tree").find('.selected').length==0){
-    //         $.alert({
-    //             theme:'dark',
-    //             title:'Atención',
-    //             content:'Debe seleccionar una carpeta para eliminarla.'
-    //         });
-    //     }
-    //     else{
-    //         $.confirm({
-    //             theme:'dark',
-    //             title:'Atención',
-    //             content:'¿Está seguro que desea eliminar la carpeta '+$(".file-tree").find('.selected')[0].textContent+'?',
-    //             buttons:{
-    //                 confirm:{
-    //                     text:'Sí',
-    //                     action:function(){
-    //                         EasyLoading.show({
-    //                             text:'Cargando...',
-    //                             type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
-    //                         });
-    //                         $.ajax({
-    //                             url:'/project/deleteFolder',
-    //                             type:'POST',
-    //                             data:JSON.stringify({'folder_id':$(".file-tree").find('.selected').data('folder')}),
-    //                             success:function(response){
-    //                                 EasyLoading.hide();
-    //                                 try{
-    //                                     var res=JSON.parse(response);
-    //                                 }catch(err){
-    //                                     ajaxError():
-    //                                 }
-    //                                 if (res.success){
-    //                                     loadTreeMenu(me.user_info['project_id']);
-    //                                 }
-    //                                 else{
-    //                                     $.alert({
-    //                                         theme:'dark',
-    //                                         title:'Atención',
-    //                                         content:res.msg_response
-    //                                     });
-    //                                 }
-    //                             },
-    //                             error:function(){
-    //                                 $.alert({
-    //                                     theme:'dark',
-    //                                     title:'Atención',
-    //                                     content:'Ocurrió un error, favor de intentarlo de nuevo maś tarde.'
-    //                                 });
-    //                             }
-    //                         });
-    //                     }
-    //                 },
-    //                 cancel:{
-    //                     text:'No'
-    //                 }
-    //             }
-    //         });
-    //         $("#FIparent").val($(".file-tree").find('.selected')[0].textContent);
-    //         $("#mod_add_folder").data('parent_id',$(".file-tree").find('.selected').data('folder'));
-    //     }
-    // });
+    $("#btnDeleteMenuFolder").click(function(){
+        if ($(".file-tree").find('input:checked').length>0){
+            $.confirm({
+                theme:'dark',
+                title:'Atención',
+                content:'¿Está seguro que desea eliminar el contenido seleccionado? (UNA VEZ ELIMINADA, NO PODRÁ SER RECUPERADA DICHA INFORMACIÓN)',
+                buttons:{
+                    confirm:{
+                        text:'Sí',
+                        action:function(){
+                            var folders=[];
+                            for (x of $(".file-tree").find(".folder-checkbox:checked")){
+                                folders.push($(x).next().children('a').data('folder'));
+                            }
+                            var forms=[];
+                            for (y of $(".file-tree").find(".form-checkbox:checked")){
+                                forms.push($(y).next().children('a')[0].id);
+                            }
+
+                            EasyLoading.show({
+                                text:'Cargando...',
+                                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                            });
+                            $.ajax({
+                                url:'/project/deleteMenuElements',
+                                type:'POST',
+                                data:JSON.stringify({'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id'],'forms':forms,'folders':folders}),
+                                success:function(response){
+                                    EasyLoading.hide();
+                                    try{
+                                        var res=JSON.parse(response);
+                                    }catch(err){
+                                        ajaxError();
+                                    }
+                                    if (res.success){
+                                        loadTreeMenu(me.user_info['project_id']);
+                                    }
+                                    else{
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res.msg_response
+                                        });
+                                    }
+                                },
+                                error:function(){
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                    });
+                                }
+                            });
+                        }
+                    },
+                    cancel:{
+                        text:'No'
+                    }
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debe seleccionar al menos un elemento para eliminarlo.'
+            });
+        }
+    });
+
+    
 
 });
 
