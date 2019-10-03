@@ -98,7 +98,8 @@ $(document).ready(function(){
 
     $("#btnEditMenuFolder").click(function(){
         // if ($(".file-tree").find('.selected').length==0){
-        if ($(".file-tree").find('input:checked').length==0){
+        // if ($(".file-tree").find('input:checked').length==0){
+        if ($(".file-tree").find(".folder-checkbox:checked").length==0){
             $.alert({
                 theme:'dark',
                 title:'Atención',
@@ -106,14 +107,23 @@ $(document).ready(function(){
             });
         }
         else{
-            $("#mod_add_folder").data('mode','edit');
-            $("#mod_add_folder").find('.spn-modal-header').html('Editar carpeta');
-            $("#divFIparent").css('display','none');
-            // $("#FIname").val($(".file-tree").find('.selected')[0].textContent);
-            // $("#mod_add_folder").data('folder_id',$(".file-tree").find('.selected').data('folder'));
-            $("#FIname").val($(".file-tree").find('input:checked').next('li').children('a')[0].textContent);
-            $("#mod_add_folder").data('folder_id',$(".file-tree").find('input:checked').next('li').children('a').data('folder'));
-            $("#mod_add_folder").modal("show");
+            if ($(".file-tree").find(".folder-checkbox:checked").length==1){
+                $("#mod_add_folder").data('mode','edit');
+                $("#mod_add_folder").find('.spn-modal-header').html('Editar carpeta');
+                $("#divFIparent").css('display','none');
+                // $("#FIname").val($(".file-tree").find('.selected')[0].textContent);
+                // $("#mod_add_folder").data('folder_id',$(".file-tree").find('.selected').data('folder'));
+                $("#FIname").val($(".file-tree").find('input:checked').next('li').children('a')[0].textContent);
+                $("#mod_add_folder").data('folder_id',$(".file-tree").find('input:checked').next('li').children('a').data('folder'));
+                $("#mod_add_folder").modal("show");
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Solo puedes editar una carpeta a la vez.'
+                });
+            }
         }
     });
 
@@ -217,7 +227,7 @@ $(document).ready(function(){
         }
     });
 
-    
+
 
 });
 
