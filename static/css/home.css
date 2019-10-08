@@ -93,7 +93,8 @@ naranja: #ed8b00
     position:relative;
     left:5%;
     overflow-y: auto;
-    max-height: 60%;
+    /* max-height: 60%; */
+    height:100%;
     z-index:1000;
 }
 
