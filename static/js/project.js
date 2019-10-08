@@ -171,6 +171,167 @@ $(document).ready(function(){
             }
         }
     });
+
+    $("#mod_clone_project").on('show.bs.modal',function(){
+        $("#ClPdateFrom").val(first_day);
+        $("#ClPdateTo").val(today);
+        $.ajax({
+            url:'/project/getAvailableProjects',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+                success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $.each(res.data,function(i,item){
+                        $("#ClPcloned_from").append($('<option>',{
+                            text:item.name,
+                            name:item.project_id,
+                            selected:true
+                        }));
+                    });
+                    $.ajax({
+                        url:'/users/getUserList',
+                        type:'POST',
+                        data:JSON.stringify({'workspace_id':me.user_info['workspace_id'],'user_id':me.user_info['user_id']}),
+                        success:function(response2){
+                            try{
+                                var res2=JSON.parse(response2);
+                            }catch(err){
+                                ajaxError();
+                            }
+                            if (res2.success){
+                                $.each(res2.data,function(i,item){
+                                    $("#ClPmanager").append($('<option>',{
+                                        text:item.name,
+                                        name:item.user_id,
+                                        selected:true
+                                    }));
+                                });
+                                $.each(res2.data,function(i,item){
+                                    $("#ClPpartner").append($('<option>',{
+                                        text:item.name,
+                                        name:item.user_id,
+                                        selected:true
+                                    }));
+                                });
+                            }
+                            else{
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:res2.msg_response
+                                });
+                            }
+                        },
+                        error:function(){
+                            $.alert({
+                                theme:'dark',
+                                title:'Atención',
+                                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                            });
+                        }
+                    });
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#mod_clone_project").on('hide.bs.modal',function(){
+        resetForm("#frmCloneProject",["input|INPUT","select|SELECT","textarea|TEXTAREA"]);
+    });
+
+    $("#btnSaveClonedProject").click(function(){
+        $("#frmCloneProject :input").focusout();
+        var form_input=$("#frmCloneProject .form-control");
+        var valid=true;
+        for (var x in form_input){
+            console.log(form_input[x].id);
+            if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                valid=false;
+            }
+        }
+        if (valid===true){
+            var data=getForm('#frmCloneProject',[{'id':'#ClPpartner','name':'partner'},{'id':'#ClPmanager','name':'manager'},{'id':'#ClPcloned_from','name':'cloned_project'}]);
+            data['created_by']=me.user_info['user_id'];
+            data['project_id']=-1;
+            data['user_id']=me.user_info['user_id'];
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
+            console.log(data);
+            $.ajax({
+                url:'/project/saveClonedProject',
+                type:'POST',
+                data:JSON.stringify(data),
+                success:function(response){
+                    EasyLoading.hide();
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Ok',
+                                    action:function(){
+                                        $("#mod_clone_project").modal("hide");
+                                        loadProjects(me.user_info);
+                                    }
+                                }
+                            }
+                        })
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'ERROR',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                failure:function(){
+                    EasyLoading.hide();
+                    $.alert({
+                        theme:'dark',
+                        title:'ERROR',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+    });
+
+    $("#frmCloneProject .form-control").focusout(function(){
+        if (this.id!=='ClPcomments'){
+            var id="#"+this.id;
+            var error_id="#err"+this.id;
+            emptyField(id,error_id);
+        }
+    });
 });
 
 function loadProjects(user_info){

@@ -2598,3 +2598,160 @@ def getFormsToDelete(folder_id,folder_list,form_list):
         return folder_list,form_list
     except:
         False,False
+
+@bp.route('/getAvailableProjects', methods=['GET','POST'])
+@is_logged_in
+def getAvailableProjects():
+    #obtener los proyectos que están disponibles para clonar
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_projects'})
+                if success:
+                    if allowed:
+                        projects=db.query("""
+                            select a.project_id, b.name
+                            from project.project_users a, project.project b
+                            where a.user_id = %s
+                            and a.project_id=b.project_id
+                            order by b.created desc
+                        """%data['user_id']).dictresult()
+                        response['success']=True
+                        response['data']=projects
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['success']=False
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentr obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/saveClonedProject', methods=['GET','POST'])
+@is_logged_in
+def saveClonedProject():
+    #clona un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_projects'})
+                if success:
+                    if allowed:
+                        #insertar datos de nuevo proyecto a tabla project.project
+                        project_info=copy.deepcopy(data)
+                        del project_info['project_id']
+                        project_info['created']='now'
+                        new_project=db.insert('project.project',project_info)
+                        user_1={'user_id':project_info['manager'],'project_id':new_project['project_id']}
+                        db.insert('project.project_users',user_1)
+                        user_2={'user_id':project_info['partner'],'project_id':new_project['project_id']}
+                        db.insert('project.project_users',user_2)
+                        if int(project_info['created_by'])!=int(project_info['manager']) and int(project_info['created_by'])!=int(project_info['partner']):
+                            user_3={'user_id':project_info['created_by'],'project_id':new_project['project_id']}
+                            db.insert('project.project_users',user_3)
+
+                        #insertar carpetas
+                        folders=db.query("""
+                            select folder_id, name, parent_id
+                            from project.folder where project_id=%s order by folder_id asc
+                        """%project_info['cloned_project']).dictresult()
+                        old_folders_record=[]
+                        for f in folders:
+                            folder={'name':f['name'],'project_id':new_project['project_id']}
+                            if f['parent_id']!=-1:
+                                for ofr in old_folders_record:
+                                    if int(ofr['old'])==int(f['parent_id']):
+                                        folder['parent_id']=ofr['new']
+                                        break
+                            else:
+                                folder['parent_id']=-1
+                            inserted_folder=db.insert('project.folder',folder)
+                            old_folders_record.append({'old':f['folder_id'],'new':inserted_folder['folder_id']})
+
+                        #insertar formularios
+                        old_forms=db.query("""
+                            select form_id, project_id, name, columns_number, rows, columns, folder_id
+                            from project.form
+                            where project_id=%s order by form_id asc
+                        """%project_info['cloned_project']).dictresult()
+                        app.logger.info(old_forms)
+                        old_forms_record=[]
+                        for of in old_forms:
+                            new_form={
+                                'name':of['name'],
+                                'columns_number':of['columns_number'],
+                                'rows':of['rows'],
+                                'columns':of['columns'],
+                                'created_by':data['user_id'],
+                                'create_date':'now',
+                                'status_id':2,
+                                'project_id':new_project['project_id']
+                            }
+                            for ofr in old_folders_record:
+                                if int(ofr['old'])==int(of['folder_id']):
+                                    new_form['folder_id']=ofr['new']
+                                    break
+                            inserted_form=db.insert('project.form',new_form)
+                            old_forms_record.append({'old':of['form_id'],'new':inserted_form['form_id']})
+                            #insertar tabla en esquema form con información del formulario
+                            new_table_name='form.project_%s_form_%s'%(new_project['project_id'],inserted_form['form_id'])
+                            old_table_name='form.project_%s_form_%s'%(of['project_id'],of['form_id'])
+                            db.query("""
+                                CREATE TABLE %s as table %s
+                            """%(new_table_name,old_table_name))
+                            sequence_name='form.project_%s_form_%s_entry_id_seq'%(new_project['project_id'],inserted_form['form_id'])
+                            db.query("""
+                                CREATE SEQUENCE %s;
+                                SELECT setval('%s', coalesce (max(entry_id),0)) FROM %s;
+                                ALTER TABLE %s ALTER COLUMN entry_id set default nextval('%s');
+                                ALTER TABLE %s ADD PRIMARY KEY (entry_id);
+                            """%(sequence_name,sequence_name,new_table_name,new_table_name,sequence_name,new_table_name))
+                            exists_rev=db.query("""
+                                select column_name from information_schema.columns where table_name='project_%s_form_%s' and column_name='rev_1';
+                            """%(new_project['project_id'],inserted_form['form_id'])).dictresult()
+                            if exists_rev!=[]:
+                                db.query("""
+                                    alter table %s drop column rev_1;
+                                """%new_table_name)
+                            columns_eval=eval(of['columns'])
+                            columns_delete=[]
+                            for ce in columns_eval:
+                                if ce['editable']==True:
+                                    columns_delete.append(ce['order'])
+                            columns_delete_str=",".join("col_%s=''"%str(e) for e in columns_delete)
+                            db.query("""
+                                update %s set %s
+                            """%(new_table_name,columns_delete_str))
+                        response['success']=True
+                        response['msg_response']='El proyecto ha sido clonado exitosamente.'
+
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['success']=False
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)

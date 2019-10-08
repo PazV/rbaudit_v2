@@ -35,7 +35,7 @@ $(document).ready(function(){
 
     $("#btnSaveFolder").click(function(){
         var valid=emptyField('#FIname','#errFIname');
-        console.log(me.user_info);
+        
         if (valid){
             var data={};
             data['name']=encodeURIComponent($("#FIname").val());
