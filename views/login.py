@@ -78,11 +78,12 @@ def signin():
                     session['session_id']=inserted_session['session_id']
                     session['logged_in']=True
                     return redirect(url_for('home.home'))
-        return render_template('login.html')
+
+        return render_template('login.html',error=error)
     except:
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
-        return render_template('login.html')
+        return render_template('login.html',error='Ocurrió un error al intentar iniciar sesión, favor de intentarlo de nuevo.'.decode('utf-8'))
 
 
 def is_logged_in(f):

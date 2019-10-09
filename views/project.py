@@ -2687,7 +2687,7 @@ def saveClonedProject():
                             from project.form
                             where project_id=%s order by form_id asc
                         """%project_info['cloned_project']).dictresult()
-                        app.logger.info(old_forms)
+                        
                         old_forms_record=[]
                         for of in old_forms:
                             new_form={

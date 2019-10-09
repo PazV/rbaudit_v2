@@ -25,13 +25,22 @@
                             <div class="form-group">
                                 <img class="login-image" alt="Russell Bedford"></img>
                                 <input class="form-control form-control-lg" type="email" placeholder="Correo electrónico" id="loginEmail" name="email" required>
-                                <div id="errorLoginEmail" class="hide-login-error">
-                                    Dirección de correo inválida
-                                </div>
+                                {% with errors = get_flashed_messages(category_filter=["user"]) %}
+                                    {% if errors %}
+                                        <div id="errorLoginEmail" class="show-login-error">
+                                            <!-- Dirección de correo inválida -->
+                                            {{errors[0]}}
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
                                 <input class="form-control form-control-lg" type="password" placeholder="Contraseña" id="loginPassword" name="password" required>
-                                <div  id="errorLoginPassword" class="hide-login-error">
-                                    Correo o contraseña incorrecta
-                                </div>
+                                {% with errors = get_flashed_messages(category_filter=["pass"]) %}
+                                    {% if errors %}
+                                        <div  id="errorLoginPassword" class="show-login-error">
+                                            {{errors[0]}}
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
                                 <button class="btn btn-info btn-block btn-lg" id="btnSignin" style="margin-top:10px;">Ingresar</button>
                                 <div class="row" style="padding-top:5%;">
                                     <div class="m-auto">

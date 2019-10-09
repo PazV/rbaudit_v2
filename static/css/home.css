@@ -127,8 +127,8 @@ naranja: #ed8b00
 
 .proj-list-li:hover{
     background-color:#00bfb3;
-
 }
+
 .proj-list-li:hover .proj-list-a, .proj-list-li.hover .proj-list-a{
     display:block;
 }
