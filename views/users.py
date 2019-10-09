@@ -454,7 +454,7 @@ def getProjectUserPermits():
                         user_id=%s
                 """%data['user_id']).dictresult()[0]
                 p="<ul>"
-                
+
                 if permits['resolve_forms']==True:
                     p+='<li>Resolver formularios</li>'
                 if permits['create_forms']==True:
@@ -572,4 +572,57 @@ def editUser():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/removeProjectUser', methods=['GET','POST'])
+@is_logged_in
+def removeProjectUser():
+    response={}
+    try:
+        if request.method=='POST':
+            response['success']=False
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_users'})
+                if success:
+                    if allowed:
+                        manager=db.query("""
+                            select manager,partner from project.project where project_id=%s
+                        """%data['project_id']).dictresult()[0]
+                        if int(manager['manager'])!=int(data['remove_user']) and int(manager['partner'])!=int(data['remove_user']):
+                            forms=db.query("""
+                                select count(*) from project.form where assigned_to=%s and project_id=%s
+                            """%(data['remove_user'],data['project_id'])).dictresult()
+                            if forms[0]['count']==0:
+                                revisions=db.query("""
+                                    select count(a.*) from project.form_revisions a, project.form b
+                                    where a.form_id=b.form_id and b.project_id=%s and a.user_id=%s
+                                """%(data['project_id'],data['remove_user'])).dictresult()
+                                if revisions[0]['count']==0:
+                                    db.query("""
+                                        delete from project.project_users where project_id=%s and user_id=%s
+                                    """%(data['project_id'],data['remove_user']))
+                                    response['success']=True
+                                    response['msg_response']='El usuario ha sido eliminado del proyecto.'
+                                else:
+                                    response['msg_response']='El usuario no puede ser eliminado, porque se encuentra como revisor de al menos un formulario.'
+                            else:
+                                response['msg_response']='El usuario no puede ser eliminado, porque tiene al menos un formulario asignado.'
+                        else:
+                            if int(manager['manager'])==int(data['remove_user']):
+                                response['msg_response']='El usuario no puede ser eliminado, porque ha sido asignado como gerente en este proyecto.'
+                            else:
+                                response['msg_response']='El usuario no puede ser eliminado, porque ha sido asignado como socio en este proyecto.'
+                    else:
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar validar los datos, favor de intentarlo de nuevo.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar obtener los datos, favor de intentarlo más tarde.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)

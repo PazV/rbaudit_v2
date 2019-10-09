@@ -572,7 +572,59 @@ $(document).ready(function(){
     });
 
     $("#btnAPUremoveUser").click(function(){
-
+        var table=$("#grdAdminProjectUsers").DataTable();
+        if (table.rows('.selected').any()){
+            var ind=table.row('.selected').index();
+            var record=table.rows(ind).data()[0];
+            $.ajax({
+                url:'/users/removeProjectUser',
+                type:'POST',
+                data:JSON.stringify({'remove_user':record['user_id'],'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id']}),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+                                        loadProjectUsersTable(me.user_info['project_id']);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Error',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debes seleccionar un usuario.'
+            });
+        }
     });
 
     $("#btnAPUseePermits").click(function(){

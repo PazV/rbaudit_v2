@@ -332,6 +332,7 @@ $(document).ready(function(){
             emptyField(id,error_id);
         }
     });
+    
 });
 
 function loadProjects(user_info){

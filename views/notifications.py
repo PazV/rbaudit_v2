@@ -57,7 +57,7 @@ def getNotifications():
                     where
                         project_id=%s
                     and user_to=%s
-                    order by sent_date desc
+                    order by notification_id desc
                     offset %s limit 10
                 """%(data['project_id'],data['user_id'],page)).dictresult()
 
