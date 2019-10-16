@@ -702,6 +702,8 @@ def publishForm():
                         notif_info={'project_id':data['project_id'],'form_id':data['form_id']}
                         # GF.createNotification('publish_form',data['project_id'],data['form_id'])
                         GF.createNotification('publish_form',notif_info)
+                        if data['notify_assignee']==True:
+                            GF.sendMailNotification({'form_id':data['form_id'],'type':'new_form'})
                         response['success']=True
                         response['msg_response']='El formulario ha sido publicado, puede encontrarlo en el menú del lado izquierdo.'
                     else:
@@ -1128,7 +1130,7 @@ def getFormsToCheck(subpath):
             if valid:
                 forms=db.query("""
                     select
-                        form_id, name, revisions
+                        form_id, name
                     from
                         project.form
                     where
@@ -1147,14 +1149,9 @@ def getFormsToCheck(subpath):
                 else:
                     showing_forms=[]
                     for f in forms:
-                        # revs=f['revisions'].split(",")
                         revisions=db.query("""
                             select user_id from project.form_revisions where form_id=%s
                         """%f['form_id']).dictresult()
-                        # for r in revs:
-                        #     if int(r.split(":")[1])==int(data['user_id']):
-                        #         showing_forms.append(f)
-                        #         break
                         for r in revisions:
                             if int(r['user_id'])==int(data['user_id']):
                                 showing_forms.append(f)
@@ -2144,6 +2141,11 @@ def doRevision():
                                     info['user_to']=un['user_id']
                                     # se envía notificación a usuarios correspondientes
                                     GF.createNotification('close_form',info)
+                                send_mail=db.query("""
+                                    select notify_resolved from project.form where form_id=%s
+                                """%data['form_id']).dictresult()[0]
+                                if send_mail['notify_resolved']==True:
+                                    GF.sendMailNotification({'form_id':data['form_id'],'type':'resolved_form'})
                         else:
                             #si no se va a cerrar el formulario
                             #se revisa si se va a regresar al usuario asignado a resolver el formulario
@@ -2687,7 +2689,7 @@ def saveClonedProject():
                             from project.form
                             where project_id=%s order by form_id asc
                         """%project_info['cloned_project']).dictresult()
-                        
+
                         old_forms_record=[]
                         for of in old_forms:
                             new_form={

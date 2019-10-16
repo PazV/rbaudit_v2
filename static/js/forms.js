@@ -192,6 +192,7 @@ $(document).ready(function(){
     });
 
     $("#btnPFpublishForm").click(function(){
+        $("#btnPFpublishForm").prop("disabled",true);
         $("#FTPresolve_date").focusout();
         if ($("#FTPresolve_date").hasClass('valid-field')){
             saveTableInfo("#grdPrefilledForm",'/project/savePrefilledForm',me.user_info,false);
@@ -218,8 +219,8 @@ $(document).ready(function(){
                     }catch(err){
                         ajaxError();
                     }
-                    EasyLoading.hide();
                     if (res.success){
+                        EasyLoading.hide();
                         $.alert({
                             theme:'dark',
                             title:'Atención',
@@ -235,6 +236,8 @@ $(document).ready(function(){
                         });
                     }
                     else{
+                        EasyLoading.hide();
+                        $("#btnPFpublishForm").prop("disabled",false);
                         $.alert({
                             theme:'dark',
                             title:'Atención',
@@ -244,6 +247,7 @@ $(document).ready(function(){
                 },
                 error:function(){
                     EasyLoading.hide();
+                    $("#btnPFpublishForm").prop("disabled",false);
                     $.alert({
                         theme:'dark',
                         title:'Atención',
@@ -253,6 +257,7 @@ $(document).ready(function(){
             });
         }
         else{
+            $("#btnPFpublishForm").prop("disabled",false);
             $.alert({
                 theme:'dark',
                 title:'Atención',

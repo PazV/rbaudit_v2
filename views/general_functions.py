@@ -72,7 +72,9 @@ class GeneralFunctions:
             msg.attach(MIMEText(body,'html'))
             text=msg.as_string()
 
-            server.sendmail(from_address,list_to,text)
+            resp=server.sendmail(from_address,list_to,text)
+            app.logger.info(resp)
+            app.logger.info("sends mail")
             response['success']=True
         except:
             exc_info=sys.exc_info()
@@ -271,5 +273,61 @@ class GeneralFunctions:
         except:
             app.logger.info(traceback.format_exc(sys.exc_info()))
             return False,False
+                                                                                                                                                                                                                                                                                       
+    def sendMailNotification(self,data):
+        try:
+            form_info=db.query("""
+                select  b.name, b.project_id, (select a.name from system.user a where a.user_id=b.assigned_to) assigned_to, to_char(b.resolve_before,'DD/MM/YYYY') as resolve_before, to_char(b.resolved_date,'DD/MM/YYYY') as resolved_date from  project.form b where b.form_id=%s
+            """%data['form_id']).dictresult()[0]
+            form_info['bottom_img']=cfg.img_rb_logo
+            link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(form_info['project_id'])),str(data['form_id']))
+            form_info['link']='<a href="%s"> link</a>'%link
+            assignee_mail=db.query("""
+                select a.email from system.user a, project.form b where a.user_id=b.assigned_to and b.form_id=%s
+            """%data['form_id']).dictresult()
+            recipients=[]
+            if data['type']=='new_form':
+                form_info['top_img']=cfg.img_new_form
+                template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Le notificamos que le ha sido asignado el formulario "{name}", el cual se espera sea resuelto a m&aacute;s tardar&nbsp;<em>{resolve_before}.</em></span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Para acceder al formulario, dar click en el siguiente {link}.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+                subject='Nuevo cuestionario'
+                recipients.append(assignee_mail[0]['email'])
 
-    
+            elif data['type']=='resolved_form':
+                revisions=db.query("""
+                    select (select a.name from system.user a where a.user_id=b.user_id) as revisor, to_char(b.revision_date,'DD/MM/YYYY') as revision_date, b.revision_number from project.form_revisions b where b.form_id=%s order by b.revision_number asc
+                """%data['form_id']).dictresult()
+                revision_str='<ul>'
+                for r in revisions:
+                    revision_str+='<li><span style="font-family: Verdana,Geneva,sans-serif;"><span style="color: rgb(77, 77, 77);">Revisi&oacute;n %s: %s - %s</span></span></li>'%(r['revision_number'],r['revisor'],r['revision_date'])
+                revision_str+='</ul>'
+                form_info['revisions']=revision_str
+                form_info['top_img']=cfg.img_resolved_form
+                # template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p>Estimado usuario:</p><p>Le informamos que el formulario {name} ha sido completado y revisado.</p><p>Resuelto por {assigned_to} - {resolved_date}</p><p>{revisions}</p><p>Puede acceder al formulario a trav&eacute;s del siguiente {link}.</p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+
+                template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p><span style="font-family: Verdana,Geneva,sans-serif;"><span style="color: rgb(77, 77, 77);">Le informamos que el formulario <em>{name}</em> ha sido completado y revisado.</span></span></p><p><span style="font-family: Verdana,Geneva,sans-serif;"><span style="color: rgb(77, 77, 77);">Resuelto por {assigned_to} - {resolved_date}</span></span></p><p>{revisions}</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Puede acceder al formulario a través del siguiente {link}.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+
+                revisor_mails=db.query("""
+                    select a.email from system.user a, project.form_revisions b
+                    where a.user_id=b.user_id and b.form_id=%s
+                """%data['form_id']).dictresult()
+                for r in revisor_mails:
+                    recipients.append(r['email'])
+                recipients.append(assignee_mail[0]['email'])
+                subject='Cuestionario finalizado'
+
+
+            elif data['type']=='reminder_resolve_form':
+                form_info['top_img']=cfg.img_form_reminder
+                template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p>&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">No olvides que tienes pendiente por resolver el formulario <em>{name}</em>, deber&aacute; ser terminado a m&aacute;s tardar el {resolve_before}.</span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Puede acceder al formulario a trav&eacute;s del siguiente {link}.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+
+                recipients.append(assignee_mail[0]['email'])
+                subject='Recordatorio cuestionario por resolver'
+            app.logger.info(recipients)
+            body=template.format(**form_info)
+            response=self.sendMail(subject,body,recipients)
+            app.logger.info(response)
+
+            return True
+        except:
+            app.logger.info(traceback.format_exc(sys.exc_info()))
+            return False
