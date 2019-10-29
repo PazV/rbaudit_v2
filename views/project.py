@@ -2757,3 +2757,243 @@ def saveClonedProject():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+@bp.route('/getSettingsForEditing', methods=['GET','POST'])
+@is_logged_in
+def getSettingsForEditing():
+    #obtiene los datos de la configuración del formulario para poder editarlos
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_forms'})
+                if success:
+                    if allowed:
+                        allowed_users=db.query("""
+                            select created_by as user from project.form where form_id=%s and created_by=%s
+                            union
+                            select user_id as user from project.form_revisions where form_id=%s and user_id=%s
+                            union
+                            select manager as user from project.project where project_id=%s and manager=%s
+                            union
+                            select partner as user from project.project where project_id=%s and partner=%s
+                        """%(data['form_id'],data['user_id'],data['form_id'],data['user_id'],data['project_id'],data['user_id'],data['project_id'],data['user_id'])).dictresult()
+                        if allowed_users!=[]:
+                            settings=db.query("""
+                                select b.form_id, b.name,
+                                b.columns_number,
+                                b.rows,
+                                b.columns as columns_info, b.folder_id,
+                                (select a.name from project.folder a where a.folder_id=b.folder_id) as folder_name
+                                from project.form b
+                                where b.form_id=%s
+                            """%data['form_id']).dictresult()[0]
+                            settings['columns']=eval(settings['columns_info'])
+                            del settings['columns_info']
+                            response['success']=True
+                            response['data']=settings
+
+                        else:
+                            response['msg_response']='No tienes permisos para editar este formulario.'
+                    else:
+                        response['msg_response']='No tienes permisos para editar formularios.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getFolderMenuEdit', methods=['GET','POST'])
+@is_logged_in
+def getFolderMenuEdit():
+    #obtener el menú para la edición de configuración de formulario
+    #no es necesario validar permisos, porque ya se validó al abrir el modal de edición de formulario
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                folders=db.query("""
+                    select folder_id, name from project.folder
+                    where project_id=%s and parent_id=-1 order by folder_id
+                """%data['project_id']).dictresult()
+                final_html=""
+                if folders!=[]:
+                    for f in folders:
+                        fh_node='<input type="checkbox" class="form-check-input tree-menu-checkbox-edit folder-checkbox-edit"><li class="selectable-folder-edit"><a href="#" data-folder="%s">%s</a><ul>'%(f['folder_id'],f['name'])
+                        sh_node='</ul></li>'
+                        res_html=getMenuNodesEdit(f['folder_id'],fh_node,sh_node,data['project_id'])
+                        final_html+=res_html
+                response['success']=True
+                response['menu']='<ul class="file-tree file-tree-edit">%s</ul>'%final_html
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener los datos, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+
+def getMenuNodesEdit(folder_id, fh_html,sh_html,project_id):
+    #obtiene los nodos del menú
+    #no requiere validar permisos
+    try:
+        folders=db.query("""
+            select folder_id, name
+            from project.folder
+            where parent_id=%s order by folder_id
+        """%folder_id).dictresult()
+        forms=db.query("""
+            select
+                form_id, name
+            from project.form where project_id=%s and folder_id=%s
+            and status_id>2 order by name
+        """%(project_id,folder_id)).dictresult()
+
+        node=""
+
+        if folders==[]:
+            if forms==[]:
+                return fh_html+sh_html
+            else:
+
+                forms_str=""
+                for f in forms:
+                    project_factor=int(project_id)*int(cfg.project_factor)
+                    url='/project/%s/%s'%(project_factor,f['form_id'])
+                    forms_str+='<li class="selectable-form-edit"><a href="#" id="%s">%s</a></li>'%(f['form_id'],f['name'])
+                return fh_html+forms_str+sh_html
+        else:
+            forms_str=""
+            if forms!=[]:
+                for f in forms:
+                    project_factor=int(project_id)*int(cfg.project_factor)
+                    url='/project/%s/%s'%(project_factor,f['form_id'])
+                    forms_str+='<li class="selectable-form-edit"><a href="#" id="%s">%s</a></li>'%(f['form_id'],f['name'])
+            current_level=""
+            for x in folders:
+                fh_new_node='<input type="checkbox" class="form-check-input tree-menu-checkbox-edit folder-checkbox-edit"><li class="selectable-folder-edit"><a href="#" data-folder="%s">%s</a><ul>'%(x['folder_id'],x['name'])
+                sh_new_node='</ul></li>'
+                res_node=getMenuNodesEdit(x['folder_id'],fh_new_node,sh_new_node,project_id)
+                current_level+=res_node
+
+            return fh_html+forms_str+current_level+sh_html
+    except:
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+
+@bp.route('/saveEditFormSettings', methods=['GET','POST'])
+@is_logged_in
+def saveEditFormSettings():
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                
+                old_form=db.query("""
+                    select * from project.form
+                    where form_id=%s
+                """%data['form_id']).dictresult()[0]
+                old_columns=eval(old_form['columns'])
+                new_columns=data['columns_info']
+                cols_to_remove=[]
+                cols_to_add=[]
+                non_originals=[]
+                originals=[]
+                delete_content=[]
+
+                columns_update=[]
+                #recorre info de columnas nuevas
+                for nc in new_columns:
+                    #se verifica si es columna original
+                    if nc['original_%s'%nc['order']]==False:
+                        #si no es columna original, será agregada a tabla en esquema form
+                        non_originals.append(nc['order'])
+                        cols_to_add.append(nc['order'])
+                    else:
+                        #si es columna original
+                        originals.append(nc['order'])
+                        #se verifica si hay que borrar contenido de la columna
+                        if nc['checkdel_%s'%nc['order']]==True:
+                            delete_content.append(nc['order'])
+                    #se va armando lista de columnas en el formato en que se va a actualizar a la base de datos
+                    columns_update.append({
+                        'editable':nc['checkcol_%s'%nc['order']],
+                        'order':nc['order'],
+                        'name':nc['name']
+                    })
+
+                #se recorre configuración antigüa de columnas
+                for oc in old_columns:
+                    #se verifica si esas columnas se encuentran en las nuevas columnas originales
+                    if str(oc['order']) not in originals:
+                        #si no se encuentran, se agrega a lista de columnas a eliminar de esquema form
+                        cols_to_remove.append(oc['order'])
+                #nombre de tabla en esquema form
+                form_table="form.project_%s_form_%s"%(data['project_id'],data['form_id'])
+
+                #se actualiza configuración de Columnas
+                db.query("""
+                    update project.form
+                    set name='%s',
+                    folder_id=%s,
+                    rows=%s,
+                    columns_number=%s,
+                    columns='%s'
+                    where form_id=%s
+                """%(data['name'],data['folder_id'],data['rows'],data['columns_number'],str(columns_update).replace("'","''"),data['form_id']))
+
+                #se comprueba si se aumentó el número de filas
+                if int(data['rows'])>int(old_form['rows']):
+                    rows_to_add=int(data['rows'])-int(old_form['rows'])
+                    for i in range(0,rows_to_add):
+                        db.insert(form_table,{'form_id':data['form_id'],'project_id':data['project_id']})
+                if int(data['rows'])<int(old_form['rows']):
+                    rows_to_remove=int(old_form['rows'])-int(data['rows'])
+                    db.query("""
+                        delete from %s where entry_id in (select entry_id from %s order by entry_id desc limit %s)
+                    """%(form_table,form_table,rows_to_remove))
+
+
+                if cols_to_remove!=[]:
+                    for ctr in cols_to_remove:
+                        db.query("""
+                            alter table %s drop column IF EXISTS %s
+                        """%(form_table,'col_%s'%ctr))
+                if cols_to_add!=[]:
+                    for cta in cols_to_add:
+                        db.query("""
+                            alter table %s add %s text default ''
+                        """%(form_table,'col_%s'%cta))
+
+                if delete_content!=[]:
+                    for dc in delete_content:
+                        db.query("""
+                            update %s
+                            set %s=''
+                        """%(form_table,'col_%s'%dc))
+                response['msg_response']='La configuración ha sido actualizada.'
+                response['success']=True
+            else:
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)

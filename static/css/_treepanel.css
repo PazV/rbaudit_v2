@@ -1,9 +1,9 @@
-.selectable-folder{
+.selectable-folder, .selectable-folder-edit{
     cursor:pointer;
     margin-left:7px;
 }
 
-.selectable-form{
+.selectable-form, .selectable-form-edit{
     margin-left:7px;
 }
 
@@ -18,4 +18,8 @@
 
 .form-check-input.tree-menu-checkbox{
     margin-left:-1.5rem !important;
+}
+
+.form-check-input.tree-menu-checkbox-edit{
+    margin-left: -1.5rem !important;
 }

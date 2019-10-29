@@ -1418,8 +1418,313 @@ $(document).ready(function(){
         }
     });
 
+    $("#btnEditResolvedForm").click(function(){
+        $.ajax({
+            url:'/project/getSettingsForEditing',
+            type:'POST',
+            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    console.log(res['data']);
+                    $("#EFSname").val(res.data.name);
+                    $("#EFSfolder").val(res.data.folder_name);
+                    $("#EFSrows").val(res.data.rows);
+                    $("#EFScolumns").val(res.data.columns_number);
+                    $("#mod_edit_form_settings").data('form_id',res.data.form_id);
+                    $("#mod_edit_form_settings").data('folder_id',res.data.folder_id);
+                    $("#mod_edit_form_settings").data('rows',res.data.rows);
+                    $("#mod_edit_form_settings").data('columns_number',res.data.columns_number);
+                    $("#frmEditColumnsSettings").empty();
+                    var column_cont=1;
+                    for (var x of res.data.columns){
+
+                        $("#frmEditColumnsSettings").append('<fieldset class="form-fieldset original-column"><legend class="form-fieldset-legend">Columna '+x['order']+'</legend><div class="form-group row"><label class="col-sm-2 col-form-label" >Nombre: </label><div class="col-sm-10"><input type="text" class="form-control" placeholder="Nombre de la columna" name="col_'+x['order']+'" value="'+x['name']+'"/></div></div><div class="row" style="display: flex; flex-flow: row nowrap; justify-content: space-between;"><div class="col-sm-10"><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="checkcol_'+x['order']+'" name="checkcol_'+x['order']+'"><label class="form-check-label" for="checkcol_'+x['order']+'">Editable</label></div><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="checkdel_'+x['order']+'" name="checkdel_'+x['order']+'"><label class="form-check-label" for="checkdel_'+x['order']+'">Borrar información de la columna</label></div></div><div style="margin-right:15px; margin-bottom:2px;"><button type="button" class="btn btn-danger btn-sm remove-column-fieldset" style="padding:1px 5px;" data-toggle="tooltip" title="Eliminar columna"><i class="fa fa-trash"></i></button></div></div></fieldset>')
 
 
+                        column_cont++;
+                        if (x['editable']==true){
+                            $("#checkcol_"+x['order']).prop("checked",true);
+                        }
+                    }
+                    $(".remove-column-fieldset").click(function(){
+                        if ($($(this).parents('fieldset')).hasClass('original-column')){
+                            var element=this;
+                            $.confirm({
+                                theme:'dark',
+                                title:'Atención',
+                                content:'Al eliminar una columna que ya se encuentra en el formulario, también será <b>ELIMINADA LA INFORMACIÓN</b> contenida en dicha columna, ¿deseas continuar?',
+                                buttons:{
+                                    confirm:{
+                                        text:'Sí',
+                                        action:function(){
+                                            $(element).parents('fieldset').remove();
+                                            var col_number=parseInt($("#EFScolumns").val())-1;
+                                            $("#EFScolumns").val(col_number);
+                                        }
+                                    },
+                                    cancel:{
+                                        text:'No'
+                                    }
+                                }
+                            });
+                        }
+                        else{
+                            $(this).parents('fieldset').remove();
+                            var col_number=parseInt($("#EFScolumns").val())-1;
+                            $("#EFScolumns").val(col_number);
+                        }
+                    });
+
+                    $("#frmEditColumnsSettings").find('.form-control:last').on('focusout',function(){
+                        var input=$(this);
+                        if (input[0].value.trim().length>0){ //valida si es diferente de vacio y verifica que no tenga puros espacios vacios
+                            input.removeClass("invalid-field").addClass("valid-field");
+                        }
+                        else{
+                            input.removeClass("valid-field").addClass("invalid-field");
+                        }
+                    });
+                    $("#mod_edit_form_settings").modal("show");
+
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Error',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnOpenFolderMenu").click(function(){
+        $.ajax({
+            url:'/project/getFolderMenuEdit',
+            type:'POST',
+            data:JSON.stringify({'project_id':me.user_info['project_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#div_form_folder_menu").empty();
+                    $("#div_form_folder_menu").append(res.menu);
+                    $(".file-tree-edit").filetree({
+                        animationSpeed: 'fast',
+                        collapsed: true
+                    });
+                    $(".folder-checkbox-edit").on('click',function(e){
+                        var folder_id=$(e.target).next().children('a').data('folder');
+                        $(".folder-checkbox-edit").prop("checked",false);
+                        $(e.target).prop("checked",true);
+                        console.log(folder_id);
+                    });
+                    $("#mod_form_folder_menu").modal("show");
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Error',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnEFSAddColumn").click(function(){
+        var col_number=parseInt($("#frmEditColumnsSettings").find("fieldset:last-child").find('input:text')[0].name.split("_")[1])+1;
+        var col_cont=parseInt($("#EFScolumns").val())+1;
+        $("#EFScolumns").val(col_cont);
+        var col_name='col_'+col_number;
+        var a=$("#frmEditColumnsSettings").append('<fieldset class="form-fieldset"><legend class="form-fieldset-legend">Columna '+col_number+'</legend><div class="form-group row"><label class="col-sm-2 col-form-label">Nombre: </label><div class="col-sm-10"><input type="text" class="form-control" placeholder="Nombre de la columna" name="'+col_name+'"/></div></div><div class="col-sm-4"><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" value="" id="check'+col_name+'" name="check'+col_name+'"><label class="form-check-label" for="check'+col_name+'">Editable</label></div></div></fieldset>');
+
+        $(a).find('.form-control:last').on('focusout',function(){
+            var input=$(this);
+            if (input[0].value.trim().length>0){ //valida si es diferente de vacio y verifica que no tenga puros espacios vacios
+                input.removeClass("invalid-field").addClass("valid-field");
+            }
+            else{
+                input.removeClass("valid-field").addClass("invalid-field");
+            }
+        });
+    });
+
+    $("#btnEFSRemoveColumn").click(function(){
+        if ($("#frmEditColumnsSettings").find("fieldset:last-child").hasClass('original-column')){
+            $.confirm({
+                theme:'dark',
+                title:'Atención',
+                content:'Al eliminar una columna que ya se encuentra en el formulario, también será <b>ELIMINADA LA INFORMACIÓN</b> contenida en dicha columna, ¿deseas continuar?',
+                buttons:{
+                    confirm:{
+                        text:'Sí',
+                        action:function(){
+                            if (parseInt($("#EFScolumns").val())>0){ //valida que no se pueda poner menos de cero en columnas
+                                var col_number=parseInt($("#EFScolumns").val())-1;
+                                $("#EFScolumns").val(col_number);
+                                $("#frmEditColumnsSettings").find("fieldset:last-child").remove();
+                            }
+                        }
+                    },
+                    cancel:{
+                        text:'No'
+                    }
+                }
+            });
+        }
+        else{
+            if (parseInt($("#EFScolumns").val())>0){ //valida que no se pueda poner menos de cero en columnas
+                var col_number=parseInt($("#EFScolumns").val())-1;
+                $("#EFScolumns").val(col_number);
+                $("#frmEditColumnsSettings").find("fieldset:last-child").remove();
+            }
+        }
+    });
+
+    $("#btnSelectNewFolder").click(function(){
+        if($(".file-tree-edit").find(".folder-checkbox-edit:checked").length==1){
+            $("#EFSfolder").val($(".file-tree-edit").find(".folder-checkbox-edit:checked").next('li').children('a')[0].textContent);
+            $("#mod_edit_form_settings").data('folder_id',$(".file-tree-edit").find('input:checked').next('li').children('a').data('folder'));
+            $("#mod_form_folder_menu").modal("hide");
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debes seleccionar una carpeta'
+            });
+        }
+    });
+
+    $("#frmEditFormSettings .form-control").focusout(function(){
+        var id="#"+this.id;
+        var error_id="#err"+this.id;
+        emptyField(id,error_id);
+    });
+
+    $("#frmEditColumnsSettings .form-control").focusout(function(){
+        var input=$(this);
+        if (input[0].value.trim().length>0){ //valida si es diferente de vacio y verifica que no tenga puros espacios vacios
+            input.removeClass("invalid-field").addClass("valid-field");
+        }
+        else{
+            input.removeClass("valid-field").addClass("invalid-field");
+        }
+    });
+
+    $("#btnSaveEditFormSettings").click(function(){
+        $("#frmEditFormSettings :input").focusout();
+        $("#frmEditColumnsSettings .form-control").focusout();
+        var form_input=$("#frmEditFormSettings .form-control");
+        var valid=true;
+        for (var x in form_input){
+            if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                valid=false;
+                break
+            }
+        }
+        var form_columns=$("#frmEditColumnsSettings .form-control");
+        var form_checks=$("#frmEditColumnsSettings .custom-control-input");
+        var col_valid=true;
+        for (var y in form_columns){
+            if (form_columns[y].type=='text'){
+                if ($(form_columns[y]).hasClass('invalid-field')){
+                    col_valid=false;
+                    break
+                }
+            }
+        }
+        if (valid===true && col_valid){
+            var data=getForm("#frmEditFormSettings");
+            if (parseInt(data['rows'])>0){
+                if (parseInt(data['columns_number'])>0){
+                    data['user_id']=me.user_info['user_id'];
+                    data['project_id']=me.user_info['project_id'];
+                    data['form_id']=me.user_info['form_id'];
+                    data['folder_id']=$("#mod_edit_form_settings").data('folder_id');
+
+                    // var form_2=getForm("#frmEditColumnsSettings",null,true);
+                    var form_2=getColumnsForm("#frmEditColumnsSettings",null,true);
+                    // var fieldsets=$("#frmEditColumnsSettings").find("fieldset");
+                    // for (var z of fieldsets){
+                    //     var col_number=$(z).find('input:text')[0].name.split("_")[1];
+                    //     if ($(z).hasClass('original-column')){
+                    //         form_2['original_'+col_number]=true;
+                    //     }
+                    //     else{
+                    //         form_2['original_'+col_number]=false;
+                    //     }
+                    // }
+                    data['columns_info']=form_2;
+                    console.log(data);
+                    EasyLoading.show({
+                        text:'Cargando...',
+                        type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                    });
+                    $.ajax({
+                        url:'/project/saveEditFormSettings',
+                        type:'POST',
+                        data:JSON.stringify(data),
+                        success:function(response){
+                            try{
+                                var res=JSON.parse(response)
+                            }catch(err){
+                                ajaxError();
+                            }
+                            EasyLoading.hide();
+                            if (res.success){
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:res.msg_response,
+                                    buttons:{
+                                        confirm:{
+                                            text:'Aceptar',
+                                            action:function(){
+                                                window.location.reload();
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                            else{
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Error',
+                                    content:res.msg_response
+                                });
+                            }
+                        }
+
+                    })
+
+                }
+            }
+        }
+    });
 });
 
 
@@ -1640,3 +1945,40 @@ function saveTableInfo(table_id,url,user_info,show_msg){
         }
     });
 }
+
+
+function getColumnsForm(formId,select_list=null,check_list=null){
+    var frm = $(formId).serializeArray().reduce(function(obj, item) {
+        obj[item.name] = item.value;
+        return obj;
+    }, {});
+    var input_list=$(formId).find("fieldset");
+    var columns=[];
+    for (var x of input_list){
+        var name=$(x).find('input:text')[0].name;
+        var col_number=String(name.split("_")[1]);
+        column={name:$(x).find('input:text')[0].value};
+        column['checkcol_'+col_number]=$("#checkcol_"+col_number).prop("checked");
+        column['original_'+col_number]=$(x).hasClass('original-column');
+        column['order']=col_number;
+        if (column['original_'+col_number]==true){
+            column['checkdel_'+col_number]=$("#checkdel_"+col_number).prop("checked");
+        }
+        columns.push(column);
+
+    }
+    // if (select_list!==null){
+    //     for (x in select_list){
+    //         frm[select_list[x]['name']]=parseInt($(select_list[x]['id']).find("option:selected").attr("name"));
+    //     }
+    // }
+    // if (check_list!==null){
+    //     var all_checks= $(formId).find("input[type=checkbox]");
+    //     for (a in all_checks){
+    //         if (all_checks[a].type=='checkbox'){
+    //             frm[all_checks[a].name]=all_checks[a].checked;
+    //         }
+    //     }
+    // }
+    return columns;
+};
