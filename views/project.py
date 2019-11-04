@@ -1033,6 +1033,9 @@ def saveResolvingForm():
                 success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'resolve_forms'})
                 if success:
                     if allowed:
+                        current_status=db.query("""
+                            select status_id from project.form where form_id=%s
+                        """%data['form_id']).dictresult()[0]
                         for x in data['table_data']:
                             update_list=[]
                             for key,value in x.iteritems():
@@ -1045,9 +1048,14 @@ def saveResolvingForm():
                             # app.logger.info(query)
                             db.query(query)
 
-                        db.query("""
-                            update project.form set status_id=4, user_last_update=%s, last_updated='now' where form_id=%s and project_id=%s
-                        """%(data['user_id'],data['form_id'],data['project_id']))
+                        if int(current_status['status_id'])==3:
+                            db.query("""
+                                update project.form set status_id=4, user_last_update=%s, last_updated='now' where form_id=%s and project_id=%s
+                            """%(data['user_id'],data['form_id'],data['project_id']))
+                        else:
+                            db.query("""
+                                update project.form set user_last_update=%s, last_updated='now' where form_id=%s and project_id=%s
+                            """%(data['user_id'],data['form_id'],data['project_id']))
 
                         response['success']=True
                         response['msg_response']='Los cambios han sido guardados.'
