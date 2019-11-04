@@ -579,6 +579,7 @@ def savePrefilledForm():
     response={}
     try:
         if request.method=='POST':
+            # app.logger.info(request.form)
             valid,data=GF.getDict(request.form,'post')
             if valid:
                 success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_forms'})
@@ -590,8 +591,9 @@ def savePrefilledForm():
                             update_list=[]
                             for key,value in x.iteritems():
                                 if key.split("_")[0]=='col':
-                                    update_list.append("%s='%s'"%(key,value))
+                                    update_list.append("%s=$$%s$$"%(key,value))
                             update_str=','.join(e for e in update_list)
+
                             query="""
                                 update form.project_%s_form_%s set %s where entry_id=%s
                             """%(data['project_id'],data['form_id'],update_str,x['entry_id'])
@@ -1377,7 +1379,7 @@ def checkSendToRevision():
                             select assigned_to,status_id from project.form
                             where form_id=%s
                         """%data['form_id']).dictresult()[0]
-                        if check['status_id']==3:
+                        if check['status_id']==3 or check['status_id']==4:
                             if int(check['assigned_to'])==int(data['user_id']):
                                 response['allowed']=True
                             else:
@@ -2903,7 +2905,7 @@ def saveEditFormSettings():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
-                
+
                 old_form=db.query("""
                     select * from project.form
                     where form_id=%s
@@ -2997,3 +2999,68 @@ def saveEditFormSettings():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+# @bp.route('/permissionDeleteProject', methods=['GET','POST'])
+# @is_logged_in
+# def permissionDeleteProject():
+#     response={}
+#     try:
+#         response['success']=False
+#         if request.method=='POST':
+#             valid,data=GF.getDict(request.form,'post')
+#             if valid:
+#                 success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'delete_projects'})
+#                 if success:
+#                     response['success']=True
+#                     if allowed:
+#                         response['allowed']=True
+#                     else:
+#                         response['allowed']=False
+#                         response['msg_response']='No tienes permisos para eliminar proyectos.'
+#                 else:
+#                     response['msg_response']='Ocurrió un error al intentar procesar la información.'
+#             else:
+#                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
+#         else:
+#             response['msg_response']='Ocurrió un error, favor de intenterlo de nuevo.'
+#     except:
+#         response['success']=False
+#         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+#         app.logger.info(traceback.format_exc(sys.exc_info()))
+#     return json.dumps(response)
+#
+# @bp.route('/getProjectInfo', methods=['GET','POST'])
+# @is_logged_in
+# def getProjectInfo():
+#     response={}
+#     try:
+#         if request.method=='POST':
+#             valid,data=GF.getDict(request.form,'post')
+#             if valid:
+#                 project=db.query("""
+#                     select a.name, a.company_name,
+#                     to_char(a.start_date,'DD-MM-YYYY') as start_date,
+#                     to_char(a.finish_date,'DD-MM-YYYY') as finish_date,
+#                     (select b.name from system.user b where b.user_id=a.manager) as manager,
+#                     (select b.name from system.user b where b.user_id=a.partner) as partner,
+#                     a.comments,
+#                     (select b.name from system.user b where b.user_id=a.created_by) as created_by,
+#                     to_char(a.created,'DD-MM-YYYY') as created
+#                     from project.project a
+#                     where a.project_id=%s
+#                 """%data['project_id']).dictresult()[0]
+#
+#                 response['success']=True
+#                 response['project_name']=project['name']
+#
+#             else:
+#                 response['success']=False
+#                 response['msg_response']='Ocurrió un error al intentar procesar la información.'
+#         else:
+#             response['success']=False
+#             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+#     except:
+#         response['success']=False
+#         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+#         app.logger.info(traceback.format_exc(sys.exc_info()))
+#     return json.dumps(response)
