@@ -447,7 +447,8 @@ def getProjectUserPermits():
                         download_forms,
                         create_users,
                         see_all_forms,
-                        delete_foldersandforms
+                        delete_foldersandforms,
+                        delete_projects
                     from
                         system.user
                     where
@@ -471,6 +472,8 @@ def getProjectUserPermits():
                     p+='<li>Ver todos los formularios</li>'
                 if permits['delete_foldersandforms']==True:
                     p+='<li>Eliminar carpetas/formularios</li>'
+                if permits['delte_projects']==True:
+                    p+='<li>Eliminar proyectos</li>'
                 p+='</ul>'
                 response['success']=True
                 response['data']=p
@@ -506,7 +509,8 @@ def getUserPermits():
                         download_forms,
                         create_users,
                         see_all_forms,
-                        delete_foldersandforms
+                        delete_foldersandforms,
+                        delete_projects
                     from
                         system.user
                     where user_id=%s
@@ -550,7 +554,8 @@ def editUser():
                             download_forms={download_forms},
                             create_users={create_users},
                             see_all_forms={see_all_forms},
-                            delete_foldersandforms={delete_foldersandforms}
+                            delete_foldersandforms={delete_foldersandforms},
+                            delete_projects={delete_projects}
                             where user_id={user_id}
                         """.format(**data))
                         response['success']=True

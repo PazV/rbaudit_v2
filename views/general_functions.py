@@ -25,7 +25,7 @@ class GeneralFunctions:
         """
         try:
             if method=='post':
-                d=form.to_dict(flat=False)
+                d=form.to_dict(flat=False)                
                 e=d.keys()[0]
                 f=json.loads(e)
                 return True,f
@@ -273,7 +273,7 @@ class GeneralFunctions:
         except:
             app.logger.info(traceback.format_exc(sys.exc_info()))
             return False,False
-                                                                                                                                                                                                                                                                                       
+
     def sendMailNotification(self,data):
         try:
             form_info=db.query("""

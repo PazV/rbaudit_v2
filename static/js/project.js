@@ -333,6 +333,178 @@ $(document).ready(function(){
         }
     });
 
+    $("#mod_delete_project").on('show.bs.modal',function(){
+        $.ajax({
+            url:'/project/permissionDeleteProject',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    if (res.allowed==false){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+                                        $("#mod_delete_project").modal("hide");
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    else{
+                        $.ajax({
+                            url:'/project/getProjects',
+                            type:'POST',
+                            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+                            success:function(response){
+                                try{
+                                    var res=JSON.parse(response);
+                                }catch(err){
+                                    ajaxError();
+                                }
+                                if (res.success){
+                                    $("#DelPprojects").empty();
+                                    $.each(res.data,function(i,item){
+                                        $("#DelPprojects").append($('<option>',{
+                                            text:item.name,
+                                            name:item.project_id,
+                                            selected:true
+                                        }));
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnShowProjectDetails").click(function(){
+        $("#mod_project_info").modal("show");
+        $.ajax({
+            url:'/project/getProjectInfo',
+            type:'POST',
+            data:JSON.stringify({'project_id':$("#DelPprojects").find("option:selected").attr("name")}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#cardproj_info_header").html("");
+                    $("#cardproj_info_body").html("");
+                    $("#mod_project_info").modal("show");
+                    $("#cardproj_info_header").html(res.project_name);
+                    $("#cardproj_info_body").html(res.project_info);
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnDeleteProject").click(function(){
+        $.confirm({
+            theme:'dark',
+            title:'Atención',
+            content:'¿Estás seguro de querer eliminar el proyecto '+$("#DelPprojects").val()+'?, una vez realizada esta acción no podrá ser revertida.',
+            buttons:{
+                confirm:{
+                    text:'Sí',
+                    action:function(){
+                        EasyLoading.show({
+                            text:'Cargando...',
+                            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                        });
+                        $.ajax({
+                            url:'/project/deleteProject',
+                            type:'POST',
+                            data:JSON.stringify({'user_id':me.user_info['user_id'],'project_id':$("#DelPprojects").find("option:selected").attr("name")}),
+                            success:function(response){
+                                try{
+                                    var res=JSON.parse(response);
+                                }catch(err){
+                                    ajaxError();
+                                }
+                                EasyLoading.hide();
+                                if (res.success){
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res.msg_response,
+                                        buttons:{
+                                            confirm:{
+                                                text:'Aceptar',
+                                                action:function(){
+                                                    window.location.reload();
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                                else{
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Error',
+                                        content:res.msg_response
+                                    });
+                                }
+                            },
+                            error:function(){
+                                EasyLoading.hide();
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Error',
+                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                });
+                            }
+                        });
+                    }
+                },
+                cancel:{
+                    text:'No'
+                }
+            }
+        })
+    });
+
 });
 
 function loadProjects(user_info){

@@ -3008,67 +3008,158 @@ def saveEditFormSettings():
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
-# @bp.route('/permissionDeleteProject', methods=['GET','POST'])
-# @is_logged_in
-# def permissionDeleteProject():
-#     response={}
-#     try:
-#         response['success']=False
-#         if request.method=='POST':
-#             valid,data=GF.getDict(request.form,'post')
-#             if valid:
-#                 success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'delete_projects'})
-#                 if success:
-#                     response['success']=True
-#                     if allowed:
-#                         response['allowed']=True
-#                     else:
-#                         response['allowed']=False
-#                         response['msg_response']='No tienes permisos para eliminar proyectos.'
-#                 else:
-#                     response['msg_response']='Ocurrió un error al intentar procesar la información.'
-#             else:
-#                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
-#         else:
-#             response['msg_response']='Ocurrió un error, favor de intenterlo de nuevo.'
-#     except:
-#         response['success']=False
-#         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
-#         app.logger.info(traceback.format_exc(sys.exc_info()))
-#     return json.dumps(response)
-#
-# @bp.route('/getProjectInfo', methods=['GET','POST'])
-# @is_logged_in
-# def getProjectInfo():
-#     response={}
-#     try:
-#         if request.method=='POST':
-#             valid,data=GF.getDict(request.form,'post')
-#             if valid:
-#                 project=db.query("""
-#                     select a.name, a.company_name,
-#                     to_char(a.start_date,'DD-MM-YYYY') as start_date,
-#                     to_char(a.finish_date,'DD-MM-YYYY') as finish_date,
-#                     (select b.name from system.user b where b.user_id=a.manager) as manager,
-#                     (select b.name from system.user b where b.user_id=a.partner) as partner,
-#                     a.comments,
-#                     (select b.name from system.user b where b.user_id=a.created_by) as created_by,
-#                     to_char(a.created,'DD-MM-YYYY') as created
-#                     from project.project a
-#                     where a.project_id=%s
-#                 """%data['project_id']).dictresult()[0]
-#
-#                 response['success']=True
-#                 response['project_name']=project['name']
-#
-#             else:
-#                 response['success']=False
-#                 response['msg_response']='Ocurrió un error al intentar procesar la información.'
-#         else:
-#             response['success']=False
-#             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
-#     except:
-#         response['success']=False
-#         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
-#         app.logger.info(traceback.format_exc(sys.exc_info()))
-#     return json.dumps(response)
+@bp.route('/permissionDeleteProject', methods=['GET','POST'])
+@is_logged_in
+def permissionDeleteProject():
+    #verifica si el usuario tiene permisos para eliminar proyectos
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'delete_projects'})
+                if success:
+                    response['success']=True
+                    if allowed:
+                        response['allowed']=True
+                    else:
+                        response['allowed']=False
+                        response['msg_response']='No tienes permisos para eliminar proyectos.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar procesar la información.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intenterlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getProjectInfo', methods=['GET','POST'])
+@is_logged_in
+def getProjectInfo():
+    #obtiene los datos del proyecto
+    #no requiere verificar permisos
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                project=db.query("""
+                    select a.name, a.company_name,
+                    to_char(a.start_date,'DD-MM-YYYY') as start_date,
+                    to_char(a.finish_date,'DD-MM-YYYY') as finish_date,
+                    (select b.name from system.user b where b.user_id=a.manager) as manager,
+                    (select b.name from system.user b where b.user_id=a.partner) as partner,
+                    a.comments,
+                    (select b.name from system.user b where b.user_id=a.created_by) as created_by,
+                    to_char(a.created,'DD-MM-YYYY') as created
+                    from project.project a
+                    where a.project_id=%s
+                """%data['project_id']).dictresult()[0]
+
+                info='<p><b>Empresa:</b> {company_name}<br><b>Periodo: </b>{start_date} - {finish_date}<br><b>Creado por: </b>{created_by}<br><b>Fecha de creación: </b>{created}<br><b>Gerente: </b>{manager}<br><b>Socio: </b>{partner}<br><b>Comentarios: </b>{comments}</p>'.format(**project)
+
+                response['success']=True
+                response['project_name']=project['name']
+                response['project_info']=info
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar procesar la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/deleteProject', methods=['GET','POST'])
+@is_logged_in
+def deleteProject():
+    #elimina un proyecto
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'delete_projects'})
+                if success:
+                    if allowed:
+                        forms=db.query("""
+                            select form_id from project.form where project_id=%s
+                        """%data['project_id']).dictresult()
+                        #eliminar tablas de cada formulario (esquema form)
+                        for f in forms:
+                            table_name="form.project_%s_form_%s"%(data['project_id'],f['form_id'])
+                            db.query("""
+                                drop table IF EXISTS %s;
+                            """%table_name)
+
+                        form_ids=','.join(str(e['form_id']) for e in forms)
+
+                        #eliminar comentarios del formulario
+                        db.query("""
+                            delete from project.form_comments where form_id in (%s)
+                        """%form_ids)
+
+                        #eliminar archivos del proyecto
+                        if os.path.exists(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id'])):
+                            shutil.rmtree(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id']))
+                        #eliminar registros de archivos de formularios
+                        db.query("""
+                            delete from project.form_files where form_id in (%s)
+                        """%form_ids)
+
+                        #eliminar revisores de formularios
+                        db.query("""
+                            delete from project.form_revisions where form_id in (%s)
+                        """%form_ids)
+
+                        #eliminar notificaciones
+                        db.query("""
+                            delete from project.notification where project_id=%s
+                        """%data['project_id'])
+
+                        #elimina carpetas del proyecto
+                        db.query("""
+                            delete from project.folder where project_id=%s
+                        """%data['project_id'])
+
+                        #elimina registros de formularios del proyecto
+                        db.query("""
+                            delete from project.form where project_id=%s
+                        """%data['project_id'])
+
+                        #elimina los usuarios del proyecto
+                        db.query("""
+                            delete from project.project_users where project_id=%s
+                        """%data['project_id'])
+
+                        #elimina registro del proyecto
+                        db.query("""
+                            delete from project.project where project_id=%s
+                        """%data['project_id'])
+
+                        response['success']=True
+                        response['msg_response']='El proyecto ha sido eliminado.'
+
+                    else:
+                        response['msg_response']='No tienes permisos para eliminar proyectos.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar procesar la información.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
