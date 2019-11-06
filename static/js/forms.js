@@ -725,6 +725,8 @@ $(document).ready(function(){
     });
 
     $("#newFormImportFile").on('change',function(){
+        var path=$("#newFormImportFile")[0].value.split("\\").pop();
+        $("#newFormImportFile").siblings("label").html(path);
         var pattern=$("#newFormImportFile")[0].pattern.split(",");
         if (hasExtension("newFormImportFile",pattern)){
             $("#newFormImportFile").parent('.custom-file').addClass('valid-file-field').removeClass('invalid-file-field');
