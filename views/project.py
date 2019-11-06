@@ -1519,7 +1519,8 @@ def checkAllowedDownload():
                             select status_id from project.form where form_id=%s
                         """%data['form_id']).dictresult()
                         #debe ser el último status
-                        if int(status[0]['status_id'])==7:
+                        # if int(status[0]['status_id'])==7:
+                        if int(status[0]['status_id'])>2:
                             manager=db.query("""
                                 select * from project.project where project_id=%s and (manager=%s or partner=%s)
                             """%(data['project_id'],data['user_id'],data['user_id'])).dictresult()
@@ -1585,6 +1586,7 @@ def downloadResolvedForm():
                                 name,
                                 columns_number,
                                 rows,
+                                status_id,
                                 columns,
                                 (select a.name from system.user a where a.user_id=assigned_to) as assigned_to,
                                 to_char(resolved_date,'DD/MM/YYYY HH24:MI:SS') as resolved_date,
@@ -1698,113 +1700,116 @@ def downloadResolvedForm():
 
                         last_info_row=row
 
-                        #agregar quién realizó el formulario
-                        revisions=db.query("""
-                            select (select a.name from system.user a where a.user_id=b.user_id) as user_name,
-                            b.revision_number, to_char(b.revision_date,'DD/MM/YYYY HH24:MI:SS') as revision_date
-                            from project.form_revisions b where b.form_id=%s order by b.revision_number asc
-                        """%data['form_id']).dictresult()
-                        bd = Side(style='thick', color="000000")
-                        th = Side(style='thin', color="000000")
+                        #comprueba si el status es cerrado para agregar datos de quien realizó y revisó el formulario
+                        if int(form['status_id'])==7:
 
-                        col_num+=2
-                        ws.cell(column=col_num,row=6).border=Border(left=bd,top=bd,bottom=th)
-                        ws.cell(column=col_num+1,row=6,value='Nombre')
-                        ws.cell(column=col_num+1,row=6).font=Font(name='Times New Roman', size=12, bold=True)
-                        ws.cell(column=col_num+1,row=6).border=Border(top=bd,bottom=th)
-                        ws.cell(column=col_num+2,row=6,value='Fecha')
-                        ws.cell(column=col_num+2,row=6).font=Font(name='Times New Roman', size=12, bold=True)
-                        ws.cell(column=col_num+2,row=6).border=Border(top=bd,right=bd,bottom=th)
+                            #agregar quién realizó el formulario
+                            revisions=db.query("""
+                                select (select a.name from system.user a where a.user_id=b.user_id) as user_name,
+                                b.revision_number, to_char(b.revision_date,'DD/MM/YYYY HH24:MI:SS') as revision_date
+                                from project.form_revisions b where b.form_id=%s order by b.revision_number asc
+                            """%data['form_id']).dictresult()
+                            bd = Side(style='thick', color="000000")
+                            th = Side(style='thin', color="000000")
 
-                        ws.cell(column=col_num,row=7,value='Encargado')
-                        ws.cell(column=col_num,row=7).font=Font(name='Times New Roman', size=12, bold=True)
-                        ws.cell(column=col_num,row=7).border=Border(left=bd)
-                        ws.cell(column=col_num+1,row=7,value=form['assigned_to'])
-                        ws.cell(column=col_num+1,row=7).font=Font(name='Times New Roman', size=12, bold=False)
-                        ws.cell(column=col_num+2,row=7,value=form['resolved_date'])
-                        ws.cell(column=col_num+2,row=7).font=Font(name='Times New Roman', size=12, bold=False)
-                        ws.cell(column=col_num+2,row=7).border=Border(right=bd)
+                            col_num+=2
+                            ws.cell(column=col_num,row=6).border=Border(left=bd,top=bd,bottom=th)
+                            ws.cell(column=col_num+1,row=6,value='Nombre')
+                            ws.cell(column=col_num+1,row=6).font=Font(name='Times New Roman', size=12, bold=True)
+                            ws.cell(column=col_num+1,row=6).border=Border(top=bd,bottom=th)
+                            ws.cell(column=col_num+2,row=6,value='Fecha')
+                            ws.cell(column=col_num+2,row=6).font=Font(name='Times New Roman', size=12, bold=True)
+                            ws.cell(column=col_num+2,row=6).border=Border(top=bd,right=bd,bottom=th)
 
-                        current_row=8
-                        for r in revisions:
-                            ws.cell(column=col_num,row=current_row,value='Revisor')
+                            ws.cell(column=col_num,row=7,value='Encargado')
+                            ws.cell(column=col_num,row=7).font=Font(name='Times New Roman', size=12, bold=True)
+                            ws.cell(column=col_num,row=7).border=Border(left=bd)
+                            ws.cell(column=col_num+1,row=7,value=form['assigned_to'])
+                            ws.cell(column=col_num+1,row=7).font=Font(name='Times New Roman', size=12, bold=False)
+                            ws.cell(column=col_num+2,row=7,value=form['resolved_date'])
+                            ws.cell(column=col_num+2,row=7).font=Font(name='Times New Roman', size=12, bold=False)
+                            ws.cell(column=col_num+2,row=7).border=Border(right=bd)
+
+                            current_row=8
+                            for r in revisions:
+                                ws.cell(column=col_num,row=current_row,value='Revisor')
+                                ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
+                                ws.cell(column=col_num,row=current_row).border=Border(left=bd)
+                                # revisor=db.query("""
+                                #     select name from system.user where user_id=%s
+                                # """%int(form['revisions'].split(",")[0].split(":")[1])).dictresult()[0]
+                                ws.cell(column=col_num+1,row=current_row,value=r['user_name'])
+                                ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
+                                ws.cell(column=col_num+2,row=current_row,value=r['revision_date'])
+                                ws.cell(column=col_num+2,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
+                                ws.cell(column=col_num+2,row=current_row).border=Border(right=bd)
+                                current_row+=1
+
+                            ws.cell(column=col_num,row=current_row,value='Gerente')
                             ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
                             ws.cell(column=col_num,row=current_row).border=Border(left=bd)
-                            # revisor=db.query("""
-                            #     select name from system.user where user_id=%s
-                            # """%int(form['revisions'].split(",")[0].split(":")[1])).dictresult()[0]
-                            ws.cell(column=col_num+1,row=current_row,value=r['user_name'])
+                            ws.cell(column=col_num+1,row=current_row,value=project['manager'])
                             ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
-                            ws.cell(column=col_num+2,row=current_row,value=r['revision_date'])
-                            ws.cell(column=col_num+2,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
                             ws.cell(column=col_num+2,row=current_row).border=Border(right=bd)
                             current_row+=1
 
-                        ws.cell(column=col_num,row=current_row,value='Gerente')
-                        ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
-                        ws.cell(column=col_num,row=current_row).border=Border(left=bd)
-                        ws.cell(column=col_num+1,row=current_row,value=project['manager'])
-                        ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
-                        ws.cell(column=col_num+2,row=current_row).border=Border(right=bd)
-                        current_row+=1
-
-                        ws.cell(column=col_num,row=current_row,value='Socio')
-                        ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
-                        ws.cell(column=col_num,row=current_row).border=Border(left=bd,bottom=bd)
-                        ws.cell(column=col_num+1,row=current_row).border=Border(bottom=bd)
-                        ws.cell(column=col_num+1,row=current_row,value=project['partner'])
-                        ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
-                        ws.cell(column=col_num+2,row=current_row).border=Border(right=bd,bottom=bd)
+                            ws.cell(column=col_num,row=current_row,value='Socio')
+                            ws.cell(column=col_num,row=current_row).font=Font(name='Times New Roman', size=12, bold=True)
+                            ws.cell(column=col_num,row=current_row).border=Border(left=bd,bottom=bd)
+                            ws.cell(column=col_num+1,row=current_row).border=Border(bottom=bd)
+                            ws.cell(column=col_num+1,row=current_row,value=project['partner'])
+                            ws.cell(column=col_num+1,row=current_row).font=Font(name='Times New Roman', size=12, bold=False)
+                            ws.cell(column=col_num+2,row=current_row).border=Border(right=bd,bottom=bd)
 
 
-                        for column_cells in ws.columns:
-                            length = max(len(GF.as_text(cell.value))+5 for cell in column_cells)
-                            ws.column_dimensions[column_cells[0].column].width = length
-
-
-                        #revisar si hay observaciones del formulario
-                        comments=db.query("""
-                            select b.comment, to_char(b.created,'DD/MM/YYYY HH24:MI:SS') as created, (select a.name from system.user a where a.user_id=b.user_id) as user_name from project.form_comments b where b.form_id=%s
-                        """%data['form_id']).dictresult()
-                        if comments!=[]:
-                            comm_header_style=NamedStyle(name='comm_header_style')
-                            comm_header_style.font=Font(
-                                name='Times New Roman',
-                                size=14,
-                                bold=True,
-                                italic=False,
-                                color='FFFFFFFF'
-                            )
-                            comm_header_style.fill=PatternFill("solid", fgColor="FF7082D4")
-                            comm_header_style.alignment=Alignment(horizontal='center')
-                            comm_header_style.border=Border(
-                                left=Side(border_style='thin',color='FF000000'),
-                                right=Side(border_style='thin',color='FF000000'),
-                                top=Side(border_style='thin',color='FF000000'),
-                                bottom=Side(border_style='thin',color='FF000000')
-                            )
-
-                            wo = wb.create_sheet('Observaciones',1)
-                            row=2
-                            wo.cell(column=2, row=row, value='Por')
-                            wo.cell(column=2, row=row).style=comm_header_style
-                            wo.cell(column=3, row=row, value='Fecha')
-                            wo.cell(column=3, row=row).style=comm_header_style
-                            wo.cell(column=4, row=row, value='Observación')
-                            wo.cell(column=4, row=row).style=comm_header_style
-                            row+=1
-                            for x in comments:
-                                wo.cell(column=2,row=row,value=x['user_name'])
-                                wo.cell(column=2,row=row).style=content_style
-                                wo.cell(column=3,row=row,value=x['created'])
-                                wo.cell(column=3,row=row).style=content_style
-                                wo.cell(column=4,row=row,value=x['comment'])
-                                wo.cell(column=4,row=row).style=content_style
-                                row+=1
-
-                            for column_cells in wo.columns:
+                            for column_cells in ws.columns:
                                 length = max(len(GF.as_text(cell.value))+5 for cell in column_cells)
-                                wo.column_dimensions[column_cells[0].column].width = length
+                                ws.column_dimensions[column_cells[0].column].width = length
+
+
+                            #revisar si hay observaciones del formulario
+                            comments=db.query("""
+                                select b.comment, to_char(b.created,'DD/MM/YYYY HH24:MI:SS') as created, (select a.name from system.user a where a.user_id=b.user_id) as user_name from project.form_comments b where b.form_id=%s
+                            """%data['form_id']).dictresult()
+                            if comments!=[]:
+                                comm_header_style=NamedStyle(name='comm_header_style')
+                                comm_header_style.font=Font(
+                                    name='Times New Roman',
+                                    size=14,
+                                    bold=True,
+                                    italic=False,
+                                    color='FFFFFFFF'
+                                )
+                                comm_header_style.fill=PatternFill("solid", fgColor="FF7082D4")
+                                comm_header_style.alignment=Alignment(horizontal='center')
+                                comm_header_style.border=Border(
+                                    left=Side(border_style='thin',color='FF000000'),
+                                    right=Side(border_style='thin',color='FF000000'),
+                                    top=Side(border_style='thin',color='FF000000'),
+                                    bottom=Side(border_style='thin',color='FF000000')
+                                )
+
+                                wo = wb.create_sheet('Observaciones',1)
+                                row=2
+                                wo.cell(column=2, row=row, value='Por')
+                                wo.cell(column=2, row=row).style=comm_header_style
+                                wo.cell(column=3, row=row, value='Fecha')
+                                wo.cell(column=3, row=row).style=comm_header_style
+                                wo.cell(column=4, row=row, value='Observación')
+                                wo.cell(column=4, row=row).style=comm_header_style
+                                row+=1
+                                for x in comments:
+                                    wo.cell(column=2,row=row,value=x['user_name'])
+                                    wo.cell(column=2,row=row).style=content_style
+                                    wo.cell(column=3,row=row,value=x['created'])
+                                    wo.cell(column=3,row=row).style=content_style
+                                    wo.cell(column=4,row=row,value=x['comment'])
+                                    wo.cell(column=4,row=row).style=content_style
+                                    row+=1
+
+                                for column_cells in wo.columns:
+                                    length = max(len(GF.as_text(cell.value))+5 for cell in column_cells)
+                                    wo.column_dimensions[column_cells[0].column].width = length
 
 
 
