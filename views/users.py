@@ -31,11 +31,12 @@ def saveUser():
     try:
         if request.method=='POST':
             data=request.form.to_dict()
-            success,allowed=GF.checkPermission({'user_id':data['this_user'],'permission':'create_users'})
-            if success:
-                if allowed:
-                    user_data=copy.deepcopy(data) #deepcopy significa que los cambios en el nuevo dict no afectarán el dict original
-                    if str(data['user_id'])=='-1': #nuevo usuario
+
+            user_data=copy.deepcopy(data) #deepcopy significa que los cambios en el nuevo dict no afectarán el dict original
+            if str(data['user_id'])=='-1': #nuevo usuario
+                success,allowed=GF.checkPermission({'user_id':data['this_user'],'permission':'create_users'})
+                if success:
+                    if allowed:
                         mail_exists=db.query("""
                             select count(*) from system.user
                             where email='%s'
@@ -79,73 +80,75 @@ def saveUser():
                         else:
                             response['success']=False
                             response['msg_response']='Ya existe un usuario registrado con el correo %s.'%data['email']
-                    else: #editar usuario
+                    else:
                         response['success']=False
-                        if data['password_data']!='false':
-                            password_info=json.loads(data['password_data'])
-                            user_info=db.query("""
-                                select password,
-                                profile_picture, profile_picture_class
-                                from system.user
-                                where user_id=%s
-                            """%data['user_id']).dictresult()
-
-                            if check_password_hash(user_info[0]['password'],password_info['old_password']):
-                                if password_info['new_password'].replace(" ","")==password_info['confirm_password'].replace(" ",""):
-                                    if len(password_info['new_password'])>=6:
-                                        if password_info['new_password']!=password_info['old_password']:
-                                            new_pass=" ,password='%s'"%generate_password_hash(password_info['new_password'])
-                                        else:
-                                            response['msg_response']='La nueva contraseña debe ser diferente de la anterior.'
-                                    else:
-                                        response['msg_response']='La contraseña debe tener al menos 6 caracteres.'
-                                else:
-                                    response['msg_response']='Las contraseñas no coinciden, favor de revisar.'
-                            else:
-                                response['msg_response']='La contraseña actual es incorrecta, favor de revisar.'
-                        else:
-                            new_pass=""
-                        if data['file_name']!='false':
-                            files=request.files
-                            file_path=cfg.profile_img_path
-                            file=files[data['file_name']]
-                            filename=secure_filename(file.filename)
-                            file.save(os.path.join(file_path,filename))
-                            fname,ext=os.path.splitext(os.path.join(file_path,filename))
-                            os.rename(os.path.join(file_path,filename),os.path.join(file_path,'img_user_%s%s'%(data['user_id'],ext)))
-                            class_name='profileimage-user-%s-'%data['user_id']
-                            profile_picture=" ,profile_picture='img_user_%s%s'"%(data['user_id'],ext)
-                            profile_picture_class=" ,profile_picture_class='%s'"%class_name
-
-                            img_path=os.path.join(cfg.class_img_path,'img_user_%s%s'%(data['user_id'],ext))
-                            style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
-                            css_class=cssutils.css.CSSStyleRule(selectorText='.'+class_name,style=style)
-                            with open(cfg.profile_css_file, "a") as f:
-                                f.write(css_class.cssText)
-                        else:
-                            profile_picture=""
-                            profile_picture_class=""
-
-                        mail=db.query("""
-                            select count(*) from system.user where email='%s' and user_id <>%s
-                        """%(data['email'].strip(),data['user_id'])).dictresult()[0]
-                        mail['count']=0
-                        if mail['count']>0:
-                            response['msg_response']='Este correo ya se encuentra registrado, favor de ingresar otro.'
-                        else:
-                            db.query("""
-                                update system.user
-                                set name='%s', email='%s' %s %s %s
-                                where user_id=%s
-                            """%(data['name'],data['email'],new_pass,profile_picture,profile_picture_class,data['user_id']))
-                            response['msg_response']='El usuario ha sido actualizado.'
-                            response['success']=True
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
                 else:
                     response['success']=False
-                    response['msg_response']='No tienes permisos para realizar esta acción.'
-            else:
+                    response['msg_response']='Ocurrió un error al intentar obtener la información.'
+
+            else: #editar usuario
                 response['success']=False
-                response['msg_response']='Ocurrió un error al intentar validar la información.'
+                if data['password_data']!='false':
+                    password_info=json.loads(data['password_data'])
+                    user_info=db.query("""
+                        select password,
+                        profile_picture, profile_picture_class
+                        from system.user
+                        where user_id=%s
+                    """%data['user_id']).dictresult()
+
+                    if check_password_hash(user_info[0]['password'],password_info['old_password']):
+                        if password_info['new_password'].replace(" ","")==password_info['confirm_password'].replace(" ",""):
+                            if len(password_info['new_password'])>=6:
+                                if password_info['new_password']!=password_info['old_password']:
+                                    new_pass=" ,password='%s'"%generate_password_hash(password_info['new_password'])
+                                else:
+                                    response['msg_response']='La nueva contraseña debe ser diferente de la anterior.'
+                            else:
+                                response['msg_response']='La contraseña debe tener al menos 6 caracteres.'
+                        else:
+                            response['msg_response']='Las contraseñas no coinciden, favor de revisar.'
+                    else:
+                        response['msg_response']='La contraseña actual es incorrecta, favor de revisar.'
+                else:
+                    new_pass=""
+                if data['file_name']!='false':
+                    files=request.files
+                    file_path=cfg.profile_img_path
+                    file=files[data['file_name']]
+                    filename=secure_filename(file.filename)
+                    file.save(os.path.join(file_path,filename))
+                    fname,ext=os.path.splitext(os.path.join(file_path,filename))
+                    os.rename(os.path.join(file_path,filename),os.path.join(file_path,'img_user_%s%s'%(data['user_id'],ext)))
+                    class_name='profileimage-user-%s-'%data['user_id']
+                    profile_picture=" ,profile_picture='img_user_%s%s'"%(data['user_id'],ext)
+                    profile_picture_class=" ,profile_picture_class='%s'"%class_name
+
+                    img_path=os.path.join(cfg.class_img_path,'img_user_%s%s'%(data['user_id'],ext))
+                    style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
+                    css_class=cssutils.css.CSSStyleRule(selectorText='.'+class_name,style=style)
+                    with open(cfg.profile_css_file, "a") as f:
+                        f.write(css_class.cssText)
+                else:
+                    profile_picture=""
+                    profile_picture_class=""
+
+                mail=db.query("""
+                    select count(*) from system.user where email='%s' and user_id <>%s
+                """%(data['email'].strip(),data['user_id'])).dictresult()[0]
+                mail['count']=0
+                if mail['count']>0:
+                    response['msg_response']='Este correo ya se encuentra registrado, favor de ingresar otro.'
+                else:
+                    db.query("""
+                        update system.user
+                        set name='%s', email='%s' %s %s %s
+                        where user_id=%s
+                    """%(data['name'],data['email'],new_pass,profile_picture,profile_picture_class,data['user_id']))
+                    response['msg_response']='El usuario ha sido actualizado.'
+                    response['success']=True
+
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error al intentar obtener los datos, favor de intentarlo de nuevo.'
