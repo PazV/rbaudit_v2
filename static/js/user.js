@@ -218,7 +218,7 @@ $(document).ready(function(){
     });
 
     $("#mod_my_account").on('show.bs.modal',function(){
-        console.log("show modal");
+
         $.ajax({
             url:'/users/getAccountInfo',
             type:'POST',
@@ -230,7 +230,7 @@ $(document).ready(function(){
                     ajaxError();
                 }
                 if (res.success){
-                    console.log(res.data);
+
                     $("#MAname").val(res.data.name);
                     $("#MAemail").val(res.data.email);
                     $("#mod_my_account").data('user_id',res.data.user_id);
@@ -371,7 +371,7 @@ $(document).ready(function(){
                 else{
                     data.append('password_data',false);
                 }
-                console.log(data);
+
                 EasyLoading.show({
                     text:'Cargando...',
                     type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -437,7 +437,7 @@ $(document).ready(function(){
                 content:'Existen campos incorrectos o vacíos, favor de revisar.'
             });
         }
-        console.log(valid);
+
     });
 
     $("#frmMAgeneral .form-control").focusout(function(){
@@ -740,7 +740,7 @@ $(document).ready(function(){
             data['name']=data['name'].trim();
             data['user_id']=$("#mod_edit_user").data('user_id');
             data['this_user']=me.user_info['user_id'];
-            console.log(data);
+
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -842,7 +842,7 @@ $(document).ready(function(){
 });
 
 function getUserTable(user_info){
-    console.log(user_info);
+
     $("#grdAdminUsers").DataTable({
         "scrollY":"225px",
         "scrollCollapse":true,
