@@ -41,7 +41,7 @@ $(document).ready(function(){
                     data['form_id']=-1;
                     // data['folder_id']=$(".file-tree").find('.selected').data('folder');
                     data['folder_id']=$("#newFormFolder").data('folderid');
-                    console.log(data);
+
                     var form_2=getForm("#frmColumnsSettings",null,true);
                     data['columns_info']=form_2;
                     $.ajax({
@@ -117,7 +117,7 @@ $(document).ready(function(){
     });
 
     $("#btnFinishForm").click(function(){
-        console.log(me.user_info);
+
     });
 
     $("#btnAddColumn").click(function(){
@@ -1432,7 +1432,7 @@ $(document).ready(function(){
                     ajaxError();
                 }
                 if (res.success){
-                    console.log(res['data']);
+
                     $("#EFSname").val(res.data.name);
                     $("#EFSfolder").val(res.data.folder_name);
                     $("#EFSrows").val(res.data.rows);
@@ -1534,7 +1534,7 @@ $(document).ready(function(){
                         var folder_id=$(e.target).next().children('a').data('folder');
                         $(".folder-checkbox-edit").prop("checked",false);
                         $(e.target).prop("checked",true);
-                        console.log(folder_id);
+
                     });
                     $("#mod_form_folder_menu").modal("show");
                 }
@@ -1681,7 +1681,7 @@ $(document).ready(function(){
                     //     }
                     // }
                     data['columns_info']=form_2;
-                    console.log(data);
+
                     EasyLoading.show({
                         text:'Cargando...',
                         type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -1752,7 +1752,7 @@ function loadFormTable(form_id,page,user_id){
                 $(".form-paging-toolbar").click(function(){
                     $("#divColumnsSettings").empty();
                     $("#divFormPagingToolbar").empty();
-                    // console.log($(this).data('number'));
+
                     loadFormTable(form_id,$(this).data('number'),user_id);
                 });
             }

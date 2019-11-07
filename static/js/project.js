@@ -71,7 +71,7 @@ $(document).ready(function(){
         var form_input=$("#frmNewProject .form-control");
         var valid=true;
         for (var x in form_input){
-            console.log(form_input[x].id);
+
             if ($("#"+form_input[x].id).hasClass('invalid-field')){
                 valid=false;
             }
@@ -263,7 +263,7 @@ $(document).ready(function(){
         var form_input=$("#frmCloneProject .form-control");
         var valid=true;
         for (var x in form_input){
-            console.log(form_input[x].id);
+
             if ($("#"+form_input[x].id).hasClass('invalid-field')){
                 valid=false;
             }
@@ -277,7 +277,7 @@ $(document).ready(function(){
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
             });
-            console.log(data);
+            
             $.ajax({
                 url:'/project/saveClonedProject',
                 type:'POST',
