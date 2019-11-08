@@ -3190,7 +3190,7 @@ def getProjectFormsInfo():
                         and a.status_id=b.status_id
                     """%data['project_id']).dictresult()
                     for f in forms:
-                        if f['status']==2:
+                        if f['status_id']==2:
                             f['link']='/project/%s/createform/step-2/%s'%(int(data['project_id'])*cfg.project_factor,f['form_id'])
                         else:
                             f['link']='/project/%s/%s'%(int(data['project_id'])*cfg.project_factor,f['form_id'])
