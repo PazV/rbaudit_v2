@@ -216,3 +216,11 @@ naranja: #ed8b00
 .fieldset-legend-permits{
     width: auto;
 }
+
+#grdProjFormInfo th,td{
+    border-bottom:1px solid #ddd;
+}
+
+#grdProjFormInfo .btn-sm{
+    line-height: 1;
+}

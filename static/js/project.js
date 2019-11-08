@@ -277,7 +277,7 @@ $(document).ready(function(){
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
             });
-            
+
             $.ajax({
                 url:'/project/saveClonedProject',
                 type:'POST',
@@ -505,6 +505,11 @@ $(document).ready(function(){
         })
     });
 
+    $("#mod_project_form_info").on('hidden.bs.modal',function(){
+        $("#grdProjFormInfo").empty();
+        $("#grdProjFormInfo").append('<tr><th>Formulario</th><th>Estado</th><th>.</th></tr>');
+    });
+
 });
 
 function loadProjects(user_info){
@@ -521,7 +526,42 @@ function loadProjects(user_info){
             if (res.success){
                 $("#projectListContainer ul").children().remove();
                 $.each(res.data,function(i,item){
-                    $("#projectListContainer ul").append('<li class="proj-list-li"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'">'+item.name+'</a></li>');
+                    $("#projectListContainer ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
+                });
+                $(".get-project-info").click(function(){
+                    var project_id=$(this).siblings('a')[0].name;
+                    $.ajax({
+                        url:'/project/getProjectFormsInfo',
+                        type:'POST',
+                        data:JSON.stringify({'project_id':project_id,'user_id':user_info['user_id']}),
+                        success:function(response){
+                            try{
+                                var res=JSON.parse(response);
+                            }catch(err){
+                                ajaxError();
+                            }
+                            if (res.success){
+                                $("#mod_project_form_info").modal("show");
+                                for (var x of res.data){
+                                    $("#grdProjFormInfo").append('<tr><td>'+x['name']+'</td><td>'+x['status']+'</td><td><a href="'+x['link']+'" role="button" class="btn btn-primary btn-sm">Ir</a></td></tr>')
+                                }
+                            }
+                            else{
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:res.msg_response
+                                });
+                            }
+                        },
+                        error:function(){
+                            $.alert({
+                                theme:'dark',
+                                title:'Atención',
+                                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                            });
+                        }
+                    });
                 });
             }
             else{

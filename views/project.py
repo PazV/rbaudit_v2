@@ -1447,6 +1447,7 @@ def importNewForm():
                     'last_updated':'now'
                 }
 
+                app.logger.info(ws.max_column)
                 columns=[]
                 for x in range(1,int(ws.max_column)+1):
                     column={
@@ -3165,6 +3166,45 @@ def deleteProject():
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
     except:
         response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getProjectFormsInfo', methods=['GET','POST'])
+@is_logged_in
+def getProjectFormsInfo():
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                valid_user=db.query("""
+                    select manager, partner from project.project where project_id=%s
+                """%data['project_id']).dictresult()[0]
+                if int(valid_user['manager'])==int(data['user_id']) or int(valid_user['partner'])==int(data['user_id']):
+                    forms=db.query("""
+                        select a.form_id, a.name, b.status, a.status_id
+                        from project.form_status b, project.form a
+                        where a.project_id=%s
+                        and a.status_id=b.status_id
+                    """%data['project_id']).dictresult()
+                    for f in forms:
+                        if f['status']==2:
+                            f['link']='/project/%s/createform/step-2/%s'%(int(data['project_id'])*cfg.project_factor,f['form_id'])
+                        else:
+                            f['link']='/project/%s/%s'%(int(data['project_id'])*cfg.project_factor,f['form_id'])
+
+                    response['data']=forms
+                    response['success']=True
+                else:
+                    response['msg_response']='No tienes permisos para ver esta información.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=True
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
