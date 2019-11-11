@@ -25,7 +25,7 @@ class GeneralFunctions:
         """
         try:
             if method=='post':
-                d=form.to_dict(flat=False)                
+                d=form.to_dict(flat=False)
                 e=d.keys()[0]
                 f=json.loads(e)
                 return True,f
@@ -251,6 +251,19 @@ class GeneralFunctions:
                 notification['user_to']=data['user_to']
                 notification['link_content']='/project/<project_factor>/<form_id>'
                 notification['link_text']='Ir a formulario'
+
+            elif type=='add_comment':
+                user_from=db.query("""
+                    select name from system.user where user_id=%s
+                """%data['user_from']).dictresult()[0]
+                notification['subject']='Nuevo comentario'
+                mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(user_from['name'],data['msg'].encode('utf-8'))
+                notification['msg']='Se ha agregado un nuevo comentario al formulario %s. %s'%(form_info['name'],mensaje)
+                notification['user_from']=data['user_from']
+                notification['user_to']=data['user_to']
+                notification['link_content']='/project/<project_factor>/<form_id>'
+                notification['link_text']='Ir a formulario'
+
 
 
             db.insert('project.notification',notification)

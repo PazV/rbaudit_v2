@@ -623,6 +623,7 @@ $(document).ready(function(){
         if (data['comment']!==''){
             data['user_id']=me.user_info['user_id'];
             data['form_id']=me.user_info['form_id'];
+            data['project_id']=me.user_info['project_id'];
             $.ajax({
                 url:'/project/addFormComment',
                 type:'POST',

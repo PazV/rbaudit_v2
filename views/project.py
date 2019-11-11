@@ -1317,6 +1317,25 @@ def addFormComment():
                     'created':'now'
                 }
                 db.insert('project.form_comments',comment)
+
+                users=db.query("""
+                    select user_id from project.form_revisions where form_id=%s
+                    union
+                    select assigned_to as user_id from project.form where form_id=%s
+                """%(data['form_id'],data['form_id'])).dictresult()
+
+                info={
+                    'form_id':data['form_id'],
+                    'project_id':data['project_id'],
+                    'msg':data['comment'].encode('utf-8'),
+                    'user_from':data['user_id']
+                }
+                for u in users:
+                    info['user_to']=u['user_id']
+                    # se envía notificación a usuarios correspondientes
+                    GF.createNotification('add_comment',info)
+
+
                 response['success']=True
                 response['msg_response']='El comentario ha sido agregado.'
 
