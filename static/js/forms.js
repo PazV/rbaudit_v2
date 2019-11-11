@@ -1421,7 +1421,7 @@ $(document).ready(function(){
         }
     });
 
-    $("#btnEditResolvedForm").click(function(){
+    $("#btnEditResolvedForm, #btnEditPrefilledForm").click(function(){
         $.ajax({
             url:'/project/getSettingsForEditing',
             type:'POST',
@@ -1433,7 +1433,6 @@ $(document).ready(function(){
                     ajaxError();
                 }
                 if (res.success){
-
                     $("#EFSname").val(res.data.name);
                     $("#EFSfolder").val(res.data.folder_name);
                     $("#EFSrows").val(res.data.rows);
@@ -1445,7 +1444,6 @@ $(document).ready(function(){
                     $("#frmEditColumnsSettings").empty();
                     var column_cont=1;
                     for (var x of res.data.columns){
-
                         $("#frmEditColumnsSettings").append('<fieldset class="form-fieldset original-column"><legend class="form-fieldset-legend">Columna '+x['order']+'</legend><div class="form-group row"><label class="col-sm-2 col-form-label" >Nombre: </label><div class="col-sm-10"><input type="text" class="form-control" placeholder="Nombre de la columna" name="col_'+x['order']+'" value="'+x['name']+'"/></div></div><div class="row" style="display: flex; flex-flow: row nowrap; justify-content: space-between;"><div class="col-sm-10"><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="checkcol_'+x['order']+'" name="checkcol_'+x['order']+'"><label class="form-check-label" for="checkcol_'+x['order']+'">Editable</label></div><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="checkdel_'+x['order']+'" name="checkdel_'+x['order']+'"><label class="form-check-label" for="checkdel_'+x['order']+'">Borrar información de la columna</label></div></div><div style="margin-right:15px; margin-bottom:2px;"><button type="button" class="btn btn-danger btn-sm remove-column-fieldset" style="padding:1px 5px;" data-toggle="tooltip" title="Eliminar columna"><i class="fa fa-trash"></i></button></div></div></fieldset>')
 
 
@@ -1668,19 +1666,7 @@ $(document).ready(function(){
                     data['project_id']=me.user_info['project_id'];
                     data['form_id']=me.user_info['form_id'];
                     data['folder_id']=$("#mod_edit_form_settings").data('folder_id');
-
-                    // var form_2=getForm("#frmEditColumnsSettings",null,true);
                     var form_2=getColumnsForm("#frmEditColumnsSettings",null,true);
-                    // var fieldsets=$("#frmEditColumnsSettings").find("fieldset");
-                    // for (var z of fieldsets){
-                    //     var col_number=$(z).find('input:text')[0].name.split("_")[1];
-                    //     if ($(z).hasClass('original-column')){
-                    //         form_2['original_'+col_number]=true;
-                    //     }
-                    //     else{
-                    //         form_2['original_'+col_number]=false;
-                    //     }
-                    // }
                     data['columns_info']=form_2;
 
                     EasyLoading.show({
@@ -1728,6 +1714,8 @@ $(document).ready(function(){
             }
         }
     });
+
+
 });
 
 
@@ -1970,18 +1958,5 @@ function getColumnsForm(formId,select_list=null,check_list=null){
         columns.push(column);
 
     }
-    // if (select_list!==null){
-    //     for (x in select_list){
-    //         frm[select_list[x]['name']]=parseInt($(select_list[x]['id']).find("option:selected").attr("name"));
-    //     }
-    // }
-    // if (check_list!==null){
-    //     var all_checks= $(formId).find("input[type=checkbox]");
-    //     for (a in all_checks){
-    //         if (all_checks[a].type=='checkbox'){
-    //             frm[all_checks[a].name]=all_checks[a].checked;
-    //         }
-    //     }
-    // }
     return columns;
 };
