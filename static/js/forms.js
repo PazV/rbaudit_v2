@@ -1707,12 +1707,63 @@ $(document).ready(function(){
                                 });
                             }
                         }
-
-                    })
-
+                    });
                 }
             }
         }
+    });
+
+    $("#btnDeletePrefilledForm").click(function(){
+        $.confirm({
+            theme:'dark',
+            title:'Atención',
+            content:'¿Estás seguro que deseas eliminar el formulario?',
+            buttons:{
+                confirm:{
+                    text:'Sí',
+                    action:function(){
+                        EasyLoading.show({
+                            text:'Cargando...',
+                            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                        });
+                        $.ajax({
+                            url:'/project/deletePrefilledForm',
+                            type:'POST',
+                            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id']}),
+                            success:function(response){
+                                EasyLoading.hide();
+                                try{
+                                    var res=JSON.parse(response);
+                                }catch(err){
+                                    ajaxError();
+                                }
+                                if (res.success){
+                                    window.location.pathname='/project/'+me.user_info.project_factor;
+                                }
+                                else {
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Error',
+                                        content:res.msg_response
+                                    });
+                                }
+                            },
+                            error:function(){
+                                EasyLoading.hide();
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Error',
+                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                });
+                            }
+                        });
+                    }
+                },
+                cancel:{
+                    text:'No'
+                }
+            }
+        });
     });
 
 

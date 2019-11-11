@@ -3227,3 +3227,37 @@ def getProjectFormsInfo():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+@bp.route('/deletePrefilledForm', methods=['GET','POST'])
+@is_logged_in
+def deletePrefilledForm():
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'delete_foldersandforms'})
+                if success:
+                    if allowed:
+                        table_name="form.project_%s_form_%s"%(data['project_id'],data['form_id'])
+                        db.query("""
+                            drop table IF EXISTS %s;
+                        """%table_name)
+                        db.query("""
+                            delete from project.form where form_id=%s
+                        """%data['form_id'])
+                        response['success']=True
+                    else:
+                        response['msg_response']='No tienes permisos para borrar este formulario.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar procesar la información.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
