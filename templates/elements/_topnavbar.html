@@ -27,6 +27,13 @@
                         <a class="dropdown-item" data-toggle="modal" href="#mod_admin_project_users">Administrar usuarios del proyecto</a>
                 </div>
             </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarProject" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Administrar proyecto">
+                    <i class="fa fa-calendar hidden-navbar-icon" style="margin-right:5px; vertical-align:middle;"></i>Proyecto</a>
+                <div class="dropdown-menu" aria-labelledby="navbarProject">
+                    <a class="dropdown-item" data-toggle="modal" href="#mod_edit_project_info">Editar datos de proyecto</a>
+                </div>
+            </li>
         </ul>
         <div class="row" >
             <a data-toggle="tooltip" title="Ver notificaciones" style="cursor:pointer; margin-right:10px; color:rgba(255,255,255,0.5); font-weight:bold; visibility:hidden;" id="btnOpenNotifications" href="/notifications/{{g.project_factor}}">

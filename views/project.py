@@ -3261,3 +3261,102 @@ def deletePrefilledForm():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+@bp.route('/getProjectEditInfo', methods=['GET','POST'])
+@is_logged_in
+def getProjectEditInfo():
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_projects'})
+                if success:
+                    response['success']=True
+                    if allowed:
+                        project=db.query("""
+                            select name,company_name,
+                            to_char(start_date,'YYYY-MM-DD') as start_date,
+                            to_char(finish_date,'YYYY-MM-DD') as finish_date,
+                            manager,
+                            partner,
+                            comments
+                            from project.project
+                            where project_id=%s and (created_by=%s or manager=%s or partner=%s)
+                        """%(data['project_id'],data['user_id'],data['user_id'],data['user_id'])).dictresult()
+                        if project!=[]:
+                            project_users=db.query("""
+                                select a.name, b.user_id
+                                from system.user a,
+                                project.project_users b
+                                where a.user_id=b.user_id
+                                and b.project_id=%s
+                            """%data['project_id']).dictresult()
+                            response['allowed']=True
+                            response['project_info']=project[0]
+                            response['users']=project_users
+                        else:
+                            response['msg_response']='No tienes permisos para editar el proyecto.'
+                    else:
+                        response['msg_response']='No tienes permisos para editar el proyecto.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar obtener los datos.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar procesar los datos.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/saveEditedProjectInfo', methods=['GET','POST'])
+@is_logged_in
+def saveEditedProjectInfo():
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_projects'})
+                if success:
+                    if allowed:
+                        user_allowed=db.query("""
+                            select project_id from project.project where project_id=%s
+                            and (manager=%s or partner=%s or created_by=%s)
+                        """%(data['project_id'],data['user_id'],data['user_id'],data['user_id'])).dictresult()
+                        if user_allowed!=[]:
+                            for k,v in data.iteritems():
+                                if type(v) is not int:
+                                    data[k]=v.encode('utf-8')
+                            db.query("""
+                                update project.project
+                                set name='{name}',
+                                company_name='{company_name}',
+                                start_date='{start_date}',
+                                finish_date='{finish_date}',
+                                partner={partner},
+                                manager={manager},
+                                comments='{comments}'
+                                where project_id={project_id}
+                            """.format(**data))
+                            response['success']=True
+                            response['msg_response']='Los datos del proyecto han sido actualizados.'
+                        else:
+                            response['msg_response']='No tienes permisos para modificar los datos de este proyecto.'
+                    else:
+                        response['msg_response']='No tienes permisos para modificar los datos de este proyecto.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar obtener los datos.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar validar los datos.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)

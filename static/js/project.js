@@ -510,6 +510,167 @@ $(document).ready(function(){
         $("#grdProjFormInfo").append('<tr><th>Formulario</th><th>Estado</th><th>.</th></tr>');
     });
 
+    $("#mod_edit_project_info").on('show.bs.modal',function(){
+        $.ajax({
+            url:'/project/getProjectEditInfo',
+            type:'POST',
+            data:JSON.stringify({'project_id':me.user_info['project_id'],'user_id':me.user_info['user_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    if (res.allowed){
+                        $.each(res.users,function(i,item){
+                            if (item.user_id==res.project_info.manager){
+                                $("#EPImanager").append($('<option>',{
+                                    text:item.name,
+                                    name:item.user_id,
+                                    selected:true
+                                }));
+                            }
+                            else{
+                                $("#EPImanager").append($('<option>',{
+                                    text:item.name,
+                                    name:item.user_id
+                                }));
+                            }
+                        });
+                        $.each(res.users,function(i,item){
+                            if (item.user_id==res.project_info.partner){
+                                $("#EPIpartner").append($('<option>',{
+                                    text:item.name,
+                                    name:item.user_id,
+                                    selected:true
+                                }));
+                            }
+                            else{
+                                $("#EPIpartner").append($('<option>',{
+                                    text:item.name,
+                                    name:item.user_id
+                                }));
+                            }
+                        });
+                        $("#EPIdateFrom").val(res.project_info.start_date);
+                        $("#EPIdateTo").val(res.project_info.finish_date);
+                        $("#EPIcompany_name").val(res.project_info.company_name);
+                        $("#EPIproject_name").val(res.project_info.name);
+                        $("#EPIcomments").val(res.project_info.comments);
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+                                        $("#mod_edit_project_info").modal("hide");
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Error',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnSaveProjectInfo").click(function(){
+        $("#frmEditProjectInfo :input").focusout();
+        var form_input=$("#frmEditProjectInfo .form-control");
+        var valid=true;
+        for (var x in form_input){
+            if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                valid=false;
+            }
+        }
+        if (valid===true){
+            var data=getForm('#frmEditProjectInfo',[{'id':'#EPIpartner','name':'partner'},{'id':'#EPImanager','name':'manager'}]);
+            data['project_id']=me.user_info['project_id'];
+            data['user_id']=me.user_info['user_id'];
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
+            $.ajax({
+                url:'/project/saveEditedProjectInfo',
+                type:'POST',
+                data:JSON.stringify(data),
+                success:function(response){
+                    EasyLoading.hide();
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+                                        $("#mod_edit_project_info").modal("hide");
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Error',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    EasyLoading.hide();
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Existen campos vacíos o incompletos.'
+            });
+        }
+    });
+
+    $("#frmEditProjectInfo .form-control").focusout(function(){
+        if (this.id!=='EPIcomments'){
+            var id="#"+this.id;
+            var error_id="#err"+this.id;
+            emptyField(id,error_id);
+        }
+    });
+
 });
 
 function loadProjects(user_info){

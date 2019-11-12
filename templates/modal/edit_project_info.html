@@ -1,0 +1,77 @@
+<div class="modal fade" id="mod_edit_project_info" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header green-modal">
+                <span class="spn-modal-header">Editar información</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <form id="frmEditProjectInfo">
+                        <div class="form-group row no-space-bottom">
+                            <label for="EPIproject_name" class="col-sm-2 col-form-label">Proyecto: </label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="EPIproject_name" placeholder="Nombre del proyecto" name="name"/>
+                            </div>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-sm-10 hide-error-msg" id="errEPIproject_name">
+                                Este campo es requerido
+                            </div>
+                        </div>
+                        <div class="form-group row no-space-bottom">
+                            <label for="EPIcompany_name" class="col-sm-2 col-form-label">Empresa: </label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="EPIcompany_name" placeholder="Nombre de la empresa" name="company_name"/>
+                            </div>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-sm-10 hide-error-msg" id="errEPIcompany_name">
+                                Este campo es requerido
+                            </div>
+                        </div>
+                        <div class="form-group row no-space-bottom">
+                            <label class="col-sm-2 col-form-label">Periodo: </label>
+                            <div class="col-sm-10 input-group">
+                                <input type="date" class="form-control" id="EPIdateFrom" required name="start_date"/>
+                                <span class="col-form-label" style="margin-left:4px; margin:right:4px;">a</span>
+                                <input type="date" class="form-control" id="EPIdateTo" required name="finish_date"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-5 offset-sm-2 hide-error-msg" id="errEPIdateFrom">
+                                Campo requerido
+                            </div>
+                            <div class="col-sm-4 hide-error-msg" id="errEPIdateTo">
+                                Campo requerido
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="EPImanager" class="col-sm-2 col-form-label">Gerente: </label>
+                            <div class="col-sm-10">
+                                <select class="form-control" id="EPImanager" name="manager"></select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="EPIpartner" class="col-sm-2 col-form-label">Socio: </label>
+                            <div class="col-sm-10">
+                                <select class="form-control" id="EPIpartner" name="partner"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="EPIcomments" class="col-form-label">Comentarios: </label>
+                            <textarea class="form-control" id="EPIcomments" placeholder="Agregar comentarios acerca del proyecto" name="comments"></textarea>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+            <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark" id="btnSaveProjectInfo"><span class="hide-text">Guardar </span><i class="fa fa-save"></i></button>
+                <button type="button" class="btn btn-outline-dark close-modal"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
