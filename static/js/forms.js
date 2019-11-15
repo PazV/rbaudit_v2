@@ -1766,6 +1766,178 @@ $(document).ready(function(){
         });
     });
 
+    $("#btnSelectFormFromProject").click(function(){
+        $("#mod_sel_form_to_clone").modal("show");
+    });
+
+    $("#mod_sel_form_to_clone").on('show.bs.modal',function(){
+        $("#SFTCpanelFormMenu").empty();
+        $.ajax({
+            url:'/project/getProjects',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#SFTCclone_form_project").empty();
+                    $.each(res.data,function(i,item){
+                        $("#SFTCclone_form_project").append($('<option>',{
+                            text:item.name,
+                            name:item.project_id
+                        }));
+                    });
+                    $("#SFTCclone_form_project").append($('<option>',{
+                        text:'---',
+                        name:-1,
+                        selected:true
+                    }));
+                }
+            }
+        })
+    });
+
+    $("#SFTCclone_form_project").on('change',function(){
+        $.ajax({
+            url:'/project/getMenuForms',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'project_id':$(this).find("option:selected").attr("name")}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#SFTCpanelFormMenu").empty();
+                    $("#SFTCpanelFormMenu").append(res.menu);
+                    $(".file-tree").filetree({
+                        animationSpeed: 'fast',
+                        collapsed: true
+                    });
+                    $(".form-checkbox-cloned").on('click',function(e){
+                        $(".form-checkbox-cloned").prop("checked",false);
+                        $(e.target).prop("checked",true);
+                    });
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Error',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnSelectFormToCloneAnPr").click(function(){
+        if ($(".form-checkbox-cloned:checked").next().children('a').length==1){
+            $("#oldClonedFormAnPr").val($(".form-checkbox-cloned:checked").next().children('a')[0].textContent);
+            $("#oldClonedFormAnPr").data('old_form_id',$(".form-checkbox-cloned:checked").next().children('a')[0].id);
+            $("#oldProjectAnPr").val($("#SFTCclone_form_project").find("option:selected")[0].textContent);
+            $("#oldProjectAnPr").data('project_id',$("#SFTCclone_form_project").find("option:selected").attr("name"));
+            $("#mod_sel_form_to_clone").modal("hide");
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debes seleccionar un formulario.'
+            });
+        }
+    });
+
+    $("#btnCreateClonedFormAnPr").click(function(){
+        $("#frmCloneFormAnPr .form-control").focusout();
+        var form_input=$("#frmCloneFormAnPr .form-control");
+        var valid=true;
+        for (var x in form_input){
+            if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                valid=false;
+                break
+            }
+        }
+        if (valid){
+            $("#btnCreateClonedFormAnPr").prop("disabled",true);
+            var data={};
+            data['old_form_id']=$("#oldClonedFormAnPr").data('old_form_id');
+            data['old_project_id']=$("#oldProjectAnPr").data('project_id');
+            data['form_name']=$("#clonedFormNameAnPr").val();
+            data['folder_id']=$("#clonedFormFolderAnPr").data('folder_id');
+            data['project_id']=me.user_info['project_id'];
+            data['user_id']=me.user_info['user_id'];
+            console.log(data);
+            $.ajax({
+                url:'/project/cloneFormAnotherProject',
+                type:'POST',
+                data:JSON.stringify(data),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+                                        window.location.pathname='/project/'+me.user_info.project_factor;
+                                    }
+                                }                                
+                            }
+                        });
+                    }
+                    else{
+                        $("#btnCreateClonedFormAnPr").prop("disabled",false);
+                        $.alert({
+                            theme:'dark',
+                            title:'Error',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    $("#btnCreateClonedFormAnPr").prop("disabled",false);
+                    $.alert({
+                        theme:'dark',
+                        title:'Error',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Existen campos vacíos o incompletos.'
+            });
+        }
+    });
+
+    $("#frmCloneFormAnPr .form-control").focusout(function(){
+        var id="#"+this.id;
+        var error_id="#err"+this.id;
+        emptyField(id,error_id);
+    });
+
+
 
 });
 

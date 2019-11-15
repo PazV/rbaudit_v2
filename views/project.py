@@ -134,6 +134,22 @@ def createformClone(project_factor):
         g.notifications=True
     return render_template('clone_form.html',g=g)
 
+@bp.route("/<int:project_factor>/createform/clone-from-another-project", methods=['GET','POST'])
+@is_logged_in
+def createformCloneAnotherProject(project_factor):
+    project_id=int(project_factor)/int(cfg.project_factor)
+    g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
+    g.project_factor=project_factor
+    has_notifications=db.query("""
+        select count(*) from project.notification
+        where project_id=%s and user_to=%s and read=False
+    """%(project_id,session['user_id'])).dictresult()[0]
+    if has_notifications['count']==0:
+        g.notifications=False
+    else:
+        g.notifications=True
+    return render_template('clone_form_anotherproject.html',g=g)
+
 @bp.route('/saveProject', methods=['GET','POST'])
 @is_logged_in
 def saveProject():
@@ -3349,6 +3365,179 @@ def saveEditedProjectInfo():
                             response['msg_response']='No tienes permisos para modificar los datos de este proyecto.'
                     else:
                         response['msg_response']='No tienes permisos para modificar los datos de este proyecto.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar obtener los datos.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar validar los datos.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getMenuForms', methods=['GET','POST'])
+@is_logged_in
+def getMenuForms():
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_forms'})
+                if success:
+                    if allowed:
+                        folders=db.query("""
+                            select folder_id, name from project.folder
+                            where project_id=%s and parent_id=-1 order by folder_id
+                        """%data['project_id']).dictresult()
+                        final_html=""
+                        if folders!=[]:
+                            for f in folders:
+                                fh_node='<li class="selectable-folder-edit"><a href="#" data-folder="%s">%s</a><ul>'%(f['folder_id'],f['name'])
+                                sh_node='</ul></li>'
+                                res_html=getMenuFormsNodes(f['folder_id'],fh_node,sh_node,data['project_id'])
+                                final_html+=res_html
+                        response['success']=True
+                        response['menu']='<ul class="file-tree file-tree-edit">%s</ul>'%final_html
+                    else:
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['msg_response']='Ocurrió un error al intentar obtener los datos.'
+            else:
+                response['msg_response']='Ocurrió un error al intentar procesar los datos.'
+        else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+def getMenuFormsNodes(folder_id, fh_html,sh_html,project_id):
+    #obtiene los nodos del menú
+    #no requiere validar permisos
+    try:
+        folders=db.query("""
+            select folder_id, name
+            from project.folder
+            where parent_id=%s order by folder_id
+        """%folder_id).dictresult()
+        forms=db.query("""
+            select
+                form_id, name
+            from project.form where project_id=%s and folder_id=%s
+            and status_id>2 order by name
+        """%(project_id,folder_id)).dictresult()
+
+        node=""
+
+        if folders==[]:
+            if forms==[]:
+                return fh_html+sh_html
+            else:
+                forms_str=""
+                for f in forms:
+                    project_factor=int(project_id)*int(cfg.project_factor)
+                    url='/project/%s/%s'%(project_factor,f['form_id'])
+                    forms_str+='<input type="checkbox" class="form-check-input tree-menu-checkbox-cloned form-checkbox-cloned"><li class="selectable-form-edit"><a href="#" id="%s">%s</a></li>'%(f['form_id'],f['name'])
+                return fh_html+forms_str+sh_html
+        else:
+            forms_str=""
+            if forms!=[]:
+                for f in forms:
+                    project_factor=int(project_id)*int(cfg.project_factor)
+                    url='/project/%s/%s'%(project_factor,f['form_id'])
+                    forms_str+='<input type="checkbox" class="form-check-input tree-menu-checkbox-cloned form-checkbox-cloned"><li class="selectable-form-edit"><a href="#" id="%s">%s</a></li>'%(f['form_id'],f['name'])
+            current_level=""
+            for x in folders:
+                fh_new_node='<li class="selectable-folder-edit"><a href="#" data-folder="%s">%s</a><ul>'%(x['folder_id'],x['name'])
+                sh_new_node='</ul></li>'
+                res_node=getMenuFormsNodes(x['folder_id'],fh_new_node,sh_new_node,project_id)
+                current_level+=res_node
+
+            return fh_html+forms_str+current_level+sh_html
+    except:
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+
+@bp.route('/cloneFormAnotherProject', methods=['GET','POST'])
+@is_logged_in
+def cloneFormAnotherProject():
+    response={}
+    try:
+        response['success']=False
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_forms'})
+                if success:
+                    if allowed:
+                        form_info=db.query("""
+                            select form_id,
+                            columns_number, rows,
+                            columns from project.form
+                            where form_id=%s
+                            and project_id=%s
+                        """%(data['old_form_id'],data['old_project_id'])).dictresult()[0]
+                        old_table_name='form.project_%s_form_%s'%(data['old_project_id'],data['old_form_id'])
+
+                        old_form_content=db.query("""
+                            select * from %s order by entry_id asc
+                        """%(old_table_name)).dictresult()
+
+                        new_form={
+                            'project_id':data['project_id'],
+                            'name':data['form_name'].encode('utf-8'),
+                            'columns_number':form_info['columns_number'],
+                            'rows':form_info['rows'],
+                            'columns':form_info['columns'],
+                            'created_by':data['user_id'],
+                            'create_date':'now',
+                            'folder_id':data['folder_id'],
+                            'status_id':2,
+                            'user_last_update':data['user_id'],
+                            'last_updated':'now'
+                        }
+
+                        inserted_form=db.insert('project.form',new_form)
+
+                        columns=eval(form_info['columns'])
+
+                        new_table_name='project_%s_form_%s'%(inserted_form['project_id'],inserted_form['form_id'])
+
+                        columns_str=""
+                        including_columns=[]
+                        for x in columns:
+                            columns_str+=" ,col_%s text default ''"%x['order']
+                            if x['editable']==False:
+                                including_columns.append("col_%s"%x['order'])
+
+                        db.query("""
+                            CREATE TABLE form.%s(
+                                entry_id serial not null primary key,
+                                form_id integer not null,
+                                project_id integer not null
+                                %s
+                            );
+                        """%(new_table_name,columns_str))
+
+                        for oi in old_form_content:
+                            entry={
+                                'form_id':inserted_form['form_id'],
+                                'project_id':inserted_form['project_id']
+                            }
+                            if including_columns!=[]:
+                                for ic in including_columns:
+                                    entry[ic]=oi[ic]
+                            db.insert('form.%s'%new_table_name,entry)
+
+                        response['success']=True
+                        response['msg_response']='El formulario ha sido clonado.'
+
+                    else:
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
                 else:
                     response['msg_response']='Ocurrió un error al intentar obtener los datos.'
             else:

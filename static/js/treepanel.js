@@ -35,7 +35,7 @@ $(document).ready(function(){
 
     $("#btnSaveFolder").click(function(){
         var valid=emptyField('#FIname','#errFIname');
-        
+
         if (valid){
             var data={};
             data['name']=encodeURIComponent($("#FIname").val());
@@ -284,6 +284,12 @@ function loadTreeMenu(project_id){
                             $(".folder-checkbox").prop("checked",false);
                             $(e.target).prop("checked",true);
                         }
+                    }
+                    if ($("#clonedFormFolderAnPr").is(":visible")){
+                        $(".folder-checkbox").prop("checked",false);
+                        $(e.target).prop("checked",true);
+                        $("#clonedFormFolderAnPr").data('folder_id',$(e.target).next().children('a').data('folder'));
+                        $("#clonedFormFolderAnPr").val($(e.target).next().children('a')[0].textContent);
                     }
                 });
                 // $(".file-tree").on('click','li',function(e){
