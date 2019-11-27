@@ -15,15 +15,15 @@
     </head>
     <body>
         <div class="container-fluid no-padding">
-            <div class="row no-gutters">
+            <div class="row no-gutters" style="height:100vh;">
                 <div class="col-sm-8 background-login">
 
                 </div>
                 <div class="col-sm-4 background-login-form login-form" style="border-radius:0;">
-                    <div class="login-form">
+                    <div class="login-form" style="height:80vh;">
                         <form id="frmLogin" class="form-siging form-login" method="post" action="/login/signin">
                             <div class="form-group">
-                                <img class="login-image" alt="Russell Bedford"></img>
+                                <img class="login-image" alt="Russell Bedford" src="/static/images/logo_verde.png" height="90px" width="300px"></img>
                                 <input class="form-control form-control-lg" type="email" placeholder="Correo electrónico" id="loginEmail" name="email" required>
                                 {% with errors = get_flashed_messages(category_filter=["user"]) %}
                                     {% if errors %}
