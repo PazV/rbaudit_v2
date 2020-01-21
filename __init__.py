@@ -26,10 +26,10 @@ def create_app(test_config=None):
     app.register_error_handler(404, page_not_found)
     # mail = Mail(app)
     # from views import app_config as cfg
-
+    from views import app_config as cfg
     app.config.from_mapping(
         # SECRET_KEY=cfg.app_secret_key,
-        SECRET_KEY='92839284792384293874',
+        SECRET_KEY=cfg.app_secret_key,
         #DATABASE=os.path.join(app.instance_path, 'taskapp.sqlite'),
         DEBUG_TB_INTERCEPT_REDIRECTS=False,
         ###***** Deseleccionar la sección con # para subir cambios a prod******
