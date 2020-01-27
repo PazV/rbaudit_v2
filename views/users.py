@@ -390,7 +390,7 @@ def getProjectUsers():
 
             users=db.query("""
                 select
-                    a.user_id,
+                    distinct(a.user_id),
                     a.name,
                     a.profile_picture_class
                 from
@@ -407,15 +407,27 @@ def getProjectUsers():
             for u in users:
                 u['profile_picture']='<img class="%s user-topnavbar-size"  alt=""/>'%u['profile_picture_class']
 
+            # users_count=db.query("""
+            #     select count(b.*)
+            #     from
+            #         system.user a,
+            #         project.project_users b
+            #     where
+            #         a.enabled=True
+            #     and a.user_id=b.user_id
+            #     and b.project_id=%s
+            # """%project_id).dictresult()
+
             users_count=db.query("""
-                select count(b.*)
+                select
+                   count(distinct(a.user_id))
                 from
                     system.user a,
                     project.project_users b
                 where
                     a.enabled=True
                 and a.user_id=b.user_id
-                and b.project_id=%s
+                and b.project_id=%s;
             """%project_id).dictresult()
 
             response['data']=users
