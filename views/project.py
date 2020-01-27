@@ -2664,13 +2664,22 @@ def getAvailableProjects():
                 success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_projects'})
                 if success:
                     if allowed:
+                        # projects=db.query("""
+                        #     select a.project_id, b.name
+                        #     from project.project_users a, project.project b
+                        #     where a.user_id = %s
+                        #     and a.project_id=b.project_id
+                        #     order by b.created desc
+                        # """%data['user_id']).dictresult()
+
                         projects=db.query("""
-                            select a.project_id, b.name
+                            select distinct(b.project_id), b.name
                             from project.project_users a, project.project b
                             where a.user_id = %s
                             and a.project_id=b.project_id
-                            order by b.created desc
+                            order by b.project_id desc;
                         """%data['user_id']).dictresult()
+
                         response['success']=True
                         response['data']=projects
                     else:
