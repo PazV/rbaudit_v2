@@ -2842,7 +2842,7 @@ def getSettingsForEditing():
                         """%(data['form_id'],data['user_id'],data['form_id'],data['user_id'],data['project_id'],data['user_id'],data['project_id'],data['user_id'])).dictresult()
                         if allowed_users!=[]:
                             settings=db.query("""
-                                select b.form_id, b.name,
+                                select b.form_id, b.name, b.status_id,
                                 b.columns_number,
                                 b.rows,
                                 b.columns as columns_info, b.folder_id,
@@ -2850,11 +2850,14 @@ def getSettingsForEditing():
                                 from project.form b
                                 where b.form_id=%s
                             """%data['form_id']).dictresult()[0]
-                            settings['columns']=eval(settings['columns_info'])
-                            del settings['columns_info']
-                            response['success']=True
-                            response['data']=settings
-
+                            if int(settings['status_id'])!=7:
+                                settings['columns']=eval(settings['columns_info'])
+                                del settings['columns_info']
+                                response['success']=True
+                                response['data']=settings
+                                
+                            else:
+                                response['msg_response']='El formulario ya se encuentra cerrado, por lo tanto no puede ser editado.'
                         else:
                             response['msg_response']='No tienes permisos para editar este formulario.'
                     else:
