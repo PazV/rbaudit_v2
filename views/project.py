@@ -3154,48 +3154,72 @@ def deleteProject():
 
                         form_ids=','.join(str(e['form_id']) for e in forms)
 
-                        #eliminar comentarios del formulario
-                        db.query("""
-                            delete from project.form_comments where form_id in (%s)
-                        """%form_ids)
+                        try:
+                            #eliminar comentarios del formulario
+                            db.query("""
+                                delete from project.form_comments where form_id in (%s)
+                            """%form_ids)
+                        except:
+                            app.logger.info("No  hay comentarios de formularios")
 
                         #eliminar archivos del proyecto
                         if os.path.exists(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id'])):
                             shutil.rmtree(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id']))
-                        #eliminar registros de archivos de formularios
-                        db.query("""
-                            delete from project.form_files where form_id in (%s)
-                        """%form_ids)
+                        try:
+                            #eliminar registros de archivos de formularios
+                            db.query("""
+                                delete from project.form_files where form_id in (%s)
+                            """%form_ids)
+                        except:
+                            app.logger.info("No hay archivos de este formulario")
 
-                        #eliminar revisores de formularios
-                        db.query("""
-                            delete from project.form_revisions where form_id in (%s)
-                        """%form_ids)
+                        try:
+                            #eliminar revisores de formularios
+                            db.query("""
+                                delete from project.form_revisions where form_id in (%s)
+                            """%form_ids)
+                        except:
+                            app.logger.info("No hay registros en form_revisions")
 
-                        #eliminar notificaciones
-                        db.query("""
-                            delete from project.notification where project_id=%s
-                        """%data['project_id'])
+                        try:
+                            #eliminar notificaciones
+                            db.query("""
+                                delete from project.notification where project_id=%s
+                            """%data['project_id'])
+                        except:
+                            app.logger.info("No hay notificaciones del proyecto")
 
-                        #elimina carpetas del proyecto
-                        db.query("""
-                            delete from project.folder where project_id=%s
-                        """%data['project_id'])
+                        try:
+                            #elimina carpetas del proyecto
+                            db.query("""
+                                delete from project.folder where project_id=%s
+                            """%data['project_id'])
+                        except:
+                            app.logger.info("No hay carpetas del proyecto")
 
-                        #elimina registros de formularios del proyecto
-                        db.query("""
-                            delete from project.form where project_id=%s
-                        """%data['project_id'])
+                        try:
+                            #elimina registros de formularios del proyecto
+                            db.query("""
+                                delete from project.form where project_id=%s
+                            """%data['project_id'])
+                        except:
+                            app.logger.info("No hay regisros de formulario del proyecto")
 
-                        #elimina los usuarios del proyecto
-                        db.query("""
-                            delete from project.project_users where project_id=%s
-                        """%data['project_id'])
+                        try:
+                            #elimina los usuarios del proyecto
+                            db.query("""
+                                delete from project.project_users where project_id=%s
+                            """%data['project_id'])
+                        except:
+                            app.logger.info("No hay usuarios del proyecto")
 
-                        #elimina registro del proyecto
-                        db.query("""
-                            delete from project.project where project_id=%s
-                        """%data['project_id'])
+                        try:
+                            #elimina registro del proyecto
+                            db.query("""
+                                delete from project.project where project_id=%s
+                            """%data['project_id'])
+                        except:
+                            app.logger.info("No hay registro del proyecto")
 
                         response['success']=True
                         response['msg_response']='El proyecto ha sido eliminado.'
