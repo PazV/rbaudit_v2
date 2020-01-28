@@ -2519,22 +2519,29 @@ def deleteFormFile():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
-                file_ids=','.join(str(e) for e in data['files'])
-                files=db.query("""
-                    select file_name from project.form_files
-                    where file_id in (%s) and form_id=%s and project_id=%s
-                """%(file_ids,data['form_id'],data['project_id'])).dictresult()
-                for f in files:
-                    os.remove(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id'],'form_%s'%data['form_id'],f['file_name']))
-                db.query("""
-                    delete from project.form_files
-                    where file_id in (%s)
-                """%file_ids)
-                response['success']=True
-                if len(data['files'])==1:
-                    response['msg_response']='El archivo ha sido eliminado.'
+                form_status=db.query("""
+                    select status_id from project.form where form_id=%s
+                """%data['form_id']).dictresult()[0]
+                if int(form_status['status_id'])!=7:
+                    file_ids=','.join(str(e) for e in data['files'])
+                    files=db.query("""
+                        select file_name from project.form_files
+                        where file_id in (%s) and form_id=%s and project_id=%s
+                    """%(file_ids,data['form_id'],data['project_id'])).dictresult()
+                    for f in files:
+                        os.remove(os.path.join(cfg.zip_main_folder,'project_%s'%data['project_id'],'form_%s'%data['form_id'],f['file_name']))
+                    db.query("""
+                        delete from project.form_files
+                        where file_id in (%s)
+                    """%file_ids)
+                    response['success']=True
+                    if len(data['files'])==1:
+                        response['msg_response']='El archivo ha sido eliminado.'
+                    else:
+                        response['msg_response']='Los archivos han sido eliminados.'
                 else:
-                    response['msg_response']='Los archivos han sido eliminados.'
+                    response['success']=False
+                    response['msg_response']='No es posible eliminar archivos de un formulario cerrado.'
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
@@ -2855,7 +2862,7 @@ def getSettingsForEditing():
                                 del settings['columns_info']
                                 response['success']=True
                                 response['data']=settings
-                                
+
                             else:
                                 response['msg_response']='El formulario ya se encuentra cerrado, por lo tanto no puede ser editado.'
                         else:

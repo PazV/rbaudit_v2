@@ -1223,6 +1223,13 @@ $(document).ready(function(){
                                             }
                                         })
                                     }
+                                    else{
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res.msg_response
+                                        });
+                                    }
                                 }
                             });
                         }
@@ -1899,7 +1906,7 @@ $(document).ready(function(){
                                     action:function(){
                                         window.location.pathname='/project/'+me.user_info.project_factor;
                                     }
-                                }                                
+                                }
                             }
                         });
                     }
