@@ -1299,7 +1299,14 @@ def checkAddComment():
                 user_list.append(int(managers['manager']))
                 user_list.append(int(managers['partner']))
                 if int(data['user_id']) in user_list:
-                    response['access']=True
+                    form_status=db.query("""
+                        select status_id from project.form where form_id=%s
+                    """%data['form_id']).dictresult()[0]
+                    if int(form_status['status_id'])!=7:
+                        response['access']=True
+                    else:
+                        response['access']=False
+                        response['msg_response']='No es posible agregar comentarios a un formulario cerrado.'
                 else:
                     response['access']=False
                     response['msg_response']='No tienes permisos para agregar comentarios a este formulario.'
