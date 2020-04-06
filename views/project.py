@@ -720,7 +720,8 @@ def publishForm():
                         exists_rev=db.query("""
                             select column_name from information_schema.columns where table_name='project_%s_form_%s' and column_name='rev_1';
                         """%(data['project_id'],data['form_id'])).dictresult()
-                        if exists_rev!=[]:
+                        app.logger.info(exists_rev)
+                        if exists_rev==[]:
                             db.query("""
                                 alter table %s add rev_1 text default ''
                             """%table_name)
