@@ -475,13 +475,29 @@ $(document).ready(function(){
                                     }catch(err){
                                         ajaxError();
                                     }
-                                    $.alert({
-                                        theme:'dark',
-                                        title:'Atención',
-                                        content:res.msg_response
-                                    })
+
                                     if (res.success){
-                                        $("#mod_finish_checking_form").modal("hide");
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res.msg_response,
+                                            buttons:{
+                                                confirm:{
+                                                    text:'Aceptar',
+                                                    action:function(){
+                                                        $("#mod_finish_checking_form").modal("hide");
+                                                        window.location.reload();
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+                                    else{
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res.msg_response
+                                        });
                                     }
                                 },
                                 error:function(){
