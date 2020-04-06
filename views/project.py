@@ -2817,12 +2817,15 @@ def saveClonedProject():
                                 if ce['editable']==True:
                                     columns_delete.append(ce['order'])
                             columns_delete_str=",".join("col_%s=''"%str(e) for e in columns_delete)
-                            app.logger.info("""
-                                update %s set %s
-                            """%(new_table_name,columns_delete_str))
-                            db.query("""
-                                update %s set %s
-                            """%(new_table_name,columns_delete_str))
+                            if columns_delete_str!='':
+                                app.logger.info("""
+                                    update %s set %s
+                                """%(new_table_name,columns_delete_str))
+                                db.query("""
+                                    update %s set %s
+                                """%(new_table_name,columns_delete_str))
+                            else:
+                                app.logger.info("sin columnas por editables por modificar")
                         response['success']=True
                         response['msg_response']='El proyecto ha sido clonado exitosamente.'
 
