@@ -2817,6 +2817,9 @@ def saveClonedProject():
                                 if ce['editable']==True:
                                     columns_delete.append(ce['order'])
                             columns_delete_str=",".join("col_%s=''"%str(e) for e in columns_delete)
+                            app.logger.info("""
+                                update %s set %s
+                            """%(new_table_name,columns_delete_str))
                             db.query("""
                                 update %s set %s
                             """%(new_table_name,columns_delete_str))
