@@ -690,6 +690,7 @@ def publishForm():
                 success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_forms'})
                 if success:
                     if allowed:
+                        app.logger.info("user allowed")
                         revisions=[]
                         for k,v in data.iteritems():
                             if k.split('_')[0]=='revision':
@@ -701,7 +702,8 @@ def publishForm():
                                 db.insert("project.form_revisions",rev)
                                 revisions.append('%s:%s'%(k,v))
                         str_revisions=','.join(e for e in revisions)
-
+                        app.logger.info("do revisions")
+                        app.logger.info(str_revisions)
                         db.query("""
                             update project.form
                             set status_id=3,
@@ -713,10 +715,16 @@ def publishForm():
                             where form_id=%s
                             and project_id=%s
                         """%(data['notify_assignee'],data['notify_resolved'],data['resolve_date'],data['assigned_to'],str_revisions,data['form_id'],data['project_id']))
+                        app.logger.info("updated table")
                         table_name='form.project_%s_form_%s'%(data['project_id'],data['form_id'])
-                        db.query("""
-                            alter table %s add rev_1 text default ''
-                        """%table_name)
+                        exists_rev=db.query("""
+                            select column_name from information_schema.columns where table_name='project_%s_form_%s' and column_name='rev_1';
+                        """%(data['project_id'],data['form_id'])).dictresult()
+                        if exists_rev!=[]:
+                            db.query("""
+                                alter table %s add rev_1 text default ''
+                            """%table_name)
+                            app.logger.info("agrega columna revisión")
                         notif_info={'project_id':data['project_id'],'form_id':data['form_id']}
                         # GF.createNotification('publish_form',data['project_id'],data['form_id'])
                         GF.createNotification('publish_form',notif_info)
