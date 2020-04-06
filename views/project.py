@@ -704,6 +704,17 @@ def publishForm():
                         str_revisions=','.join(e for e in revisions)
                         app.logger.info("do revisions")
                         app.logger.info(str_revisions)
+                        app.logger.info("""
+                            update project.form
+                            set status_id=3,
+                            notify_assignee=%s,
+                            notify_resolved=%s,
+                            resolve_before='%s',
+                            assigned_to=%s,
+                            revisions='%s'
+                            where form_id=%s
+                            and project_id=%s
+                        """%(data['notify_assignee'],data['notify_resolved'],data['resolve_date'],data['assigned_to'],str_revisions,data['form_id'],data['project_id']))
                         db.query("""
                             update project.form
                             set status_id=3,
