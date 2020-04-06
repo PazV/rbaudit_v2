@@ -487,7 +487,7 @@ def getProjectUserPermits():
                     p+='<li>Ver todos los formularios</li>'
                 if permits['delete_foldersandforms']==True:
                     p+='<li>Eliminar carpetas/formularios</li>'
-                if permits['delte_projects']==True:
+                if permits['delete_projects']==True:
                     p+='<li>Eliminar proyectos</li>'
                 p+='</ul>'
                 response['success']=True
