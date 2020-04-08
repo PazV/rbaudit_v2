@@ -99,6 +99,7 @@ def getNotifications():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/showNotification', methods=['GET','POST'])
@@ -146,4 +147,5 @@ def showNotification():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)

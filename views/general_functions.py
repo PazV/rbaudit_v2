@@ -14,6 +14,7 @@ from email.MIMEText import MIMEText
 import re
 import os
 from .db_connection import getDB
+import time
 db = getDB()
 app=Flask(__name__)
 
@@ -339,6 +340,37 @@ class GeneralFunctions:
             body=template.format(**form_info)
             response=self.sendMail(subject,body,recipients)
             app.logger.info(response)
+
+            return True
+        except:
+            app.logger.info(traceback.format_exc(sys.exc_info()))
+            return False
+
+    def sendErrorMail(self,msg_content):
+
+        try:
+            server=smtplib.SMTP(cfg.mail_server,cfg.mail_port)
+            server.login(cfg.mail_username,cfg.mail_password)
+            from_address=cfg.mail_username
+            msg=MIMEMultipart()
+            msg['From']=from_address
+            to_address=cfg.error_mail
+            msg['To']=to_address
+            msg['To']=to_address
+            list_to=[to_address]
+            subject='Error en %s'%cfg.host
+            msg['Subject']=subject.decode('utf-8')
+
+            t=time.localtime()
+            body="<b>Host:</b> %s <br><br> <b>Fecha:</b> %s <br><br> <b>Error:</b> %s"%(cfg.host,time.asctime(t),msg_content)
+            # body=self.replaceStringHtml(body)
+            msg.attach(MIMEText(body,'html'))
+            text=msg.as_string()
+
+            resp=server.sendmail(from_address,list_to,text)
+            app.logger.info(resp)
+            app.logger.info("sends mail")
+
 
             return True
         except:

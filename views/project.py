@@ -193,6 +193,7 @@ def saveProject():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getProjects', methods=['GET','POST'])
@@ -229,6 +230,7 @@ def getProjects():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 
@@ -283,6 +285,7 @@ def saveFormStep1():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route("/<path:subpath>/getUnpublishedForms", methods=['GET','POST'])
@@ -318,6 +321,7 @@ def getUnpublishedForms(subpath):
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/saveFolder', methods=['GET','POST'])
@@ -359,6 +363,7 @@ def saveFolder():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getMenu',methods=['GET','POST'])
@@ -399,6 +404,7 @@ def getMenu():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 
@@ -448,6 +454,7 @@ def getMenuNodes(folder_id, fh_html,sh_html,project_id):
             return fh_html+forms_str+current_level+sh_html
     except:
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
 
 @bp.route('/deleteFolder', methods=['GET','POST'])
 @is_logged_in
@@ -484,6 +491,7 @@ def deleteFolder():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 
@@ -585,6 +593,7 @@ def createFormTable():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 
@@ -639,6 +648,7 @@ def savePrefilledForm():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getFormRevisionUsers', methods=['GET','POST'])
@@ -676,6 +686,7 @@ def getFormRevisionUsers():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/publishForm', methods=['GET','POST'])
@@ -761,6 +772,7 @@ def publishForm():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getFormToResolve', methods=['GET','POST'])
@@ -868,6 +880,7 @@ def getFormToResolve():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/checkUserIsAllowed',methods=['GET','POST'])
@@ -992,6 +1005,7 @@ def checkUserIsAllowed():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getFormDetails', methods=['GET','POST'])
@@ -1055,6 +1069,7 @@ def getFormDetails():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/saveResolvingForm', methods=['GET','POST'])
@@ -1112,6 +1127,7 @@ def saveResolvingForm():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/sendFormToRevision', methods=['GET','POST'])
@@ -1162,6 +1178,7 @@ def sendFormToRevision():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/<path:subpath>/getFormsToCheck', methods=['GET','POST'])
@@ -1215,6 +1232,7 @@ def getFormsToCheck(subpath):
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/checkToDoRevision', methods=['GET','POST'])
@@ -1285,6 +1303,7 @@ def checkToDoRevision():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/checkAddComment', methods=['GET','POST'])
@@ -1341,6 +1360,7 @@ def checkAddComment():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/addFormComment', methods=['GET','POST'])
@@ -1392,6 +1412,7 @@ def addFormComment():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getFormComments', methods=['GET','POST'])
@@ -1431,6 +1452,7 @@ def getFormComments():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/checkSendToRevision', methods=['GET','POST'])
@@ -1475,6 +1497,7 @@ def checkSendToRevision():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/importNewForm',methods=['GET','POST'])
@@ -1564,6 +1587,7 @@ def importNewForm():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/checkAllowedDownload', methods=['GET','POST'])
@@ -1619,6 +1643,7 @@ def checkAllowedDownload():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/doDownloadResolvedForm', methods=['GET','POST'])
@@ -1901,6 +1926,7 @@ def downloadResolvedForm():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/downloadFile/<type>/<filename>', methods=['GET','POST'])
@@ -1918,6 +1944,7 @@ def downloadReport(type,filename):
         response['success']=False
         response['msg_response']='Ocurrió un error.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
         return response
 
 @bp.route('/uploadFormZipFile', methods=['GET','POST'])
@@ -1983,6 +2010,7 @@ def uploadFormZipFile():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/allowedFormZip',methods=['GET','POST'])
@@ -2056,6 +2084,7 @@ def allowedFormZip():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getZipDownloadLink', methods=["GET","POST"])
@@ -2100,6 +2129,7 @@ def getZipDownloadLink():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/downloadZipFile/<project_id>/<form_id>/<filename>', methods=['GET','POST'])
@@ -2116,6 +2146,7 @@ def downloadZipFile(project_id,form_id,filename):
         response['success']=False
         response['msg_response']='Ocurrió un error.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
         return response
 
 @bp.route('/getUsersForRevision', methods=['GET','POST'])
@@ -2170,6 +2201,7 @@ def getUsersForRevision():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/doRevision', methods=['GET','POST'])
@@ -2289,6 +2321,7 @@ def doRevision():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getPrintingInfo', methods=['GET','POST'])
@@ -2342,6 +2375,7 @@ def getPrintingInfo():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/checkRightPanelPermission', methods=['GET','POST'])
@@ -2372,6 +2406,7 @@ def checkRightPanelPermission():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/cloneForm', methods=['GET','POST'])
@@ -2454,6 +2489,7 @@ def cloneForm():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getFormDocuments', methods=['GET','POST'])
@@ -2496,6 +2532,7 @@ def getFormDocuments():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getDownloadFolderLink', methods=['GET','POST'])
@@ -2534,6 +2571,7 @@ def getDownloadFolderLink():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/deleteFormFile', methods=['GET','POST'])
@@ -2579,6 +2617,7 @@ def deleteFormFile():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/deleteMenuElements', methods=['GET','POST'])
@@ -2660,6 +2699,7 @@ def deleteMenuElements():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 def getFormsToDelete(folder_id,folder_list,form_list):
@@ -2732,6 +2772,7 @@ def getAvailableProjects():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/saveClonedProject', methods=['GET','POST'])
@@ -2856,6 +2897,7 @@ def saveClonedProject():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getSettingsForEditing', methods=['GET','POST'])
@@ -2912,6 +2954,7 @@ def getSettingsForEditing():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getFolderMenuEdit', methods=['GET','POST'])
@@ -2947,6 +2990,7 @@ def getFolderMenuEdit():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 
@@ -2996,6 +3040,7 @@ def getMenuNodesEdit(folder_id, fh_html,sh_html,project_id):
             return fh_html+forms_str+current_level+sh_html
     except:
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
 
 @bp.route('/saveEditFormSettings', methods=['GET','POST'])
 @is_logged_in
@@ -3099,6 +3144,7 @@ def saveEditFormSettings():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/permissionDeleteProject', methods=['GET','POST'])
@@ -3129,6 +3175,7 @@ def permissionDeleteProject():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getProjectInfo', methods=['GET','POST'])
@@ -3170,6 +3217,7 @@ def getProjectInfo():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/deleteProject', methods=['GET','POST'])
@@ -3279,6 +3327,7 @@ def deleteProject():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getProjectFormsInfo', methods=['GET','POST'])
@@ -3318,6 +3367,7 @@ def getProjectFormsInfo():
         response['success']=True
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/deletePrefilledForm', methods=['GET','POST'])
@@ -3352,6 +3402,7 @@ def deletePrefilledForm():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getProjectEditInfo', methods=['GET','POST'])
@@ -3402,6 +3453,7 @@ def getProjectEditInfo():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/saveEditedProjectInfo', methods=['GET','POST'])
@@ -3451,6 +3503,7 @@ def saveEditedProjectInfo():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 @bp.route('/getMenuForms', methods=['GET','POST'])
@@ -3490,6 +3543,7 @@ def getMenuForms():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
 def getMenuFormsNodes(folder_id, fh_html,sh_html,project_id):
@@ -3537,6 +3591,7 @@ def getMenuFormsNodes(folder_id, fh_html,sh_html,project_id):
             return fh_html+forms_str+current_level+sh_html
     except:
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
 
 @bp.route('/cloneFormAnotherProject', methods=['GET','POST'])
 @is_logged_in
@@ -3624,4 +3679,5 @@ def cloneFormAnotherProject():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)

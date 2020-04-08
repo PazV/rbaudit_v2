@@ -157,6 +157,7 @@ def saveUser():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info = sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getUserTable', methods=['GET','POST'])
@@ -206,6 +207,7 @@ def getUserTable():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info= sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getUserList', methods=['GET','POST'])
@@ -240,6 +242,7 @@ def getUserList():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getAccountInfo', methods=['GET','POST'])
@@ -266,6 +269,7 @@ def getAccountInfo():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/removeProfileImage', methods=['GET','POST'])
@@ -329,6 +333,7 @@ def removeProfileImage():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/addProjectUser',methods=['GET','POST'])
@@ -374,6 +379,7 @@ def addProjectUser():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getProjectUsers', methods=['GET','POST'])
@@ -441,6 +447,7 @@ def getProjectUsers():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getProjectUserPermits', methods=['GET','POST'])
@@ -503,6 +510,7 @@ def getProjectUserPermits():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/getUserPermits', methods=['GET','POST'])
@@ -543,6 +551,7 @@ def getUserPermits():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/editUser', methods=['GET','POST'])
@@ -592,6 +601,7 @@ def editUser():
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         exc_info=sys.exc_info()
         app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
     return json.dumps(response)
 
 @bp.route('/removeProjectUser', methods=['GET','POST'])
@@ -645,4 +655,5 @@ def removeProjectUser():
         response['success']=False
         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
         app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
