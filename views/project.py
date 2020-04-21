@@ -3782,31 +3782,36 @@ def getConsultantProjects():
                     select user_id from system.user
                     where workspace_id=%s
                 """%data['workspace_id']).dictresult()
-                ws_users_str=','.join(str(e['user_id']) for e in ws_users)
 
-                app.logger.info("""
-                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
-                    from project.project a
-                    where a.manager in (%s) or a.partner in (%s)
-                    union
-                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
-                    from project.project a, project.project_users b
-                    where a.project_id=b.project_id
-                    and b.user_id in (%s))
-                    order by name asc
-                """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str))
+                if ws_users!=[]:
 
-                projects=db.query("""
-                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
-                    from project.project a
-                    where a.manager in (%s) or a.partner in (%s)
-                    union
-                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
-                    from project.project a, project.project_users b
-                    where a.project_id=b.project_id
-                    and b.user_id in (%s))
-                    order by name asc
-                """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str)).dictresult()
+                    ws_users_str=','.join(str(e['user_id']) for e in ws_users)
+
+                    app.logger.info("""
+                        (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                        from project.project a
+                        where a.manager in (%s) or a.partner in (%s)
+                        union
+                        select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                        from project.project a, project.project_users b
+                        where a.project_id=b.project_id
+                        and b.user_id in (%s))
+                        order by name asc
+                    """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str))
+
+                    projects=db.query("""
+                        (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                        from project.project a
+                        where a.manager in (%s) or a.partner in (%s)
+                        union
+                        select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                        from project.project a, project.project_users b
+                        where a.project_id=b.project_id
+                        and b.user_id in (%s))
+                        order by name asc
+                    """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str)).dictresult()
+                else:
+                    projects=[]
                 response['data']=projects
                 response['success']=True
             else:
