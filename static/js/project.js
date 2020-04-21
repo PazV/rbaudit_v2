@@ -412,10 +412,16 @@ $(document).ready(function(){
     });
 
     $("#mod_delete_project").on('show.bs.modal',function(){
+        if (window.location.pathname=='/home/'){
+            var ws=me.user_info['workspace_id'];
+        }
+        else{
+            var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+        }
         $.ajax({
             url:'/project/permissionDeleteProject',
             type:'POST',
-            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'workspace_id':ws,'consultant':me.user_info.consultant}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -439,10 +445,24 @@ $(document).ready(function(){
                         });
                     }
                     else{
+                        if (window.location.pathname=='/home/'){
+                            var ws=me.user_info['workspace_id'];
+                            var url='/project/getProjects';
+                            var aj_data={'user_id':me.user_info['user_id']};
+                        }
+                        else{
+                            var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+                            var url='/project/getConsultantProjects';
+                            var aj_data={'user_id':me.user_info['user_id'],'workspace_id':ws}
+                        }
+
+
                         $.ajax({
-                            url:'/project/getProjects',
+                            // url:'/project/getProjects',
+                            url:url,
                             type:'POST',
-                            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+                            // data:JSON.stringify({'user_id':me.user_info['user_id']}),
+                            data:JSON.stringify(aj_data),
                             success:function(response){
                                 try{
                                     var res=JSON.parse(response);

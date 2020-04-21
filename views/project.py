@@ -1352,7 +1352,7 @@ def checkAddComment():
                     check_is_c=db.query("""
                         select * from system.consultants where user_id=%s
                     """%data['user_id']).dictresult()
-                    
+
                     if check_is_c!=[]:
                         #obtiene ws de manager
                         manager_ws=db.query("""
@@ -3202,8 +3202,22 @@ def permissionDeleteProject():
                     if allowed:
                         response['allowed']=True
                     else:
-                        response['allowed']=False
-                        response['msg_response']='No tienes permisos para eliminar proyectos.'
+                        #revisar si es consultor del espacio de trabajo
+                        if data['consultant']==True:
+                            consultants=db.query("""
+                                select * from system.consultants where user_id=%s
+                            """%data['user_id']).dictresult()
+                            if consultants!=[]:
+                                ws=consultants[0]['workspaces'].split(",")
+                                if str(data['workspace_id']) in ws:
+                                    response['success']=True
+                                    response['allowed']=True
+                            else:
+                                response['allowed']=False
+                                response['msg_response']='No tienes permisos para eliminar proyectos.'
+                        else:
+                            response['allowed']=False
+                            response['msg_response']='No tienes permisos para eliminar proyectos.'
                 else:
                     response['msg_response']='Ocurrió un error al intentar procesar la información.'
             else:
