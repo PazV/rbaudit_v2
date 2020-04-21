@@ -608,10 +608,11 @@ $(document).ready(function(){
     });
 
     $("#btnFormAddComment").click(function(){
+        console.log(me.user_info);
         $.ajax({
             url:'/project/checkAddComment',
             type:'POST',
-            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id']}),
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id'],'is_consultant':me.user_info.consultant}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -1915,7 +1916,7 @@ $(document).ready(function(){
             data['folder_id']=$("#clonedFormFolderAnPr").data('folder_id');
             data['project_id']=me.user_info['project_id'];
             data['user_id']=me.user_info['user_id'];
-            console.log(data);
+
             $.ajax({
                 url:'/project/cloneFormAnotherProject',
                 type:'POST',

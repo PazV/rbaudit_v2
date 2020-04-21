@@ -58,12 +58,21 @@ $(document).ready(function(){
     });
 
     $("#btnSaveUser").click(function(){
+        if (window.location.pathname.includes('/home/consultant')){
+
+            var workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
+        }
+        else{
+            var workspace_id=me.user_info['workspace_id'];
+
+        }
         if (emptyField("#NUname","#errNUname")===true){
             if (emptyField("#NUemail","#errNUemail")===true){
                 if (validateMail("#NUemail","#errNUemail")){
                     var frm = getForm('#frmNewUser',null,true);
                     frm['user_id']=-1;
-                    frm['workspace_id']=me.user_info['workspace_id'];
+                    // frm['workspace_id']=me.user_info['workspace_id'];
+                    frm['workspace_id']=workspace_id;
                     frm['this_user']=me.user_info['user_id'];
                     var data = new FormData();
                     if ($("#NUuser_image")[0].files.length==1){
@@ -494,7 +503,7 @@ $(document).ready(function(){
         $.ajax({
             url:'/users/getUserList',
             type:'POST',
-            data:JSON.stringify({'workspace_id':me.user_info['workspace_id']}),
+            data:JSON.stringify({'workspace_id':me.user_info['workspace_id'],'project_factor':me.user_info.project_factor,'user_id':me.user_info.user_id}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -842,7 +851,14 @@ $(document).ready(function(){
 });
 
 function getUserTable(user_info){
+    if (window.location.pathname.includes('/home/consultant')){
 
+        var workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
+    }
+    else{
+        var workspace_id=user_info['workspace_id'];
+
+    }
     $("#grdAdminUsers").DataTable({
         "scrollY":"225px",
         "scrollCollapse":true,
@@ -850,7 +866,8 @@ function getUserTable(user_info){
         serverSide:true,
         destroy:true,
         ajax:{
-            data:{'workspace_id':user_info['workspace_id']},
+            // data:{'workspace_id':user_info['workspace_id']},
+            data:{'workspace_id':workspace_id},
             url:'/users/getUserTable',
             dataSrc:'data',
             type:'POST',

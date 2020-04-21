@@ -220,15 +220,27 @@ def getUserList():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
-                if int(data['workspace_id'])==-1:
-                    workspace=""
+                app.logger.info(data)
+                if data['project_factor']==-1:
+                    if int(data['workspace_id'])==-1:
+                        workspace=""
+                    else:
+                        workspace=" where workspace_id=%s "%data['workspace_id']
                 else:
-                    workspace=" where workspace_id=%s "%data['workspace_id']
+                    project_id=int(data['project_factor'])/int(cfg.project_factor)
+                    ws=db.query("""
+                        select b.workspace_id from system.user b, project.project a
+                        where a.manager=b.user_id
+                        and a.project_id=%s
+                    """%project_id).dictresult()
+                    workspace=" where workspace_id=%s "%ws[0]['workspace_id']
                 users=db.query("""
                     select user_id, name
                     from system.user %s
                     order by name asc
                 """%workspace).dictresult()
+
+
                 response['data']=users
                 response['success']=True
             else:

@@ -169,10 +169,19 @@ def saveProject():
                             new_project=db.insert('project.project',project_info)
                             user_1={'user_id':project_info['manager'],'project_id':new_project['project_id']}
                             user_2={'user_id':project_info['partner'],'project_id':new_project['project_id']}
-                            user_3={'user_id':project_info['created_by'],'project_id':new_project['project_id']}
                             db.insert('project.project_users',user_1)
                             db.insert('project.project_users',user_2)
-                            db.insert('project.project_users',user_3)
+
+                            if data['include_creator']==True: #dependiendo de la bandera include_creator, se agrega el usuario que creó el proyecto a la lista de usuarios del proyecto
+                                user_3={'user_id':project_info['created_by'],'project_id':new_project['project_id']}
+                                db.insert('project.project_users',user_3)
+                            else:
+                                get_ws=db.query("""
+                                    select workspace_id from system.user where user_id=%s
+                                """%data['user_id']).dictresult()
+                                if int(get_ws[0]['workspace_id'])==int(data['workspace_id']):
+                                    user_3={'user_id':project_info['created_by'],'project_id':new_project['project_id']}
+                                    db.insert('project.project_users',user_3)
                             response['msg_response']='El proyecto ha sido creado.'
                         response['success']=True
                     else:
@@ -1332,11 +1341,27 @@ def checkAddComment():
                 for r in revisions:
                     user_list.append(int(r['user_id']))
                 managers=db.query("""
-                    select a.manager,a.partner from project.project a, project.form b
+                    select a.manager,a.partner, a.project_id from project.project a, project.form b
                     where a.project_id=b.project_id and b.form_id=%s
                 """%data['form_id']).dictresult()[0]
                 user_list.append(int(managers['manager']))
                 user_list.append(int(managers['partner']))
+                #agregar usuario consultor
+                if data['is_consultant']==True:
+                    #comprueba que sea consultor
+                    check_is_c=db.query("""
+                        select * from system.consultants where user_id=%s
+                    """%data['user_id']).dictresult()
+                    
+                    if check_is_c!=[]:
+                        #obtiene ws de manager
+                        manager_ws=db.query("""
+                            select workspace_id from system.user where user_id=%s
+                        """%managers['manager']).dictresult()
+                        c_ws=check_is_c[0]['workspaces'].split(",")
+
+                        if str(manager_ws[0]['workspace_id']) in c_ws:
+                            user_list.append(int(data['user_id']))
                 if int(data['user_id']) in user_list:
                     form_status=db.query("""
                         select status_id from project.form where form_id=%s
@@ -2745,14 +2770,22 @@ def getAvailableProjects():
                         #     and a.project_id=b.project_id
                         #     order by b.created desc
                         # """%data['user_id']).dictresult()
-
-                        projects=db.query("""
-                            select distinct(b.project_id), b.name
-                            from project.project_users a, project.project b
-                            where a.user_id = %s
-                            and a.project_id=b.project_id
-                            order by b.project_id desc;
-                        """%data['user_id']).dictresult()
+                        if data['consultant_mode']==False:
+                            projects=db.query("""
+                                select distinct(b.project_id), b.name
+                                from project.project_users a, project.project b
+                                where a.user_id = %s
+                                and a.project_id=b.project_id
+                                order by b.project_id desc;
+                            """%data['user_id']).dictresult()
+                        else:
+                            projects=db.query("""
+                                select distinct(b.project_id), b.name
+                                from project.project_users a, project.project b
+                                where a.user_id in (select c.user_id from system.user c where c.workspace_id=%s)
+                                and a.project_id=b.project_id
+                                order by b.project_id desc
+                            """%data['workspace_id']).dictresult()
 
                         response['success']=True
                         response['data']=projects
@@ -2796,9 +2829,15 @@ def saveClonedProject():
                         db.insert('project.project_users',user_1)
                         user_2={'user_id':project_info['partner'],'project_id':new_project['project_id']}
                         db.insert('project.project_users',user_2)
-                        if int(project_info['created_by'])!=int(project_info['manager']) and int(project_info['created_by'])!=int(project_info['partner']):
-                            user_3={'user_id':project_info['created_by'],'project_id':new_project['project_id']}
-                            db.insert('project.project_users',user_3)
+                        #revisa el workspace de quien creó el proyecto para ver que coincida con el resto de los usuarios (cuando se crea un proyecto desde modo consultor)
+
+                        ws=db.query("""
+                            select workspace_id from system.user where user_id=%s
+                        """%project_info['created_by']).dictresult()
+                        if int(ws[0]['workspace_id'])==int(project_info['workspace_id']):
+                            if int(project_info['created_by'])!=int(project_info['manager']) and int(project_info['created_by'])!=int(project_info['partner']):
+                                user_3={'user_id':project_info['created_by'],'project_id':new_project['project_id']}
+                                db.insert('project.project_users',user_3)
 
                         #insertar carpetas
                         folders=db.query("""
@@ -3674,6 +3713,93 @@ def cloneFormAnotherProject():
             else:
                 response['msg_response']='Ocurrió un error al intentar validar los datos.'
         else:
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getConsultantWorkspaces', methods=['GET','POST'])
+@is_logged_in
+def getConsultantWorkspaces():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                has_ws=db.query("""
+                    select * from system.consultants
+                    where user_id=%s
+                """%data['user_id']).dictresult()
+                if has_ws!=[]:
+                    workspaces=db.query("""
+                        select workspace_id, name from system.workspace
+                        where workspace_id in (%s) order by name
+                    """%has_ws[0]['workspaces']).dictresult()
+                    response['success']=True
+                    response['data']=workspaces
+                else:
+                    response['success']=False
+                    response['msg_response']='No existen espacios de trabajo asignados a este consultor.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar validar la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getConsultantProjects', methods=['GET','POST'])
+@is_logged_in
+def getConsultantProjects():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                ws_users=db.query("""
+                    select user_id from system.user
+                    where workspace_id=%s
+                """%data['workspace_id']).dictresult()
+                ws_users_str=','.join(str(e['user_id']) for e in ws_users)
+
+                app.logger.info("""
+                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    from project.project a
+                    where a.manager in (%s) or a.partner in (%s)
+                    union
+                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    from project.project a, project.project_users b
+                    where a.project_id=b.project_id
+                    and b.user_id in (%s))
+                    order by name asc
+                """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str))
+
+                projects=db.query("""
+                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    from project.project a
+                    where a.manager in (%s) or a.partner in (%s)
+                    union
+                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    from project.project a, project.project_users b
+                    where a.project_id=b.project_id
+                    and b.user_id in (%s))
+                    order by name asc
+                """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str)).dictresult()
+                response['data']=projects
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar validar la información.'
+        else:
+            response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
     except:
         response['success']=False

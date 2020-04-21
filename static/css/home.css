@@ -224,3 +224,11 @@ naranja: #ed8b00
 #grdProjFormInfo .btn-sm{
     line-height: 1;
 }
+
+.consultant-li-hide{
+    display: none !important;
+}
+
+.consultant-li-show{
+    display:block !important;
+}

@@ -108,6 +108,14 @@ class GeneralFunctions:
             select user_id,profile_picture_class,workspace_id
             from system.user where user_id=%s
         """%session['user_id']).dictresult()[0]
+        is_consultant=db.query("""
+            select * from system.consultants where user_id=%s
+        """%session['user_id']).dictresult()
+        if is_consultant!=[]:
+            user_info['consultant']=True
+            user_info['consultant_workspaces']=is_consultant[0]['workspaces']
+        else:
+            user_info['consultant']=False
         if extras!=None:
             for x in extras:
                 user_info.update(x)
@@ -367,8 +375,8 @@ class GeneralFunctions:
             msg.attach(MIMEText(body,'html'))
             text=msg.as_string()
 
-            resp=server.sendmail(from_address,list_to,text)
-            app.logger.info(resp)
+            # resp=server.sendmail(from_address,list_to,text)
+            # app.logger.info(resp)
             app.logger.info("sends mail")
 
 

@@ -1,0 +1,29 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super ()}}
+<div class="row" style="width:100%;">
+    <div class="col-sm-9">
+        <span style="font-size:1.2em;">Modo consultor</span>
+
+        <div class="div-proj-title">
+            <span class="spnMyProjects">Proyectos</span>
+            <div class="form-group row justify-content-center">
+                <label for="consultant_workspaces" class="col-sm-3 col-form-label">Espacios de trabajo: </label>
+                <div class="col-sm-5">
+                    <select class="form-control" id="consultant_workspaces" name="workspace_id">
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="project-list-div" id="projectListContainerCons">
+            <ul class="proj-list-ul">
+
+            </ul>
+        </div>
+    </div>
+    <div class="col-sm-3" style="padding-top:65px;">
+        {% include 'elements/_sidebar_menu.html' %}
+    </div>
+</div>
+
+{% endblock %}

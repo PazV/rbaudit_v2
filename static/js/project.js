@@ -16,10 +16,26 @@ $(document).ready(function(){
         $("#btnOpenNotifications").css("visibility","visible");
     }
 
-    if (window.location.pathname.includes('/home/') || (window.location.pathname.includes('/notifications/'))){
+    if (window.location.pathname.includes('/home/') ||  (window.location.pathname.includes('/notifications/'))){
         $("#topnb_leftmenu").css("visibility","hidden");
+        if (me.user_info.consultant===true){
+            $("#consultant_home").css("display","initial");
+        }
+        else{
+            $("#consultant_home").css("display","none");
+        }
         if (window.location.pathname.includes('/home/')){
             $("#btnOpenNotifications").css("visibility","hidden");
+            if (me.user_info.consultant===true){
+                $(".consultant-li").removeClass("consultant-li-hide").addClass("consultant-li-show");
+            }
+            else{
+                $(".consultant-li").removeClass("consultant-li-show").addClass("consultant-li-hide");
+            }
+            if (window.location.pathname.includes('/home/consultant')){
+                $(".consultant-li").removeClass("consultant-li-hide").addClass("consultant-li-show");
+                getConsultantWorkspaces(me.user_info,true);
+            }
         }
         else{
             $("#btnOpenNotifications").css("visibility","visible");
@@ -27,15 +43,38 @@ $(document).ready(function(){
     }
     else{
         $("#topnb_leftmenu").css("visibility","visible");
+        if (me.user_info.consultant===true){
+            $("#consultant_home").css("display","initial");
+        }
+        else{
+            $("#consultant_home").css("display","none");
+        }
     }
 
     $("#mod_new_project").on('show.bs.modal',function(){
+
         $("#NPdateFrom").val(first_day);
         $("#NPdateTo").val(today);
+        var workspace_id;
+
+        if (window.location.pathname=='/home/'){
+
+            workspace_id=me.user_info['workspace_id'];
+        }
+        else{
+
+            if (me.user_info['consultant']===true){
+                workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
+            }
+            else{
+                workspace_id=me.user_info['workspace_id'];
+            }
+        }
+
         $.ajax({
             url:'/users/getUserList',
             type:'POST',
-            data:JSON.stringify({'workspace_id':me.user_info['workspace_id'],'user_id':me.user_info['user_id']}),
+            data:JSON.stringify({'workspace_id':workspace_id,'user_id':me.user_info['user_id'],'project_factor':-1}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -67,11 +106,20 @@ $(document).ready(function(){
     });
 
     $("#btnSaveProject").click(function(){
+        var include_creator; //variable para identificar si se creó desde el espacio de trabajo propio o si se creó como consultor, para no agregarlo en la lista de usuarios del proyecto
+        if (window.location.pathname=='/home/'){
+            var ws=me.user_info['workspace_id'];
+            include_creator=true; //cuando se crea desde el espacio de trabajo propio, se incluye al usuario en los usuarios del proyecto
+        }
+        else{
+            var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+            include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
+        }
+
         $("#frmNewProject :input").focusout();
         var form_input=$("#frmNewProject .form-control");
         var valid=true;
         for (var x in form_input){
-
             if ($("#"+form_input[x].id).hasClass('invalid-field')){
                 valid=false;
             }
@@ -81,6 +129,8 @@ $(document).ready(function(){
             data['created_by']=me.user_info['user_id'];
             data['project_id']=-1;
             data['user_id']=me.user_info['user_id'];
+            data['include_creator']=include_creator;
+            data['workspace_id']=ws;
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -106,7 +156,13 @@ $(document).ready(function(){
                                     text:'Ok',
                                     action:function(){
                                         $("#mod_new_project").modal("hide");
-                                        loadProjects(me.user_info);
+                                        if (window.location.pathname=='/home/'){
+                                            loadProjects(me.user_info);
+                                        }
+                                        else{
+                                            getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"))
+                                        }
+
                                         //mandar a llamar función que vuelva a cargar el div de proyectos
                                     }
                                 }
@@ -175,10 +231,18 @@ $(document).ready(function(){
     $("#mod_clone_project").on('show.bs.modal',function(){
         $("#ClPdateFrom").val(first_day);
         $("#ClPdateTo").val(today);
+        if (window.location.pathname.includes('/home/consultant')){
+            var workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
+            var consultant_mode=true;
+        }
+        else{
+            var workspace_id=me.user_info['workspace_id'];
+            var consultant_mode=false;
+        }
         $.ajax({
             url:'/project/getAvailableProjects',
             type:'POST',
-            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'workspace_id':workspace_id,'consultant_mode':consultant_mode}),
                 success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -196,7 +260,8 @@ $(document).ready(function(){
                     $.ajax({
                         url:'/users/getUserList',
                         type:'POST',
-                        data:JSON.stringify({'workspace_id':me.user_info['workspace_id'],'user_id':me.user_info['user_id']}),
+                        // data:JSON.stringify({'workspace_id':me.user_info['workspace_id'],'user_id':me.user_info['user_id']}),
+                        data:JSON.stringify({'workspace_id':workspace_id,'user_id':me.user_info['user_id'],'project_factor':-1}),
                         success:function(response2){
                             try{
                                 var res2=JSON.parse(response2);
@@ -269,10 +334,17 @@ $(document).ready(function(){
             }
         }
         if (valid===true){
+            if (window.location.pathname=='/home/'){
+                var ws=me.user_info['workspace_id'];
+            }
+            else{
+                var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+            }
             var data=getForm('#frmCloneProject',[{'id':'#ClPpartner','name':'partner'},{'id':'#ClPmanager','name':'manager'},{'id':'#ClPcloned_from','name':'cloned_project'}]);
             data['created_by']=me.user_info['user_id'];
             data['project_id']=-1;
             data['user_id']=me.user_info['user_id'];
+            data['workspace_id']=ws;
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -299,7 +371,13 @@ $(document).ready(function(){
                                     text:'Ok',
                                     action:function(){
                                         $("#mod_clone_project").modal("hide");
-                                        loadProjects(me.user_info);
+                                        if (window.location.pathname=='/home/'){
+                                            loadProjects(me.user_info);
+                                        }
+                                        else{
+                                            getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"))
+                                        }
+                                        // loadProjects(me.user_info);
                                     }
                                 }
                             }
@@ -671,76 +749,87 @@ $(document).ready(function(){
         }
     });
 
+    $("#consultant_workspaces").on('change',function(){
+        getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"));
+    });
+
 });
 
 function loadProjects(user_info){
-    $.ajax({
-        url:'/project/getProjects',
-        type:'POST',
-        data:JSON.stringify({'user_id':user_info['user_id']}),
-        success:function(response){
-            try{
-                var res=JSON.parse(response);
-            }catch(err){
-                ajaxError();
-            }
-            if (res.success){
-                $("#projectListContainer ul").children().remove();
-                $.each(res.data,function(i,item){
-                    $("#projectListContainer ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
-                });
-                $(".get-project-info").click(function(){
-                    var project_id=$(this).siblings('a')[0].name;
-                    $.ajax({
-                        url:'/project/getProjectFormsInfo',
-                        type:'POST',
-                        data:JSON.stringify({'project_id':project_id,'user_id':user_info['user_id']}),
-                        success:function(response){
-                            try{
-                                var res=JSON.parse(response);
-                            }catch(err){
-                                ajaxError();
-                            }
-                            if (res.success){
-                                $("#mod_project_form_info").modal("show");
-                                for (var x of res.data){
-                                    $("#grdProjFormInfo").append('<tr><td>'+x['name']+'</td><td>'+x['status']+'</td><td><a href="'+x['link']+'" role="button" class="btn btn-primary btn-sm">Ir</a></td></tr>')
+    if (window.location.pathname.includes('/home/consultant')){
+        //do nothing
+
+    }
+    else{
+        $.ajax({
+            url:'/project/getProjects',
+            type:'POST',
+            data:JSON.stringify({'user_id':user_info['user_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#projectListContainer ul").children().remove();
+                    $.each(res.data,function(i,item){
+                        $("#projectListContainer ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
+                    });
+                    $(".get-project-info").click(function(){
+                        var project_id=$(this).siblings('a')[0].name;
+                        $.ajax({
+                            url:'/project/getProjectFormsInfo',
+                            type:'POST',
+                            data:JSON.stringify({'project_id':project_id,'user_id':user_info['user_id']}),
+                            success:function(response){
+                                try{
+                                    var res=JSON.parse(response);
+                                }catch(err){
+                                    ajaxError();
                                 }
-                            }
-                            else{
+                                if (res.success){
+                                    $("#mod_project_form_info").modal("show");
+                                    for (var x of res.data){
+                                        $("#grdProjFormInfo").append('<tr><td>'+x['name']+'</td><td>'+x['status']+'</td><td><a href="'+x['link']+'" role="button" class="btn btn-primary btn-sm">Ir</a></td></tr>')
+                                    }
+                                }
+                                else{
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res.msg_response
+                                    });
+                                }
+                            },
+                            error:function(){
                                 $.alert({
                                     theme:'dark',
                                     title:'Atención',
-                                    content:res.msg_response
+                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
                                 });
                             }
-                        },
-                        error:function(){
-                            $.alert({
-                                theme:'dark',
-                                title:'Atención',
-                                content:'Ocurrió un error, favor de intentarlo de nuevo.'
-                            });
-                        }
+                        });
                     });
-                });
-            }
-            else{
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            failure:function(){
                 $.alert({
                     theme:'dark',
                     title:'Atención',
-                    content:res.msg_response
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
                 });
             }
-        },
-        failure:function(){
-            $.alert({
-                theme:'dark',
-                title:'Atención',
-                content:'Ocurrió un error, favor de intentarlo de nuevo.'
-            });
-        }
-    });
+        });
+    }
+
 }
 
 function loadFormPanel(user_info,location){
@@ -857,6 +946,121 @@ function loadFormsToCheck(user_info,location){
                 theme:'dark',
                 title:'Atención',
                 content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+            });
+        }
+    });
+}
+
+function getConsultantWorkspaces(user_info,is_first){
+    //el segundo parámetro sirve para saber si es la primera vez que se carga el select, para también mandar a llamar los proyectos en cuanto termina la petición ajax de los espacios de trabajo, se obtendrán los proyectos del último espacio de trabajo regresado en orden alfabético
+    $.ajax({
+        url:'/project/getConsultantWorkspaces',
+        type:'POST',
+        data:JSON.stringify({'user_id':user_info.user_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError()
+            }
+            if (res.success){
+                $.each(res.data,function(i,item){
+                    $("#consultant_workspaces").append($('<option>',{
+                        text:item.name,
+                        name:item.workspace_id,
+                        selected:true
+                    }));
+                });
+                if (is_first===true){
+
+                    var ws_len=res.data.length;
+                    getWorkspaceProjects(user_info,res.data[ws_len-1]['workspace_id']);
+                }
+
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        error:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
+}
+
+function getWorkspaceProjects(user_info,workspace_id){
+    $.ajax({
+        url:'/project/getConsultantProjects',
+        type:'POST',
+        data:JSON.stringify({'user_id':user_info['user_id'],'workspace_id':workspace_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#projectListContainerCons ul").children().remove();
+                $.each(res.data,function(i,item){
+                    $("#projectListContainerCons ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
+                });
+                $(".get-project-info").click(function(){
+                    var project_id=$(this).siblings('a')[0].name;
+                    $.ajax({
+                        url:'/project/getProjectFormsInfo',
+                        type:'POST',
+                        data:JSON.stringify({'project_id':project_id,'user_id':user_info['user_id']}),
+                        success:function(response){
+                            try{
+                                var res=JSON.parse(response);
+                            }catch(err){
+                                ajaxError();
+                            }
+                            if (res.success){
+                                $("#mod_project_form_info").modal("show");
+                                for (var x of res.data){
+                                    $("#grdProjFormInfo").append('<tr><td>'+x['name']+'</td><td>'+x['status']+'</td><td><a href="'+x['link']+'" role="button" class="btn btn-primary btn-sm">Ir</a></td></tr>')
+                                }
+                            }
+                            else{
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:res.msg_response
+                                });
+                            }
+                        },
+                        error:function(){
+                            $.alert({
+                                theme:'dark',
+                                title:'Atención',
+                                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                            });
+                        }
+                    });
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
             });
         }
     });
