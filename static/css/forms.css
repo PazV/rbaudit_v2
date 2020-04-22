@@ -96,39 +96,69 @@
 }
 
 .icon-pdf{
-    content: url(../images/pdf.png);
+    content: url('/static/images/pdf.png');
+    background-image:url('/static/images/pdf.png');
     width:50px;
     height:50px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 .icon-excel{
-    content:url(../images/excel.png);
+    content:url('/static/images/excel.png');
+    background-image: url('/static/images/excel.png');
     width:50px;
     height:50px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 .icon-powerpoint{
-    content:url(../images/power_point.png);
+    content:url('/static/images/power_point.png');
+    background-image: url('/static/images/power_point.png');
     width:50px;
     height:50px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 .icon-word{
-    content:url(../images/word.png);
+    content:url('/static/images/word.png');
+    background-image: url('/static/images/word.png');
     width:50px;
     height:50px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 .icon-zip{
-    content:url(../images/zip_icon.png);
+    content:url('/static/images/zip_icon.png');
+    background-image: url('/static/images/zip_icon.png');
     width:50px;
     height:50px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 .icon-generic-file{
-    content:url(../images/generic_file.png);
+    content:url('/static/images/generic_file.png');
+    background-image: url('/static/images/generic_file.png');
     width:50px;
     height:50px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 .download-file{
