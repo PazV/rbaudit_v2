@@ -126,7 +126,8 @@ def saveUser():
                     profile_picture_class=" ,profile_picture_class='%s'"%class_name
 
                     img_path=os.path.join(cfg.class_img_path,'img_user_%s%s'%(data['user_id'],ext))
-                    style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
+                    # style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s);'%img_path)
+                    style=cssutils.css.CSSStyleDeclaration(cssText='content:url(%s); background-image:url(%s);'%(img_path,img_path))
                     css_class=cssutils.css.CSSStyleRule(selectorText='.'+class_name,style=style)
                     with open(cfg.profile_css_file, "a") as f:
                         f.write(css_class.cssText)

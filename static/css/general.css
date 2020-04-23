@@ -83,4 +83,9 @@ body{
     width:30px;
     height:30px;
     border-radius:50px;
+    
+    display: inline-block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
