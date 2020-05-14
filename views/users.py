@@ -50,7 +50,11 @@ def saveUser():
                             user_data['enabled']=True
                             user_data['profile_picture_class']='generic-user-img'
                             new_user=db.insert("system.user",user_data)
-                            mail_body='Se ha registrado al usuario %s. <br><br> <b>Correo:</b> %s, <br> <b>Contraseña:</b> %s<br><br><a href="%s">Acceder</a>'%(new_user['name'],new_user['email'],passwd,cfg.host)
+
+                            # mail_body='Se ha registrado al usuario %s. <br><br> <b>Correo:</b> %s, <br> <b>Contraseña:</b> %s<br><br><a href="%s">Acceder</a>'%(new_user['name'],new_user['email'],passwd,cfg.host)
+
+                            mail_body='<p style="text-align: center;"><img src="%s" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(93, 93, 92);">El usuario <em>%s</em> ha sido registrado con &eacute;xito.</span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Los datos de acceso son:</span></span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;"><strong>Correo:</strong> %s</span></span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;"><strong>Contrase&ntilde;a:</strong> %s</span></span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(93, 93, 92);">Para acceder a la aplicaci&oacute;n, dar click en el siguiente <a href="%s">link</a>.</span></p><p><img src="%s" alt="" width="250" height="70" /></p>'%(cfg.img_new_user,new_user['name'],new_user['email'],passwd,cfg.host,cfg.img_rb_logo)
+
                             GF.sendMail('Nuevo usuario',mail_body,user_data['email'])
                             response['success']=True
                             response['msg_response']='El usuario ha sido registrado.'
