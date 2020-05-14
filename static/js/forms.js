@@ -650,17 +650,32 @@ $(document).ready(function(){
     });
 
     $("#btnAFMsaveComment").click(function(){
-        var data={};
-        data['comment']=$("#AFMcomment").val().trim();
-        if (data['comment']!==''){
-            data['user_id']=me.user_info['user_id'];
-            data['form_id']=me.user_info['form_id'];
-            data['project_id']=me.user_info['project_id'];
+        // var data={};
+        var data = new FormData();
+        // data['comment']=$("#AFMcomment").val().trim();
+        data.append('comment',$("#AFMcomment").val().trim());
+        // if (data['comment']!==''){
+        if ($("#AFMcomment").val().trim()!==''){
+            $("#btnAFMsaveComment").prop("disabled",true);
+            // data['user_id']=me.user_info['user_id'];
+            // data['form_id']=me.user_info['form_id'];
+            // data['project_id']=me.user_info['project_id'];
+            data.append('user_id',me.user_info['user_id']);
+            data.append('form_id',me.user_info['form_id']);
+            data.append('project_id',me.user_info['project_id']);
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
             $.ajax({
                 url:'/project/addFormComment',
                 type:'POST',
-                data:JSON.stringify(data),
+                // data:JSON.stringify(data),
+                processData:false,
+                contentType:false,
+                data:data,
                 success:function(response){
+                    EasyLoading.hide();
                     try{
                         var res=JSON.parse(response);
                     }catch(err){
@@ -674,8 +689,13 @@ $(document).ready(function(){
                     if (res.success){
                         $("#mod_add_form_comment").modal("hide");
                     }
+                    else{
+                        $("#btnAFMsaveComment").prop("disabled",false);
+                    }
                 },
                 error:function(){
+                    EasyLoading.hide();
+                    $("#btnAFMsaveComment").prop("disabled",false);
                     $.alert({
                         theme:'dark',
                         title:'Atención',
@@ -695,6 +715,7 @@ $(document).ready(function(){
 
     $("#mod_add_form_comment").on('hide.bs.modal',function(){
         $("#AFMcomment").val("");
+        $("#btnAFMsaveComment").prop("disabled",false);
     })
 
     $("#btnFormSeeComments").click(function(){

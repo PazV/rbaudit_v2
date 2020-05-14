@@ -1127,7 +1127,7 @@ def saveResolvingForm():
                     response['msg_response']='Ocurrió un error al intentar validar la información.'
             else:
                 response['success']=False
-                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+                response['msg_response']='Ocurrió un error al intentar guardar la información, favor de revisar el formato del texto a guardar (preferentemente, use texto plano o sin formato).'
         else:
             response['success']=False
             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
@@ -1341,11 +1341,13 @@ def checkAddComment():
                 for r in revisions:
                     user_list.append(int(r['user_id']))
                 managers=db.query("""
-                    select a.manager,a.partner, a.project_id from project.project a, project.form b
+                    select a.manager,a.partner,b.assigned_to, a.project_id from project.project a, project.form b
                     where a.project_id=b.project_id and b.form_id=%s
                 """%data['form_id']).dictresult()[0]
                 user_list.append(int(managers['manager']))
                 user_list.append(int(managers['partner']))
+                #se agregó que usuario que resuelve pueda agregar comentarios
+                user_list.append(int(managers['assigned_to']))
                 #agregar usuario consultor
                 if data['is_consultant']==True:
                     #comprueba que sea consultor
@@ -1396,20 +1398,27 @@ def addFormComment():
     response={}
     try:
         if request.method=='POST':
-            valid,data=GF.getDict(request.form,'post')
+
+            # valid,data=GF.getDict(request.form,'post')
+            valid=True
+            data=request.form.to_dict()
+
             if valid:
+
                 comment={
-                    'comment':data['comment'].encode('utf-8'),
+                    # 'comment':data['comment'].encode('utf-8'),
+                    'comment':data['comment'].encode('utf-8').replace("\n","<br>").replace("\r","<br>").replace("•","-").replace("\t"," "),
+                    # 'comment':data['comment'].encode('ascii',errors='ignore').replace("\n","<br>").replace("\r","<br>").replace("•","-"),
                     'user_id':data['user_id'],
                     'form_id':data['form_id'],
                     'created':'now'
                 }
-                db.insert('project.form_comments',comment)
+                new_comm=db.insert('project.form_comments',comment)
 
                 users=db.query("""
-                    select user_id from project.form_revisions where form_id=%s
+                    select a.user_id, (select b.name from system.user b where a.user_id=b.user_id) as email from project.form_revisions a where a.form_id=%s
                     union
-                    select assigned_to as user_id from project.form where form_id=%s
+                    select c.assigned_to as user_id, (select d.email from system.user d where d.user_id=c.assigned_to) as email from project.form c where c.form_id=%s
                 """%(data['form_id'],data['form_id'])).dictresult()
 
                 info={
@@ -1422,6 +1431,14 @@ def addFormComment():
                     info['user_to']=u['user_id']
                     # se envía notificación a usuarios correspondientes
                     GF.createNotification('add_comment',info)
+
+                    mail_data={
+                        'comment_id':new_comm['comment_id'],
+                        'recipient_mail':u['email'],
+                        'type':'new_form_comment',
+                        'form_id':data['form_id']
+                    }
+                    GF.sendMailNotification(mail_data)
 
 
                 response['success']=True

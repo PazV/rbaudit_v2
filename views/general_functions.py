@@ -266,7 +266,7 @@ class GeneralFunctions:
                     select name from system.user where user_id=%s
                 """%data['user_from']).dictresult()[0]
                 notification['subject']='Nuevo comentario'
-                mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(user_from['name'],data['msg'].encode('utf-8'))
+                mensaje='<br>%s dice: <br><br><span class="notif-msg-quote"><i class="fa fa-quote-left" style="font-style:italic;"></i>%s<i class="fa fa-quote-right" style="font-style:italic" ></i></span>'%(user_from['name'],data['msg'])
                 notification['msg']='Se ha agregado un nuevo comentario al formulario %s. %s'%(form_info['name'],mensaje)
                 notification['user_from']=data['user_from']
                 notification['user_to']=data['user_to']
@@ -344,8 +344,27 @@ class GeneralFunctions:
 
                 recipients.append(assignee_mail[0]['email'])
                 subject='Recordatorio cuestionario por resolver'
-            app.logger.info(recipients)
-            body=template.format(**form_info)
+
+            elif data['type']=='new_form_comment':
+                comment=db.query("""
+                    select b.comment, (select a.name from system.user a where a.user_id=b.user_id) as author,
+                    to_char(b.created,'DD-MM-YYYY HH:MI:SS') as comment_date from project.form_comments b where b.comment_id=%s
+                """%data['comment_id']).dictresult()[0]
+
+
+                form_info['top_img']=cfg.img_form_comment
+                form_info['author']=comment['author']
+                form_info['comment_date']=comment['comment_date']
+                form_info['comment']=comment['comment'].replace('#','&#35;')
+                # template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p>&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">{author} ha agregado un comentario al formulario <em>{name}</em> el {comment_date}:<p>{comment}</p></span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Puede acceder al formulario a trav&eacute;s del siguiente {link}.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+                template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50"></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p>&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">{author} ha agregado un comentario al formulario <em><strong>{name}</strong></em> el d&iacute;a {comment_date}:</span></p><p style="text-align:left;"><span style="color: rgb(41, 105, 176);">&quot;{comment}&quot;</span></p><p><br></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Puede acceder al formulario a trav&eacute;s del siguiente {link}.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70"></p><p><br></p>'
+                subject='Nuevo comentario'
+                recipients.append(data['recipient_mail'])
+
+
+
+
+            body=template.format(**form_info)            
             response=self.sendMail(subject,body,recipients)
             app.logger.info(response)
 
