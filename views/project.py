@@ -1169,6 +1169,28 @@ def sendFormToRevision():
                         notif_info={'project_id':data['project_id'],'form_id':data['form_id']}
                         # GF.createNotification('send_to_revision1',data['project_id'],data['form_id'])
                         GF.createNotification('send_to_revision1',notif_info)
+
+                        form=db.query("""
+                            select name as form_name,
+                            project_id,
+                            (select a.name from system.user a where a.user_id=assigned_to) as assignee_name
+                            from project.form
+                            where form_id=%s
+                        """%data['form_id']).dictresult()[0]
+                        revision_email=db.query("""
+                            select a.email from system.user a, project.form_revisions b
+                            where a.user_id=b.user_id and b.revision_number=1
+                            and b.form_id=%s
+                        """%data['form_id']).dictresult()[0]['email']
+                        form['top_img']=cfg.img_revision_form
+                        form['bottom_img']=cfg.img_rb_logo
+                        link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(form['project_id'])),str(data['form_id']))
+                        form['link']='<a href="%s"> aqu&iacute;</a>'%link
+
+                        template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50" /></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(93, 93, 92);">Estimado usuario:</span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Le informamos que {assignee_name} ha terminado de resolver el programa de trabajo {form_name}, y se lo ha enviado para su revisi&oacute;n.</span></span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(93, 93, 92);">Para acceder, haga click {link}.</span></p><p><br></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+                        body=template.format(**form)
+
+                        GF.sendMail('Enviado a revisión',body,revision_email)
                         response['success']=True
                     else:
                         response['success']=False
