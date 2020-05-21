@@ -2341,6 +2341,22 @@ def doRevision():
                                 """%(data['form_id']))
                                 notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg']}
                                 GF.createNotification('return_form',notif_info)
+                                assignee_info=db.query("""
+                                    select a.name, a.email, b.name as form_name from system.user a, project.form b
+                                    where a.user_id=b.assigned_to and b.form_id=%s
+                                """%data['form_id']).dictresult()[0]
+                                revisor_info=db.query("""
+                                    select name, email from system.user where user_id=%s
+                                """%data['user_id']).dictresult()
+                                assignee_info['revisor_name']=revisor_info[0]['name']
+                                assignee_info['comments']=data['msg'].encode('utf-8')
+                                assignee_info['top_img']=cfg.img_return_form
+                                assignee_info['bottom_img']=cfg.img_rb_logo
+                                link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(data['project_id'])),str(data['form_id']))
+                                assignee_info['link']='<a href="%s"> aqu&iacute;</a>'%link
+                                template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50"></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(93, 93, 92);">Estimado usuario:</span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Le informamos que el usuario {revisor_name} ha revisado el programa de trabajo {form_name} y ha decidido asignarlo a usted nuevamente.&nbsp;</span></span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Ha incluido los siguientes comentarios:</span></span></p><p style="margin-left: 20px;"><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;"><em>{comments}</em></span></span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Para acceder al programa de trabajo, dar click {link}.</span></span></p><p><br></p><p><img src="{bottom_img}" alt="" width="250" height="70"></p>'
+                                body=template.format(**assignee_info)
+                                GF.sendMail('Revisión completada (regresado)',body,assignee_info['email'])
                             else:
                                 #en caso de que se cambie de revisor
                                 current_revision=db.query("""
@@ -2366,6 +2382,25 @@ def doRevision():
                                 """%(data['form_id'],data['user_to']))
                                 notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg'],'user_to':data['user_to']}
                                 GF.createNotification('send_next_revision',notif_info)
+
+                                form_info=db.query("""
+                                    select name as form_name from project.form where form_id=%s
+                                """%data['form_id']).dictresult()[0]
+                                form_info['revisor_name']=db.query("""
+                                    select name from system.user where user_id=%s
+                                """%data['user_id']).dictresult()[0]['name']
+                                form_info['email']=db.query("""
+                                    select email from system.user where user_id=%s
+                                """%data['user_to']).dictresult()[0]['email']
+                                form_info['comments']=data['msg'].encode('utf-8')
+                                form_info['top_img']=cfg.img_revision_form
+                                form_info['bottom_img']=cfg.img_rb_logo
+                                link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(data['project_id'])),str(data['form_id']))
+                                form_info['link']='<a href="%s"> aqu&iacute;</a>'%link
+                                template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50"></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(93, 93, 92);">Estimado usuario:</span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Le informamos que el usuario {revisor_name} ha revisado el programa de trabajo {form_name} y ha decidido asignarlo a usted para su revisi&oacute;n.&nbsp;</span></span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Ha incluido los siguientes comentarios:</span></span></p><p style="margin-left: 20px;"><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;"><em>{comments}</em></span></span></p><p><span style="color: rgb(93, 93, 92);"><span style="font-family: Verdana, Geneva, sans-serif;">Para acceder al programa de trabajo, dar click {link}.</span></span></p><p><img src="{bottom_img}" alt="" width="250" height="70"></p><p><br></p>'
+                                body=template.format(**form_info)
+                                GF.sendMail('Enviado a revisión',body,form_info['email'])
+
 
                         response['success']=True
                         response['msg_response']='El formulario ha sido actualizado.'
