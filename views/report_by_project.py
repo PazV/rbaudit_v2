@@ -94,8 +94,7 @@ def main():
 
         #obtener usuarios habilitados
         users=db.query("""
-            select user_id, name
-            --, email
+            select user_id, name, email
             from system.user
             where enabled=True order by user_id
         """).dictresult()
@@ -245,9 +244,9 @@ def main():
 
                 if template!='':
                     template+='<p><img src="%s" alt="" width="250" height="70"></p><p><br></p>'%cfg.img_rb_logo
-                    subject='Resumen de actividades %s'%u['name']
+                    subject='Resumen de actividades'
                     body='<p style="line-height: 1;"><span style="font-family: Verdana, Geneva, sans-serif; font-size: 14px;">Estimado usuario:</span></p><p style="line-height: 1;"><span style="font-family: Verdana, Geneva, sans-serif; font-size: 14px;">A continuaci&oacute;n mostramos un resumen de los proyectos supervisados por usted:</span></p>'+template
-                    recipients=['pgarcia@russellbedford.mx']
+                    recipients=[u['email']]
                     MF.sendMail(subject,body,recipients)
                     logger.info("Envía correo de usuario %s"%u['name'])
                 else:
