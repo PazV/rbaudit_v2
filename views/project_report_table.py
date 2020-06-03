@@ -130,9 +130,9 @@ def main():
                     template+='<tr><td style="width: 10.274%; border: 1px solid rgb(173, 173, 173);"><div style="text-align: center;"><img src={flag} style="height: 12px; width: 12px;"></div></td><td style="width: 28.2534%; border: 1px solid rgb(173, 173, 173);">{project_name}</td><td style="width: 28.2534%; border: 1px solid rgb(173, 173, 173);">{form_name}</td><td style="width: 13.5274%; border: 1px solid rgb(173, 173, 173);"><div style="text-align: center;">{resolve_before}</div></td><td style="width: 9.9315%; border: 1px solid rgb(173, 173, 173);"><div style="text-align: center;">{status}</div></td><td style="width: 9.4178%; border: 1px solid rgb(173, 173, 173);"><div style="text-align: center;">{link}</div></td></tr>'.format(**f)
 
                 template+='</tbody></table><br><p><img src="%s" alt="" width="250" height="70"></p><p><br></p>'%cfg.img_rb_logo
-                subject='Resumen de actividades %s'%u['name']
+                subject='Resumen de actividades'
                 body=template
-                recipients=['pgarcia@russellbedford.mx']
+                recipients=[u['email']]
                 MF.sendMail(subject,body,recipients)
                 logger.info("Envía correo de usuario %s"%u['name'])
                 print "Envía correo de usuario %s"%u['name']
