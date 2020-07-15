@@ -1029,19 +1029,22 @@ def getFormDetails():
             if valid:
                 info=db.query("""
                     select
+                        f.name as form_name,
                         (select a.name from system.user a where a.user_id=f.assigned_to) as assigned_to,
                         --f.revisions,
                         to_char(f.create_date,'DD-MM-YYYY HH24:MI:SS') as create_date,
                         (select a.name from system.user a where a.user_id=f.created_by) as created_by,
                         to_char(f.resolve_before,'DD-MM-YYYY HH24:MI:SS') as resolve_before,
-                        (select c.status from project.form_status c where c.status_id=f.status_id) as status
+                        (select c.status from project.form_status c where c.status_id=f.status_id) as status,
+                        f.status_id
                     from
                         project.form f
                     where
                         f.form_id=%s
                 """%data['form_id']).dictresult()[0]
 
-                html='<p><b>Asignado a: </b>%s<br><b>Resolver antes de: </b>%s<br>'%(info['assigned_to'].decode('utf-8'),info['resolve_before'])
+                html='<p><b>Nombre: </b>%s<br>'%info['form_name']
+                html+='<b>Asignado a: </b>%s<br><b>Resolver antes de: </b>%s<br>'%(info['assigned_to'].decode('utf-8'),info['resolve_before'])
 
                 revisions=db.query("""
                     select b.user_id,
@@ -1063,7 +1066,18 @@ def getFormDetails():
 
                 html+='<b>Creado: </b>%s<br>'%info['create_date']
                 html+='<b>Creado por: </b>%s<br>'%info['created_by'].decode('utf-8')
-                html+='<b>Estado actual: </b>%s</p>'%info['status'].decode('utf-8')
+                app.logger.info("status: %s"%info['status_id'])
+                if info['status_id'] in [5,6]:
+                    current_revisor=db.query("""
+                        select a.name from system.user a, project.form_revisions b
+                        where a.user_id=b.user_id and b.form_id=%s and b.currently_assigned=True
+                    """%data['form_id']).dictresult()[0]
+                    if info['status_id']==5:
+                        html+='<b>Estado actual: </b>%s a %s</p>'%(info['status'].decode('utf-8'),current_revisor['name'].decode('utf-8'))
+                    else:
+                        html+='<b>Estado actual: </b>%s por %s</p>'%(info['status'].decode('utf-8'),current_revisor['name'].decode('utf-8'))
+                else:
+                    html+='<b>Estado actual: </b>%s</p>'%info['status'].decode('utf-8')
 
                 response['success']=True
                 response['data']=html
@@ -1438,7 +1452,7 @@ def addFormComment():
                 new_comm=db.insert('project.form_comments',comment)
 
                 users=db.query("""
-                    select a.user_id, (select b.name from system.user b where a.user_id=b.user_id) as email from project.form_revisions a where a.form_id=%s
+                    select a.user_id, (select b.email from system.user b where a.user_id=b.user_id) as email from project.form_revisions a where a.form_id=%s
                     union
                     select c.assigned_to as user_id, (select d.email from system.user d where d.user_id=c.assigned_to) as email from project.form c where c.form_id=%s
                 """%(data['form_id'],data['form_id'])).dictresult()
@@ -2277,6 +2291,7 @@ def doRevision():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
+                app.logger.info(data)
                 success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'resolve_forms'})
                 if success:
                     if allowed:
@@ -2334,11 +2349,17 @@ def doRevision():
                                     set status_id=3, user_last_update=%s,
                                     last_updated='now' where form_id=%s
                                 """%(data['user_id'],data['form_id']))
+                                #actualizar fecha en que se regresó la revisión en registro de usuario que regresó el formulario
+                                db.query("""
+                                    update project.form_revisions set returned_revision_date='now' where form_id=%s
+                                    and currently_assigned=True
+                                """%data['form_id'])
                                 #se actualiza a quien está asignada la revisión
                                 db.query("""
                                     update project.form_revisions set
-                                    currently_assigned=False where form_id=%s
+                                    currently_assigned=False, revision_date='1900-01-01 00:00:00' where form_id=%s
                                 """%(data['form_id']))
+
                                 notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg']}
                                 GF.createNotification('return_form',notif_info)
                                 assignee_info=db.query("""
@@ -2363,6 +2384,8 @@ def doRevision():
                                     select * from project.form_revisions where
                                     form_id=%s and currently_assigned=True
                                 """%data['form_id']).dictresult()[0]
+                                app.logger.info("current_revision")
+                                app.logger.info(current_revision)
                                 #se actualiza quien y cuando fue la última vez que se actualizó el formulario
                                 db.query("""
                                     update project.form set
@@ -2372,14 +2395,29 @@ def doRevision():
                                 user_update=""
                                 if int(current_revision['user_id'])!=int(data['user_id']):
                                     user_update=",user_update=%s"%data['user_id']
+                                #se actualiza la fecha en que se realizó la revisión, y se cambia currently_assigned a false
                                 db.query("""
                                     update project.form_revisions set currently_assigned=False,
                                     revision_date='now' %s where form_id=%s and currently_assigned=True
                                 """%(user_update,data['form_id']))
+                                #se asigna el nuevo revisor
                                 db.query("""
                                     update project.form_revisions set currently_assigned=True
                                     where form_id=%s and user_id=%s
                                 """%(data['form_id'],data['user_to']))
+                                #cuando se regresa a un revisor anterior
+                                if data['to']=='return':
+                                    new_assigned=db.query("""
+                                        select revision_number from project.form_revisions where user_id=%s and form_id=%s
+                                    """%(data['user_to'],data['form_id'])).dictresult()[0]
+
+                                    db.query("""
+                                        update project.form_revisions set revision_date='1900-01-01 00:00:00' where
+                                        form_id=%s and revision_number>=%s
+                                    """%(data['form_id'],new_assigned['revision_number']))
+                                    db.query("""
+                                        update project.form_revisions set returned_revision_date='now' where revision_id=%s
+                                    """%current_revision['revision_id'])
                                 notif_info={'project_id':data['project_id'],'form_id':data['form_id'],'msg':data['msg'],'user_to':data['user_to']}
                                 GF.createNotification('send_next_revision',notif_info)
 
@@ -3900,3 +3938,249 @@ def getConsultantProjects():
         app.logger.info(traceback.format_exc(sys.exc_info()))
         GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+# @bp.route('/getPublishingInfo', methods=['GET','POST'])
+# @is_logged_in
+# def getPublishingInfo():
+#     response={}
+#     try:
+#         if request.method=='POST':
+#             valid,data=GF.getDict(request.form,'post')
+#             if valid:
+#                 is_allowed=db.query("""
+#                     select edit_publising_info from system.user where user_id=%s
+#                 """%data['user_id']).dictresult()
+#                 if is_allowed[0]['edit_publising_info']==True:
+#                     assigned=db.query("""
+#                         select assigned_to, project_id, to_char(resolve_before,'YYYY-MM-DD') as resolve_before, notify_assignee, notify_resolved from project.form
+#                         where form_id=%s
+#                     """%data['form_id']).dictresult()[0]
+#                     revisions=db.query("""
+#                         select user_id, revision_number, currently_assigned, to_char(revision_date,'DD-MM-YYYY'),
+#                         case when revision_date = '1900-01-01 00:00:00' then 'no' else 'yes' end as already_revised
+#                         from project.form_revisions
+#                         where form_id=%s
+#                         order by revision_number asc
+#                     """%data['form_id']).dictresult()
+#                     users=db.query("""
+#                         select a.user_id, b.name from project.project_users a, system.user b where a.user_id=b.user_id and a.project_id=%s
+#                     """%assigned['project_id']).dictresult()
+#                     assigned['revisions']=revisions
+#                     assigned['users']=users
+#                     response['data']=assigned
+#                     response['success']=True
+#                     app.logger.info(response['data'])
+#                 else:
+#                     response['success']=False
+#                     response['msg_response']='No tienes permisos para editar esta información.'
+#             else:
+#                 response['success']=False
+#                 response['msg_response']='Ocurrió un error al intentar obtener la información.'
+#         else:
+#             response['success']=False
+#             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+#     except:
+#         response['success']=False
+#         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+#         app.logger.info(traceback.format_exc(sys.exc_info()))
+#         GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+#     return json.dumps(response)
+
+# @bp.route('/editPublishingInfo', methods=['GET','POST'])
+# @is_logged_in
+# def editPublishingInfo():
+#     response={}
+#     try:
+#         if request.method=='POST':
+#             valid,data=GF.getDict(request.form,'post')
+#             if valid:
+#                 #comparar para ver si hay cambios
+#                 new_revisions=[]
+#                 new_revisions_wusers=[]
+#                 app.logger.info(data)
+#                 diff=False #bandera para indicar si hubo algún cambio
+#
+#                 for k,v in data.iteritems():
+#                     if k.split("_")[0]=='revision':
+#                         new_revisions.append(k)
+#                         new_revisions_wusers.append("%s:%s"%(k,v))
+#                 app.logger.info("new_revisions")
+#                 app.logger.info(new_revisions)
+#                 old_revisions=db.query("""
+#                     select *, to_char(revision_date,'YYYY-MM-DD') as formatted_date  from project.form_revisions where form_id=%s order by revision_number asc
+#                 """%data['form_id']).dictresult()
+#                 form_info=db.query("""
+#                     select assigned_to, to_char(resolve_before,'YYYY-MM-DD') as resolve_before,
+#                     notify_assignee, notify_resolved from project.form where form_id=%s
+#                 """%data['form_id']).dictresult()[0]
+#                 #revisar que si es el mismo número, no sean los mismos revisores
+#                 #revisar si es mismo asignado
+#                 #revisar si es la misma fecha
+#                 notif_changes={'revisor':False,'assigned_to':False,'date':False,'send':False}
+#                 if len(old_revisions)==len(new_revisions):
+#                     for o in old_revisions:
+#                         if int(o['user_id'])!=int(data['revision_%s'%o['revision_number']]):
+#                             diff=True
+#                             notif_changes['send']=True
+#                             notif_changes['revisor']=True
+#                             break
+#                     if diff==False:
+#                         if int(data['assigned_to'])!=int(form_info['assigned_to']):
+#                             diff=True
+#                             notif_changes['send']=True
+#                             notif_changes['assigned_to']=True
+#                         else:
+#                             if data['resolve_date']!=form_info['resolve_before']:
+#                                 diff=True
+#                                 notif_changes['send']=True
+#                                 notif_changes['date']=True
+#                             else:
+#                                 if data['notify_resolved']!=form_info['notify_resolved']:
+#                                     diff=True
+#                                 else:
+#                                     if data['notify_assignee']!=form_info['notify_assignee']:
+#                                         diff=True
+#                                     else:
+#                                         diff=False
+#                 else:
+#                     diff=True
+#                     notif_changes['send']=True
+#                     notif_changes['revisor']=True
+#
+#                 if diff==True:
+#                     hist_rev=','.join("revision_%s:%s"%(e['revision_number'],e['user_id']) for e in old_revisions)
+#                     history={
+#                         'form_id':data['form_id'],
+#                         'assigned_to':form_info['assigned_to'],
+#                         'resolve_before':form_info['resolve_before'],
+#                         'updated':'now',
+#                         'updated_by':data['user_id'],
+#                         'revisors':hist_rev
+#                     }
+#                     db.insert("project.publish_history",history)
+#
+#                     nr=','.join(new_revisions_wusers)
+#
+#                     db.query("""
+#                         update project.form
+#                         set assigned_to=%s,
+#                         resolve_before='%s',
+#                         revisions='%s',
+#                         notify_assignee=%s,
+#                         notify_resolved=%s
+#                         where form_id=%s
+#                     """%(data['assigned_to'],data['resolve_date'],nr,data['notify_assignee'],data['notify_resolved'],data['form_id']))
+#
+#                     if len(old_revisions)==len(new_revisions):
+#                         #mismo número de revisores
+#                         for oldr in old_revisions:
+#                             if oldr['formatted_date']=='1900-01-01':
+#                                 user=data['revision_%s'%oldr['revision_number']]
+#                                 db.query("""
+#                                     update project.form_revisions
+#                                     set user_id=%s,
+#                                     returned_revision_date='1900-01-01 00:00:00'
+#                                     where revision_id=%s and form_id=%s
+#                                 """%(user,oldr['revision_id'],data['form_id']))
+#
+#
+#                     elif len(old_revisions)>len(new_revisions):
+#                         #si se quitaron revisores
+#                         db.query("""
+#                             delete from project.form_revisions
+#                             where form_id=%s and revision_number>%s
+#                         """%(data['form_id'],len(new_revisions)))
+#                         for oldr in old_revisions:
+#                             if oldr['revision_number']<=len(new_revisions):
+#                                 if oldr['formatted_date']=='1900-01-01':
+#                                     user=data['revision_%s'%oldr['revision_number']]
+#                                     db.query("""
+#                                         update project.form_revisions
+#                                         set user_id=%s,
+#                                         returned_revision_date='1900-01-01 00:00:00'
+#                                         where revision_id=%s and form_id=%s
+#                                     """%(user,oldr['revision_id'],data['form_id']))
+#                     else:
+#                         #si se agregan revisores
+#                         for oldr in old_revisions:
+#                             if oldr['formatted_date']=='1900-01-01':
+#                                 user=data['revision_%s'%oldr['revision_number']]
+#                                 db.query("""
+#                                     update project.form_revisions
+#                                     set user_id=%s,
+#                                     returned_revision_date='1900-01-01 00:00:00'
+#                                     where revision_id=%s and form_id=%s
+#                                 """%(user,oldr['revision_id'],data['form_id']))
+#                         for x in range(len(old_revisions),len(new_revisions)):
+#                             revision={
+#                                 'form_id':data['form_id'],
+#                                 'user_id':data['revision_%s'%str(x+1)],
+#                                 'revision_number':x+1,
+#                                 'revision_date':'1900-01-01 00:00:00',
+#                                 'currently_assigned':False
+#                             }
+#                             db.insert('project.form_revisions',revision)
+#
+#                     if notif_changes['send']==True:
+#                         #obtener información del formulario
+#                         form_info=db.query("""
+#                             select
+#                                 a.name as form_name,
+#                                 a.assigned_to,
+#                                 (select b.name from system.user b where a.assigned_to=b.user_id) as assigned_to_name,
+#                                 to_char(a.resolve_before, 'DD-MM-YYYY') as resolve_before,
+#                                 c.status
+#                                 a.status_id
+#                             from project.form a, project.form_status c
+#                             where a.status_id=c.status_id
+#                             and a.form_id=%s
+#                         """%data['form_id']).dictresult()
+#                         #obtener información de revisores
+#                         revisors_html=db.query("""
+#                             select
+#                                 a.name,
+#                                 a.email,
+#                                 a.user_id
+#                                 b.currently_assigned
+#                             from
+#                                 system.user a,
+#                                 project.form_revisions b
+#                             where
+#                                 b.form_id=%s
+#                             and a.user_id=b.user_id
+#                             order by b.revision_number
+#                         """%data['form_id']).dictresult()
+#
+#                         #obtener correos de destinatarios (asignado y revisores) - incluir nuevos y viejos usuarios asociados al formulario (tanto los que se quitan como los que se agregan)
+#
+#                         html='<p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(93, 93, 93);">Estimado usuario:</span></p><p><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Le notificamos que se realizaron cambios en <strong>{form_name}</strong>:</span></span></p><ul>'
+#                         if notif_changes['assigned_to']:
+#                             html+='<li><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Usuario asignado</span></span></li>'
+#                         if notif_changes['revisor']==True:
+#                             html+='<li><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Revisores</span></span></li>'
+#                         if notif_changes['date']==True:
+#                             html+='<li><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Fecha en que deber&aacute; ser resuelto</span></span></li>'
+#
+#                         html+='</ul><p style="line-height: 1;"><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Los datos quedan como se muestra a continuaci&oacute;n:</span></span></p><p style="line-height: 1;"><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Nombre: {form_name}</span></span></p><p style="line-height: 1;"><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Asignado a: {assignee_to}</span></span></p><p style="line-height: 1;"><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Resolver antes de: {resolve_before}</span></span></p><p style="line-height: 1;"><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Revisi&oacute;n 1:{rev_1}</span></span></p><p style="line-height: 1;"><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Estado actual: {status}</span></span></p><p style="line-height: 1;"><span style="color: rgb(93, 93, 93);"><span style="font-family: Verdana, Geneva, sans-serif;">Para acceder, haga click {link}.</span></span></p><p style="line-height: 1;"><br></p>'
+#
+#                     response['msg_response']='Los datos han sido actualizados.'
+#                     #enviar notificaciones
+#                 else:
+#                     response['msg_response']='Ningún dato fue modificado.'
+#
+#
+#
+#
+#                 response['success']=True
+#             else:
+#                 response['success']=False
+#                 response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+#         else:
+#             response['success']=False
+#             response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+#     except:
+#         response['success']=False
+#         response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+#         app.logger.info(traceback.format_exc(sys.exc_info()))
+#         GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+#     return json.dumps(response)
