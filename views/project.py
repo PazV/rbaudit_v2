@@ -2138,11 +2138,21 @@ def allowedFormZip():
                                     if int(data['user_id'])==int(project_users['manager']) or int(data['user_id'])==int(project_users['partner']):
                                         response['allowed']=True
                                     else:
-                                        response['allowed']=False
-                                        if data['from']=='upload':
-                                            response['msg_response']='No tienes permitido subir un archivo relacionado a este formulario.'
+                                        workspace_id=db.query("""
+                                            select workspace_id from system.user where user_id=%s
+                                        """%project_users['manager']).dictresult()[0]
+                                        consultants=db.query("""
+                                            select consultants from system.workspace where workspace_id=%s
+                                        """%workspace_id['workspace_id']).dictresult()[0]
+                                        cons=consultants['consultants'].split(",")
+                                        if str(data['user_id']) in cons:
+                                            response['allowed']=True
                                         else:
-                                            response['msg_response']='No tienes permitido descargar archivos de este formulario.'
+                                            response['allowed']=False
+                                            if data['from']=='upload':
+                                                response['msg_response']='No tienes permitido subir un archivo relacionado a este formulario.'
+                                            else:
+                                                response['msg_response']='No tienes permitido descargar archivos de este formulario.'
                         else:
                             response['allowed']=False
                             response['msg_response']='Este formulario se encuentra cerrado, por lo tanto no puede ser cargado ningún archivo nuevo.'
@@ -3985,7 +3995,7 @@ def getConsultantProjects():
 #         app.logger.info(traceback.format_exc(sys.exc_info()))
 #         GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
 #     return json.dumps(response)
-
+#
 # @bp.route('/editPublishingInfo', methods=['GET','POST'])
 # @is_logged_in
 # def editPublishingInfo():
