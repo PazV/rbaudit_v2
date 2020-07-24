@@ -29,11 +29,11 @@
                     <fieldset class="fieldset-permits">
                         <legend class="fieldset-legend-permits" style="font-size:1.2rem;">Notificaciones </legend>
                         <div class="custom-control custom-checkbox">
-                            <input class="custom-control-input" type="checkbox" id="FTPcheck_notify_assignee" name="notify_assignee"/>
+                            <input class="custom-control-input" type="checkbox" id="FTPcheck_notify_assignee" name="notify_assignee" checked="true"/>
                             <label class="custom-control-label" for="FTPcheck_notify_assignee">Enviar notificación por correo al usuario asignado</label>
                         </div>
                         <div class="custom-control custom-checkbox">
-                            <input class="custom-control-input" type="checkbox" id="FTPcheck_notify_resolved" name="notify_resolved"/>
+                            <input class="custom-control-input" type="checkbox" id="FTPcheck_notify_resolved" name="notify_resolved" checked="true"/>
                             <label class="custom-control-label" for="FTPcheck_notify_resolved">Recibir notificación por correo cuando sea resuelto</label>
                         </div>
                     </fieldset>
@@ -53,6 +53,7 @@
                 </form>
             </div>
             <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark mr-auto" id="btnSeePublishingHistory" style="display:none;"><span class="hide-text">Ver Historial </span><i class="fa fa-history"></i></button>
                 <button type="button" class="btn btn-outline-dark" id="btnPFpublishForm"><span class="hide-text">Publicar </span><i class="fa fa-cloud-upload"></i></button>
                 <button type="button" class="btn btn-outline-dark close-modal"><span class="hide-text">Salir </span><i class="fa fa-close"></i></button>
             </div>

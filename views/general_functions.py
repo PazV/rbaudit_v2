@@ -364,7 +364,7 @@ class GeneralFunctions:
 
 
 
-            body=template.format(**form_info)            
+            body=template.format(**form_info)
             response=self.sendMail(subject,body,recipients)
             app.logger.info(response)
 
@@ -394,7 +394,7 @@ class GeneralFunctions:
             msg.attach(MIMEText(body,'html'))
             text=msg.as_string()
 
-            resp=server.sendmail(from_address,list_to,text)
+            #resp=server.sendmail(from_address,list_to,text)
             # app.logger.info(resp)
             app.logger.info("sends mail")
 

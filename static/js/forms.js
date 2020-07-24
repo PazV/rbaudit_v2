@@ -160,31 +160,64 @@ $(document).ready(function(){
     });
 
     $("#btnPublishForm").click(function(){
+        $("#mod_publish_form").data('mode','new');
         $("#mod_publish_form").modal("show");
         loadRevisionUsers("#FTPassigned_to",me.user_info['project_id']);
         loadRevisionUsers("#FTPrevision_1",me.user_info['project_id']);
 
     });
 
-    $("#mod_publish_form").on('hide.bs.modal',function(){
+    $("#mod_publish_form").on('hidden.bs.modal',function(){
         resetForm("#frmFormToPublish",['input|INPUT','select|SELECT']);
         $("#FTPrevisions").empty();
     });
 
+    $("#mod_publish_form").on('show.bs.modal',function(){
+        $("#btnPFpublishForm").attr("disabled",false);
+    });
+
     $("#btnFTPaddRevision").click(function(){
-        if ($("#FTPrevisions").children().last().length==0){
-            $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_2" class="col-sm-3 col-form-label">Revisión 2: </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_2" name="revision_2" data-revision="2"></select></div>');
-            loadRevisionUsers("#FTPrevision_2",me.user_info['project_id']);
-        }
-        else{
+        console.log($("#mod_publish_form").data('mode'));
+        if ($("#mod_publish_form").data('mode')=='edit'){
             var revision_number=$("#FTPrevisions").children().length+2;
             $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_'+revision_number+'" class="col-sm-3 col-form-label">Revisión '+revision_number+': </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_'+revision_number+'" name="revision_'+revision_number+'" data-revision="'+revision_number+'"></select></div>');
+            $("#FTPrevision_"+revision_number).data('currently_assigned',false);
             loadRevisionUsers("#FTPrevision_"+revision_number,me.user_info['project_id']);
+        }
+        else{
+            if ($("#FTPrevisions").children().last().length==0){
+                $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_2" class="col-sm-3 col-form-label">Revisión 2: </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_2" name="revision_2" data-revision="2"></select></div>');
+                loadRevisionUsers("#FTPrevision_2",me.user_info['project_id']);
+            }
+            else{
+                var revision_number=$("#FTPrevisions").children().length+2;
+                $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_'+revision_number+'" class="col-sm-3 col-form-label">Revisión '+revision_number+': </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_'+revision_number+'" name="revision_'+revision_number+'" data-revision="'+revision_number+'"></select></div>');
+                loadRevisionUsers("#FTPrevision_"+revision_number,me.user_info['project_id']);
+            }
         }
     });
 
     $("#btnFTPremoveRevision").click(function(){
-        $("#FTPrevisions").children().last().remove();
+        console.log($("#mod_publish_form").data('mode'));
+        if ($("#mod_publish_form").data('mode')){
+            console.log($("#FTPrevisions").children().last());
+            if (!$("#FTPrevisions").children().last().is('disabled')){
+                console.log($("#FTPrevisions").children().last());
+                if ($("#FTPrevisions").children().last().find('select').data('currently_assigned')===false){
+                    $("#FTPrevisions").children().last().remove();
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Este revisor no puede ser eliminado, porque tiene asignada la revisión actual. Es posible, asignar la revisión a alguien más.'
+                    });
+                }
+            }
+        }
+        else{
+            $("#FTPrevisions").children().last().remove();
+        }
     });
 
     $("#FTPresolve_date").focusout(function(){
@@ -195,7 +228,13 @@ $(document).ready(function(){
         $("#btnPFpublishForm").prop("disabled",true);
         $("#FTPresolve_date").focusout();
         if ($("#FTPresolve_date").hasClass('valid-field')){
-            saveTableInfo("#grdPrefilledForm",'/project/savePrefilledForm',me.user_info,false);
+            if ($("#mod_publish_form").data('mode')=='new'){
+                var url='/project/publishForm';
+                saveTableInfo("#grdPrefilledForm",'/project/savePrefilledForm',me.user_info,false);
+            }
+            else{
+                var url='/project/editPublishingInfo';
+            }
             var sel_list=[{'id':'#FTPassigned_to','name':'assigned_to'},{'id':'#FTPrevision_1','name':'revision_1'}];
             var revisions=$("#FTPrevisions").children();
             for (var x of revisions){
@@ -209,8 +248,9 @@ $(document).ready(function(){
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
             });
+
             $.ajax({
-                url:'/project/publishForm',
+                url:url,
                 type:'POST',
                 data:JSON.stringify(data),
                 success:function(response){
@@ -229,7 +269,13 @@ $(document).ready(function(){
                                 confirm:{
                                     text:'Aceptar',
                                     action:function(){
-                                        window.location.pathname='/project/'+me.user_info.project_factor;
+                                        $("#mod_publish_form").modal("hide");
+                                        if ($("#mod_publish_form").data('mode')=='new'){
+                                            window.location.pathname='/project/'+me.user_info.project_factor;
+                                        }
+                                        else{
+                                            // window.location.reload();
+                                        }
                                     }
                                 }
                             }
@@ -1493,6 +1539,12 @@ $(document).ready(function(){
                     ajaxError();
                 }
                 if (res.success){
+                    if (res.data.status_id==2){
+                        $("#btnEditPublishingInfo").css("display",'none');
+                    }
+                    else{
+                        $("#btnEditPublishingInfo").css("display",'initial');
+                    }
                     $("#EFSname").val(res.data.name);
                     $("#EFSfolder").val(res.data.folder_name);
                     $("#EFSrows").val(res.data.rows);
@@ -1567,6 +1619,118 @@ $(document).ready(function(){
                     title:'Error',
                     content:'Ocurrió un error, favor de intentarlo de nuevo.'
                 });
+            }
+        });
+    });
+
+    $("#btnEditPublishingInfo").click(function(){
+        $.ajax({
+            url:'/project/getPublishingInfo',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'form_id':me.user_info['form_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    console.log(res.data);
+                    $("#FTPresolve_date").val(res.data.resolve_before);
+                    $("#FTPcheck_notify_resolved").attr("checked",res.data.notify_resolved);
+                    $("#FTPcheck_notify_assignee").attr("checked",res.data.notify_assignee);
+                    $.each(res.data.users,function(i,item){
+                        if (item.user_id==res.data.assigned_to){
+                            $("#FTPassigned_to").append($('<option>',{
+                                text:item.name,
+                                name:item.user_id,
+                                selected:true
+                            }));
+                        }
+                        else{
+                            $("#FTPassigned_to").append($('<option>',{
+                                text:item.name,
+                                name:item.user_id
+                            }));
+                        }
+                    });
+                    for (var x in res.data.revisions){
+                        //primer revisor (este revisor no puede ser eliminado porque siempre debe haber al menos un revisor)
+                        if (x==0){
+                            $("#FTPrevision_1").data('currently_assigned',res.data.revisions[x].currently_assigned);
+                            $.each(res.data.users,function(i,item){
+                                if (res.data.revisions[x].user_id==item.user_id){
+                                    $("#FTPrevision_1").append($('<option>',{
+                                        text:item.name,
+                                        name:item.user_id,
+                                        selected:true
+                                    }));
+                                }
+                                else{
+                                    $("#FTPrevision_1").append($('<option>',{
+                                        text:item.name,
+                                        name:item.user_id
+                                    }));
+                                }
+                            });
+                            if (res.data.revisions[x].already_revised=='yes'){
+                                $("#FTPrevision_1").attr('disabled',true);
+                            }
+                        }
+                        else{
+                            //en caso de existir, el resto de los revisores
+                            if (res.data.revisions[x].already_revised=='yes'){
+                                var disabled=' disabled';
+                            }
+                            else{
+                                var disabled='';
+                            }
+                            var revision_number=$("#FTPrevisions").children().length+2;
+                            $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_'+revision_number+'" class="col-sm-3 col-form-label">Revisión '+revision_number+': </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_'+revision_number+'" name="revision_'+revision_number+'" data-revision="'+revision_number+'"'+disabled+'></select></div>');
+                            $("#FTPrevision_"+revision_number).data('currently_assigned',res.data.revisions[x].currently_assigned);
+                            $.each(res.data.users,function(i,item){
+                                if (res.data.revisions[x].user_id==item.user_id){
+                                    $("#FTPrevision_"+revision_number).append($('<option>',{
+                                        text:item.name,
+                                        name:item.user_id,
+                                        selected:true
+                                    }));
+                                }
+                                else{
+                                    $("#FTPrevision_"+revision_number).append($('<option>',{
+                                        text:item.name,
+                                        name:item.user_id
+                                    }));
+                                }
+                            });
+                        }
+                    }
+                    // $.each(res.data.users,function(i,item){
+                    //     if (res.data.revisions[0].user_id==item.user_id){
+                    //         $("#FTPrevision_1").append($('<option>',{
+                    //             text:item.name,
+                    //             name:item.user_id,
+                    //             selected:true
+                    //         }));
+                    //     }
+                    //     else{
+                    //         $("#FTPrevision_1").append($('<option>',{
+                    //             text:item.name,
+                    //             name:item.user_id
+                    //         }));
+                    //     }
+                    // });
+                    $("#mod_publish_form").data('mode','edit');
+                    $("#btnSeePublishingHistory").css("display","initial");
+                    $("#mod_publish_form").modal("show");
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
             }
         });
     });
@@ -1997,7 +2161,50 @@ $(document).ready(function(){
         emptyField(id,error_id);
     });
 
+    $("#btnSeePublishingHistory").click(function(){
+        $("#mod_publishing_history").modal("show");
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
+        $.ajax({
+            url:'/project/getPublishingHistory',
+            method:'POST',
+            data:JSON.stringify({'form_id':me.user_info.form_id,'user_id':me.user_info.user_id}),
+            success:function(response){
+                EasyLoading.hide();
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    for (var x of res.data){
+                        $("#divPublishingHistory").append('<div class="div-form-comment"><p class="comment-content">'+x['html']+'</p><span class="comment-author"> Modificado por:'+x['author']+'</span></div>');
+                    }
 
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            error:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#mod_publishing_history").on('hidden.bs.modal',function(){
+        $("#divPublishingHistory").empty();
+    })
 
 });
 
