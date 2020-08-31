@@ -1043,7 +1043,7 @@ def getFormDetails():
                         f.form_id=%s
                 """%data['form_id']).dictresult()[0]
 
-                html='<p><b>Nombre: </b>%s<br>'%info['form_name']
+                html='<p><b>Nombre: </b>%s<br>'%info['form_name'].decode('utf-8')
                 html+='<b>Asignado a: </b>%s<br><b>Resolver antes de: </b>%s<br>'%(info['assigned_to'].decode('utf-8'),info['resolve_before'])
 
                 revisions=db.query("""
