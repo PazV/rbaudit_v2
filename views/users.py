@@ -488,7 +488,7 @@ def getProjectUserPermits():
                         see_all_forms,
                         delete_foldersandforms,
                         delete_projects,
-                        edit_publising_info
+                        edit_publishing_info
                     from
                         system.user
                     where
@@ -514,7 +514,7 @@ def getProjectUserPermits():
                     p+='<li>Eliminar carpetas/formularios</li>'
                 if permits['delete_projects']==True:
                     p+='<li>Eliminar proyectos</li>'
-                if permits['edit_publising_info']==True:
+                if permits['edit_publishing_info']==True:
                     p+='<li>Editar datos publicación</li>'
                 p+='</ul>'
                 response['success']=True
@@ -554,7 +554,7 @@ def getUserPermits():
                         see_all_forms,
                         delete_foldersandforms,
                         delete_projects,
-                        edit_publising_info
+                        edit_publishing_info
                     from
                         system.user
                     where user_id=%s
@@ -601,7 +601,7 @@ def editUser():
                             see_all_forms={see_all_forms},
                             delete_foldersandforms={delete_foldersandforms},
                             delete_projects={delete_projects},
-                            edit_publising_info={edit_publising_info}
+                            edit_publishing_info={edit_publishing_info}
                             where user_id={user_id}
                         """.format(**data))
                         response['success']=True
