@@ -3962,9 +3962,9 @@ def getPublishingInfo():
             valid,data=GF.getDict(request.form,'post')
             if valid:
                 is_allowed=db.query("""
-                    select edit_publising_info from system.user where user_id=%s
+                    select edit_publishing_info from system.user where user_id=%s
                 """%data['user_id']).dictresult()
-                if is_allowed[0]['edit_publising_info']==True:
+                if is_allowed[0]['edit_publishing_info']==True:
                     assigned=db.query("""
                         select assigned_to, project_id, to_char(resolve_before,'YYYY-MM-DD') as resolve_before, notify_assignee, notify_resolved from project.form
                         where form_id=%s
