@@ -1652,7 +1652,10 @@ def importNewForm():
                     for c in columns:
                         if c['editable']==False:
                             if ws.cell(row=i+2, column=c['order']).value is not None:
-                                ins['col_%s'%c['order']]=(ws.cell(row=i+2, column=c['order']).value).encode('utf-8')
+                                if type(ws.cell(row=i+2, column=c['order']).value)=='unicode':
+                                    ins['col_%s'%c['order']]=(ws.cell(row=i+2, column=c['order']).value).encode('utf-8')
+                                else:
+                                    ins['col_%s'%c['order']]=ws.cell(row=i+2, column=c['order']).value
                             else:
                                 ins['col_%s'%c['order']]=''
                     db.insert('form.%s'%table_name,ins)
