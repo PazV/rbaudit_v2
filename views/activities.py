@@ -21,7 +21,7 @@ GF = general_functions.GeneralFunctions()
 bp = Blueprint('activities', __name__, url_prefix='/activity-list')
 
 @bp.route('/')
-# @is_logged_in
+@is_logged_in
 def activityList():
     user_info=db.query("""
         select user_id,profile_picture_class,workspace_id
