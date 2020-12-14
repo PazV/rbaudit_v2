@@ -1,6 +1,6 @@
 .background-login{
-    content:url("/static/images/login_wallpaper4.jpg");
-    background-image:url("/static/images/login_wallpaper4.jpg");
+    /* content:url("/static/images/login_small.jpg"); */
+    background-image:url("/static/images/login_small.jpg");
     height:-webkit-fill-available;
     height:-moz-fit-content;
     background-repeat: no-repeat;
@@ -31,15 +31,37 @@
   -webkit-box-pack: center;
   justify-content: center;
   padding:40px 15px;
-  background-color: rgba(179, 179, 179, 0.43);
+  /* background-color: rgba(179, 179, 179, 0.43); */
+  background-color: rgb(29 66 154 / 74%);
   border-radius:5px;
+  height: inherit;
 }
 
 .login-image{
-    content:url('/static/images/logo_verde.png');
-    max-width:300px;
-    height:90px;
+    content:url('/static/images/Logo_Rb_white2.png');
+    max-width:250px;
+    height:80px;
     padding:15px;
+    display: block;
+    margin: auto;
+}
+
+.login-pass-image{
+    content:url('/static/images/Logo_Rb_white2.png');
+    padding:15px;
+    display: block;
+    margin: auto;
+    width: inherit;
+    height: inherit;
+}
+
+.login-profile{
+    content:url('/static/images/perfil.png');
+    max-width:150px;
+    height:150px;
+    padding:15px;
+    display: block;
+    margin: auto;
 }
 
 .form-login{
@@ -66,6 +88,9 @@
   z-index: 2;
 }
 
+.form-control::placeholder{
+    text-align: center;
+}
 input[type="email"] {
     margin-bottom: 5px;
 
@@ -76,12 +101,12 @@ input[type="password"] {
 }
 
 .a-login{
-    color:#4a6267;
+    color:#dae3e4;
 }
 
 .a-login:hover{
     text-decoration:none;
-    color:#31a2b8;
+    color:#c8cfd0;
 }
 
 .show-login-error{
@@ -138,4 +163,132 @@ input[type="password"] {
 .form-group.no-space-bottom{
     padding-bottom:0 !important;
     margin-bottom:0 !important;
+}
+
+.rec-pass-row{
+    margin-left: 0;
+    margin-right: 0;
+    height: inherit;
+}
+
+.rec-pass-div{
+    background-color: rgb(29 66 154 / 74%);
+    /* background-color: black; */
+    height: 35%;
+    margin:0;
+}
+
+.lbl-forg-pass{
+    color:white;
+    font-weight: bold;
+    font-size: 32px;
+}
+
+.fp-align-center{
+    display: flex;
+    margin:auto;
+}
+
+.btn-fp{
+    width: 60%;
+    margin: auto;
+    display: block;
+    margin-top: 5px;
+}
+
+@media screen and (max-width:1060px){
+    .login-image{
+        width:160px;
+        height: 60px;
+    }
+    .login-profile{
+        width: 120px;
+        height:120px;
+    }
+    #loginEmail,#loginPassword, #btnSignin{
+        padding: 5px;
+        font-size: 14px;
+    }
+    .a-login{
+        font-size:14px;
+    }
+    .login-form{
+        height:inherit;
+    }
+}
+
+.div-fg-img{
+    margin:auto;
+}
+
+@media screen and (max-width:860px){
+    .login-image{
+        width: 140px;
+        height: 40px;
+        padding: 3px;
+    }
+    #loginEmail,#loginPassword, #btnSignin{
+        padding: 3px;
+        font-size: 12px;
+    }
+    .a-login{
+        font-size:12px;
+    }
+    .login-form{
+        height:inherit;
+    }
+}
+
+@media screen and (max-width:900px){
+    .lbl-forg-pass{
+        font-size:28px;
+    }
+}
+
+@media screen and (max-width:800px){
+    .lbl-forg-pass{
+        font-size:20px;
+    }
+    .btn-fp{
+        font-size:0.7rem;
+    }
+    .inp-fg{
+        font-size:0.9rem;
+    }
+}
+
+@media screen and (max-width:595px){
+    .lbl-forg-pass{
+        font-size:18px;
+    }
+    .inp-fg{
+        font-size:0.8rem;
+    }
+    .btn-fp{
+        font-size:0.7rem;
+    }
+    .login-pass-image{
+        display: none;
+    }
+    .div-fg-img{
+        display: none;
+    }
+}
+
+@media screen and (max-width:290px){
+    .lbl-forg-pass{
+        font-size:16px;
+    }
+    .inp-fg{
+        font-size:0.7rem;
+    }
+    .btn-fp{
+        font-size:0.6rem;
+    }
+    .login-pass-image{
+        display: none;
+    }
+    .div-fg-img{
+        display: none;
+    }
 }

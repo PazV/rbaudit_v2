@@ -34,6 +34,10 @@ bp = Blueprint('login',__name__, url_prefix='/login')
 def login():
     return render_template('login.html')
 
+@bp.route('/recover-password')
+def recover():
+    return render_template('recover_password.html')
+
 @bp.route('/signin', methods=['GET','POST'])
 def signin():
     error=''
@@ -77,7 +81,8 @@ def signin():
                     session['user_id']=registered_user[0]['user_id']
                     session['session_id']=inserted_session['session_id']
                     session['logged_in']=True
-                    return redirect(url_for('home.home'))
+                    # return redirect(url_for('home.home')) #se reemplaza por vista de actividades al iniciar sesión
+                    return redirect(url_for('activities.activityList'))
 
         return render_template('login.html',error=error)
     except:

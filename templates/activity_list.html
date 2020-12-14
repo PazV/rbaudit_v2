@@ -1,0 +1,47 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super() }}
+<div class="row" style="height:100%;">
+    <div class="row-wo-margin" style="width:22%">
+        {% include 'elements/_left_menu_sidebar.html' %}
+    </div>
+    <div class="div-act-title">
+        <span class="spn-act-title">Mis actividades</span>
+        <div class="form-group row row-wo-margin" style="margin-left:3px;">
+            <label for="activ_date" class="col-sm-2 col-form-label">Mostrar hasta:</label>
+            <div>
+                <input type="date" class="form-control" id="activ_date">
+            </div>
+        </div>
+        <div class="div-act-table">
+            <table id="table_id" class="display">
+                <thead>
+                    <tr>
+                        <th>Actividad</th>
+                        <th>Proyecto</th>
+                        <th>Vencimiento</th>
+                        <th>Estado</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Row 1 Data 1</td>
+                        <td>Row 1 Data 2</td>
+                        <td>Row 1 Data 1</td>
+                        <td>Row 1 Data 2</td>
+                        <td>Row 1 Data 1</td>
+                    </tr>
+                    <tr>
+                        <td>Row 2 Data 1</td>
+                        <td>Row 2 Data 2</td>
+                        <td>Row 1 Data 1</td>
+                        <td>Row 1 Data 2</td>
+                        <td>Row 1 Data 1</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

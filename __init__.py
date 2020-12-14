@@ -18,7 +18,7 @@ def create_app(test_config=None):
     app.debug=True
     formatter = logging.Formatter(
         "[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
-    handler = RotatingFileHandler('/var/log/rbaudit/audlog.log', maxBytes=10000000, backupCount=5)
+    handler = RotatingFileHandler('/var/log/rbaudit_v2/aud.log', maxBytes=10000000, backupCount=5)
     handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
@@ -69,6 +69,8 @@ def create_app(test_config=None):
     app.register_blueprint(users.bp)
     from views import login
     app.register_blueprint(login.bp)
+    from views import activities
+    app.register_blueprint(activities.bp)
     app.add_url_rule('/',endpoint='home.home')
     app.add_url_rule('/home', endpoint='home.home')
 

@@ -4,28 +4,22 @@
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
         <link rel="icon" type="image/jpg" href="../static/images/Spaceblue-01.png">
-        <link rel="stylesheet" href="/static/css/lib/bootstrap-grid.min.css"/>
-        <link rel="stylesheet" href="/static/css/lib/bootstrap-reboot.min.css"/>
-        <link rel="stylesheet" href="/static/css/lib/bootstrap.min.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-        <!-- <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/> -->
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+        <link rel="stylesheet" href="/static/css/lib_4.5/bootstrap.css" />
+        <link rel="stylesheet" href="/static/css/lib_4.5/bootstrap.min.css" />
+
+
         <link rel="stylesheet" href="/static/css/login.css" />
         <link rel="stylesheet" href="/static/jquery-confirm/jquery-confirm.min.css"/>
         <title>EasyTask</title>
     </head>
     <body>
-        <div class="container-fluid no-padding">
+        <div class="container-fluid no-padding background-login">
             <div class="row no-gutters" style="height:100vh;">
-                <div class="col-sm-8 background-login">
-
-                </div>
-                <div class="col-sm-4 background-login-form login-form" style="border-radius:0;">
-                    <div class="login-form" style="height:80vh;">
-                        <form id="frmLogin" class="form-siging form-login" method="post" action="/login/signin">
+                <div class="offset-sm-1 col-sm-3 login-form" style="border-radius:0;">
+                        <form id="frmLogin" class="form-signin form-login" method="post" action="/login/signin">
                             <div class="form-group">
-                                <img class="login-image" alt="Russell Bedford" src="/static/images/logo_verde.png" height="90px" width="300px"></img>
+                                <img class="login-image" alt="Russell Bedford" src="/static/images/Logo_Rb_white2.png" height="80px" width="250"></img>
+                                <img class="login-profile" alt="Usuario" src="/static/images/perfil.png" height="150px" width="150px" ></img>
                                 <input class="form-control form-control-lg" type="email" placeholder="Correo electrónico" id="loginEmail" name="email" required>
                                 {% with errors = get_flashed_messages(category_filter=["user"]) %}
                                     {% if errors %}
@@ -46,26 +40,21 @@
                                 <button class="btn btn-info btn-block btn-lg" id="btnSignin" style="margin-top:10px;">Ingresar</button>
                                 <div class="row" style="padding-top:5%;">
                                     <div class="m-auto">
-                                        <a class="a-login" href="#mod_forgot_password" data-toggle="modal">Olvidé mi contraseña</a>
+                                        <a class="a-login" href="/login/recover-password">Olvidé mi contraseña</a>
                                     </div>
                                 </div>
-
                             </div>
                         </form>
-                    </div>
-
                 </div>
             </div>
-
         </div>
         {% include 'modal/forgot_password.html' %}
-        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
-        <script src="/static/js/lib/bootstrap.min.js"></script>
-        <script type=text/javascript>
-          $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-        </script>
-        <script src="/static/js/login.js"></script>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.js"  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+        <script src="/static/js/lib_4.5/bootstrap.bundle.js"></script>
+        <script src="/static/js/lib_4.5/bootstrap.bundle.min.js"></script>
+
         <script src="/static/jquery-confirm/jquery-confirm.min.js"></script>
+        <script src="/static/js/login.js"></script>
     </body>
 </html>

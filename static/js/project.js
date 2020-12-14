@@ -6,10 +6,12 @@ $(document).ready(function(){
     split_date[2]="01";
     var first_day=split_date.join("-");
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
-    loadProjects(me.user_info); //carga de inicio los proyectos
 
+    loadProjects(me.user_info); //carga de inicio los proyectos
     var location=window.location.pathname;
+
     if (location.split('/')[1]=='project'){
+
         loadFormPanel(me.user_info,location);
         loadTreeMenu(me.user_info['project_id']);
         loadFormsToCheck(me.user_info,location);
@@ -17,6 +19,7 @@ $(document).ready(function(){
     }
 
     if (window.location.pathname.includes('/home/') ||  (window.location.pathname.includes('/notifications/'))){
+
         $("#topnb_leftmenu").css("visibility","hidden");
         if (me.user_info.consultant===true){
             $("#consultant_home").css("display","initial");
@@ -42,6 +45,7 @@ $(document).ready(function(){
         }
     }
     else{
+        
         $("#topnb_leftmenu").css("visibility","visible");
         if (me.user_info.consultant===true){
             $("#consultant_home").css("display","initial");

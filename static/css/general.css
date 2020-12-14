@@ -12,10 +12,11 @@ verde: #00bfb3
 naranja: #ed8b00
 */
 
-body{
-    background-color:#f2f2f2;
+html,body{
+    /* background-color:#f2f2f2; */
     /* padding-top:65px; */
     height: 100%;
+    margin: 0;
 }
 
 .mh-inh{
@@ -83,9 +84,75 @@ body{
     width:30px;
     height:30px;
     border-radius:50px;
-    
+
     display: inline-block;
     box-sizing: border-box;
     background-repeat: no-repeat;
     background-size: contain;
+}
+
+/*----------------Nuevas clases V2-----------------*/
+
+/*-top navbar-*/
+.blue-top-navbar{
+    background-color: #367dbe;
+    height: 60px;
+}
+
+/*-sidebar menu-*/
+.bg-left-sidebar{
+    background-color: #4096d3;
+    height: 100%;
+    padding:7%;
+    font-size:14px;
+    color:#f4f2db;
+}
+.sidebar-profile-img{
+    border-radius: 50%;
+
+}
+
+.hr-sidebar{
+    width: 114%;
+    background-color: #f4f8fc;
+    margin: 5px 0;
+    margin-left: -7%;
+}
+
+.sb-user-name{
+    font-size:16px;
+    color:	#f4f2db;
+}
+
+.sb-user-name:hover{
+    color:white;
+}
+
+.sb-elem{
+    color:#efede6;
+    padding: 0.5rem 0.5rem;
+}
+
+.sb-elem:hover{
+    color:white;
+}
+
+.sb-icon{
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    vertical-align: top;
+
+}
+
+/*-general-*/
+.row-wo-margin{
+    margin-left:0;
+    margin-right:0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+#bodyContent{
+    height: calc(100% - 60px);
 }
