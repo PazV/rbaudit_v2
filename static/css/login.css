@@ -221,6 +221,14 @@ input[type="password"] {
     margin:auto;
 }
 
+.rp-step-1{
+    display:initial;
+}
+
+.rp-step-2{
+    display:none;
+}
+
 @media screen and (max-width:860px){
     .login-image{
         width: 140px;
