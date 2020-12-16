@@ -2,7 +2,7 @@
 {% block bodyContent %}
 {{ super() }}
 <div class="row" style="height:100%;">
-    <div class="row-wo-margin" style="width:22%">
+    <div class="row-wo-margin div-leftmenusb">
         {% include 'elements/_left_menu_sidebar.html' %}
     </div>
     <div class="div-act-title">
@@ -14,7 +14,7 @@
             </div>
         </div>
         <div class="div-act-table">
-            <table id="table_id" class="display">
+            <table id="tableActList" class="display cell-border compact">
                 <thead>
                     <tr>
                         <th>Actividad</th>
@@ -26,14 +26,14 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td><div class="act-priority-yellow"><span class="spn-act-priority">Row 1 Data 1</span></div></td>
                         <td>Row 1 Data 1</td>
-                        <td>Row 1 Data 2</td>
                         <td>Row 1 Data 1</td>
                         <td>Row 1 Data 2</td>
                         <td>Row 1 Data 1</td>
                     </tr>
                     <tr>
-                        <td>Row 2 Data 1</td>
+                        <td><div class="act-priority-red"><span class="spn-act-priority">Row 1 Data 1</span></div></td>
                         <td>Row 2 Data 2</td>
                         <td>Row 1 Data 1</td>
                         <td>Row 1 Data 2</td>

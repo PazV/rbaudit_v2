@@ -104,7 +104,7 @@ html,body{
     background-color: #4096d3;
     height: 100%;
     padding:7%;
-    font-size:14px;
+    font-size:16px;
     color:#f4f2db;
 }
 .sidebar-profile-img{
@@ -155,4 +155,36 @@ html,body{
 
 #bodyContent{
     height: calc(100% - 60px);
+}
+
+.lfs-original{
+    display:initial;
+}
+.lfs-reduced{
+    display:none;
+}
+
+@media screen and (max-width:1080px){
+    .bg-left-sidebar{
+        font-size:14px;
+    }
+}
+
+@media screen and (max-width:970px){
+    .lfs-original{
+        display:none;
+    }
+    .lfs-reduced{
+        display:initial;
+    }
+}
+
+@media screen and (max-width:810px){
+    .lfs-reduced,.small-no-text{
+        display:none;
+    }
+    .sb-icon{
+        height:24px;
+        width:24px;
+    }
 }
