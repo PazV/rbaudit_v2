@@ -33,6 +33,16 @@
 .spn-act-priority{
     margin-left:3px;
 }
+
+.dataTables_info, .page-item, .page-link{
+    font-size: 14px;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover{
+    background: none;
+    border:none;
+    box-shadow: none;
+}
+
 @media screen and (max-width:810px){
     .div-leftmenusb{
         width:15%;
