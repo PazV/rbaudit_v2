@@ -9,7 +9,7 @@ $(document).ready(function(){
 
     $("#activ_date").on('change',function(x){
         // console.log(x.currentTarget.value);
-        loadUserActivities(me.user_info,x.currentTarget.value);
+        loadUserActivities(me.user_info.user_id,x.currentTarget.value);
     });
 });
 
