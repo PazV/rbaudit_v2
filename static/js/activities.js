@@ -11,6 +11,10 @@ $(document).ready(function(){
         // console.log(x.currentTarget.value);
         loadUserActivities(me.user_info.user_id,x.currentTarget.value);
     });
+
+    $("#btnSearchUserAct").click(function(){
+        loadUserActivities(me.user_info.user_id,$("#activ_date").val());
+    });
 });
 
 function loadUserActivities(user_id,date){
