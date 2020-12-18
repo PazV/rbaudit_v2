@@ -50,7 +50,7 @@ def getUserActivities():
         if request.method=='POST':
 
             user_id=int(request.form['user_id'])
-            user_id=24
+            
             date=request.form['date']
             start=int(request.form['start'])
             limit=int(request.form['length'])
