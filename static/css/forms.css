@@ -190,3 +190,81 @@
     margin-top: 8px; */
     margin: initial;
 }
+
+
+/*----FORM MENU PATH----*/
+.div-form-menu-path{
+    height:30px;
+    width: inherit;
+    font-size: 14px;
+    color:var(--text-color-grey);
+    padding:5px;
+}
+
+.icon-form-path{
+    margin-right:5px;
+    font-size: 14px;
+}
+
+.last-icon-form-path{
+    color:orange;
+    margin-right: 5px;
+    font-size: 14px;
+}
+
+.spn-form-menu-path{
+    font-family:sans-serif;
+    margin-left: 3px;
+}
+
+.a-home-form-path-menu{
+    color:var(--text-color-grey);
+    /* display: inherit; */
+}
+
+.a-home-form-path-menu:hover{
+    text-decoration: none;
+    color:black;
+}
+
+/*----Table style----*/
+
+#divTableToResolve{
+    font-size:14px;
+    max-height: 350px;
+    overflow-y: scroll;
+}
+
+.btn-primary{
+    background-color:#367dbe;
+    border-color:#367dbe;
+}
+
+#btnSeeFormDetails{
+    border-radius: 50%;
+    background-color:#69c5d8;
+    font-size:12px;
+    color:white;
+    border:1px solid #69c5d8;
+}
+
+#btnSeeFormDetails:focus{
+    outline:none;
+}
+
+#btnSeeFormDetails:hover{
+    background-color:#4096d3;
+}
+
+#btnCollapseObsDoc{
+    color:#69c5d8;
+    border:none;
+    border-radius: 50%;
+    background-color:white;
+    font-size:14px;
+}
+
+#btnCollapseObsDoc:hover{
+    color:white;
+    background-color: #69c5d8;
+}

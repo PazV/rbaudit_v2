@@ -24,6 +24,7 @@ naranja: #ed8b00
     --azul-marino: #253381;
     --verde: #00bfb3;
     --naranja: #ed8b00;
+    --text-color-grey: #696969;
 }
 .wrapper {
     /* display: flex; */

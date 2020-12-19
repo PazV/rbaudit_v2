@@ -1,7 +1,52 @@
 {% extends 'main_layout.html' %}
 {% block bodyContent %}
 {{ super() }}
-<div class="row" style="width:100%; height:80vh;">
+<div class="row row-wo-margin" style="height:100%;">
+    <div class="col-sm-9" id="divRStable">
+        {% include 'elements/_form_menu_path.html' %}
+        <div id="divResolveFormFormInfo">
+            <h3 id="resolveFormName"></h3>
+            <div class="justify-content-between">
+                <div style="display:inline-flex;">
+                    <p class="p-last-updated" id="resolveFormLastUpdated"></p>
+                    <p class="p-form-status"></p>
+                </div>
+                <button class="pull-right" id="btnSeeFormDetails" data-toggle="tooltip" title="Ver detalles del formulario"><i class="fa fa-info"></i></button>
+            </div>
+
+        </div>
+        <div id="divResolveFormPrintingInfo" style="display:none;">
+
+        </div>
+        <div id="divTableToResolve" style="margin-top:10px;">
+        </div>
+        <div id="divTableToResolvePagingToolbar" style="float:right;" class="d-print-none">
+
+        </div>
+        <div style="margin-top:40px;" class="d-print-none">
+            <!-- <button class="btn btn-primary pull-left" data-toggle="tooltip" title="Agregar observación" id="btnFormAddComment"><i class="fa fa-commenting"></i></button> -->
+            <!-- <button class="btn btn-primary pull-left" data-toggle="tooltip" title="Ver observaciones" id="btnFormSeeComments"><i class="fa fa-list-alt"></i></button> -->
+            <!-- <button class="btn btn-primary pull-left" style="margin-left:10px;" data-toggle="tooltip" title="Cargar archivos" id="btnUploadFormFolder"><i class="fa fa-upload"></i></button> -->
+            <!-- <button class="btn btn-primary pull-left" data-toggle="tooltip" title="Descargar archivos" id="btnDownloadFormFolder"><i class="fa fa-download"></i></button> -->
+            <button class="btn btn-primary pull-left btn-sm" data-toggle="tooltip" title="Editar configuración de formulario" id="btnEditResolvedForm">Editar <i class="fa fa-edit"></i></button>
+            <button class="btn btn-primary pull-left btn-sm" data-toggle="tooltip" title="Modo impresión" id="btnPrintingMode" style="margin-left:10px;"><i class="fa fa-print"></i></button>
+            <!-- <button class="btn btn-primary pull-right" data-toggle="tooltip" title="Descargar formulario" id="btnDownloadForm" style="display:none;"><i class="fa fa-cloud-download"></i></button> -->
+
+            <button class="btn btn-primary pull-right btn-sm" data-toggle="tooltip" title="Finalizar revisión" id="btnFinishRevision">Revisar <i class="fa fa-check-square-o"></i></button>
+            <button class="btn btn-primary pull-right btn-sm" data-toggle="tooltip" title="Enviar a revisión" id="btnSendToRevision">Enviar a revisión <i class="fa fa-send"></i></button>
+            <button class="btn btn-primary pull-right btn-sm" data-toggle="tooltip" title="Guardar cambios hasta el momento" id="btnSaveResolvedForm">Guardar cambios <i class="fa fa-save"></i></button>
+
+
+        </div>
+    </div>
+    <div class="col-sm-3" id="divRSobs_doc">
+        <button id="btnCollapseObsDoc"><i class="fa fa-thumb-tack"></i></button>
+        <h1>docs</h1>
+    </div>
+</div>
+
+
+<!-- <div class="row" style="width:100%; height:80vh;">
     <div class="col-sm-3 mh-inh">
         {% include 'elements/_project_tree_structure.html' %}
 
@@ -37,5 +82,5 @@
     <div class="col-sm-3 mh-inh">
         {%include 'elements/_panel_right.html' %}
     </div>
-</div>
+</div> -->
 {% endblock %}
