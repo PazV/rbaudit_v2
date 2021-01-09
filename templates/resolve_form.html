@@ -40,8 +40,11 @@
         </div>
     </div>
     <div class="col-sm-3" id="divRSobs_doc">
-        <button id="btnCollapseObsDoc"><i class="fa fa-thumb-tack"></i></button>
-        <h1>docs</h1>
+        <div style="height:inherit;">
+            <button id="btnCollapseObsDoc"><i class="fa fa-thumb-tack"></i></button>
+            {% include 'elements/_obs_docs_panel.html' %}
+        </div>
+
     </div>
 </div>
 

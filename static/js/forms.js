@@ -7,6 +7,7 @@ $(document).ready(function(){
 
     if (window.location.pathname=='/project/'+me.user_info['project_factor']+'/'+me.user_info['form_id']){
         getFormToResolve(me.user_info['project_id'],me.user_info['form_id'],1,me.user_info['user_id']);
+        getFormObservations(me.user_info);
 
     }
 
@@ -2204,7 +2205,41 @@ $(document).ready(function(){
 
     $("#mod_publishing_history").on('hidden.bs.modal',function(){
         $("#divPublishingHistory").empty();
-    })
+    });
+
+    $("#btnCollapseObsDoc").click(function(){
+        if ($("#btnCollapseObsDoc").hasClass('pin-right')){
+            $("#btnCollapseObsDoc").removeClass('pin-right');
+            $("#divRSobs_doc").removeClass('col-sm-1').addClass('col-sm-3');
+            $("#divRStable").removeClass('col-sm-11').addClass('col-sm-9');
+        }
+        else{
+            $("#btnCollapseObsDoc").addClass('pin-right');
+            $("#divRSobs_doc").removeClass('col-sm-3').addClass('col-sm-1');
+            $("#divRStable").removeClass('col-sm-9').addClass('col-sm-11');
+        }
+    });
+
+    $("#btnAddObservation").on('click',function(){
+        $(this).attr("disabled",true);
+        $(".obs-bg").css("height","60%");
+        $(".card-body-obs").append('<div id="comment_editor" style="height:30%;"></div>');
+        // $("#formComments").append('<div id="editor" style="width:100%; height:100px;"></div><button class="btn btn-primary pull-right">Guardar</button>');
+        var toolbarOptions=[
+            ['bold','italic','underline','strike'],
+            [{'list':'ordered'},{'list':'bullet'}],
+            [{'indent': '-1'}, { 'indent': '+1' }],
+            [{'color': ['black','white','yellow','red','blue','green','gray'] }, {'background': ['black','white','yellow','red','blue','green']}],
+        ]
+        var quill = new Quill('#comment_editor', {
+            modules:{
+                toolbar:toolbarOptions
+            },
+            theme: 'snow'
+        });
+    });
+
+
 
 });
 
@@ -2449,4 +2484,46 @@ function getColumnsForm(formId,select_list=null,check_list=null){
 
     }
     return columns;
-};
+}
+
+function getFormObservations(user_info){
+    $.ajax({
+        url:'/project/getFormComments',
+        type:'POST',
+        data:JSON.stringify({'form_id':user_info['form_id'],'user_id':user_info['user_id']}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                //crear divs de comentarioss
+                $("#formComments").empty();
+                if (res.data.length!=0){
+                    for (var x of res.data){
+                        $("#formComments").append('<div class="div-form-comment"><span class="comment-author">'+x['author']+'</span><p class="comment-content">'+x['comment']+'</p></div>');
+                    }
+                }
+                else{
+                    $("#formComments").append('<div class="comment-content">No ha sido agregada ninguna observación.</div>');
+                }
+
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        error:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
+}
