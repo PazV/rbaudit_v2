@@ -2224,11 +2224,91 @@ $(document).ready(function(){
         $(this).attr("disabled",true);
         $(".obs-bg").css("height","60%");
         $(".card-body-obs").append('<div id="comment_editor" style="height:30%;"></div>');
+        $(".card-body-obs").append('<div class="row-wo-margin justify-content-end" style="display:flex;" id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id=""><i class="fa fa-times-circle"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-save"></i></button></div>');
+
+        $("#btnSaveNewObs").click(function(){
+            // var data={};
+            var data = new FormData();
+            // data['comment']=$("#AFMcomment").val().trim();
+            var len=quill.getLength();
+
+            // quill.formatText(0,len,{'size':'8px'});
+            data.append('comment',$(".ql-editor").html().trim());
+            // if (data['comment']!==''){
+            if ($(".ql-editor").html().trim()!==''){
+                // $("#btnSaveNewObs").prop("disabled",true);
+
+
+                // data['user_id']=me.user_info['user_id'];
+                // data['form_id']=me.user_info['form_id'];
+                // data['project_id']=me.user_info['project_id'];
+                data.append('user_id',me.user_info['user_id']);
+                data.append('form_id',me.user_info['form_id']);
+                data.append('project_id',me.user_info['project_id']);
+                console.log(data);
+                var len=quill.getLength();
+                console.log(len);
+                quill.formatText(0,len,{'size':'0.9em'});
+                EasyLoading.show({
+                    text:'Cargando...',
+                    type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                });
+                $.ajax({
+                    url:'/project/addFormComment',
+                    type:'POST',
+                    // data:JSON.stringify(data),
+                    processData:false,
+                    contentType:false,
+                    data:data,
+                    success:function(response){
+                        EasyLoading.hide();
+                        try{
+                            var res=JSON.parse(response);
+                        }catch(err){
+                            ajaxError();
+                        }
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                        if (res.success){
+                            getFormObservations(me.user_info);
+                            $("div").remove(".ql-toolbar");
+                            $("#comment_editor").remove();
+                            $("#comment_editor_buttons").remove();
+                            $(".obs-bg").css("height","100%")
+                            $("#btnAddObservation").attr("disabled",false);
+
+                        }
+                        else{
+                            $("#btnAddObservation").attr("disabled",false);
+                        }
+                    },
+                    error:function(){
+                        EasyLoading.hide();
+                        $("#btnAddObservation").attr("disabled",false);
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                        });
+                    }
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Debes agregar un comentario.'
+                });
+            }
+        });
+
         // $("#formComments").append('<div id="editor" style="width:100%; height:100px;"></div><button class="btn btn-primary pull-right">Guardar</button>');
         var toolbarOptions=[
             ['bold','italic','underline','strike'],
             [{'list':'ordered'},{'list':'bullet'}],
-            [{'indent': '-1'}, { 'indent': '+1' }],
             [{'color': ['black','white','yellow','red','blue','green','gray'] }, {'background': ['black','white','yellow','red','blue','green']}],
         ]
         var quill = new Quill('#comment_editor', {
@@ -2237,7 +2317,10 @@ $(document).ready(function(){
             },
             theme: 'snow'
         });
+
     });
+
+
 
 
 

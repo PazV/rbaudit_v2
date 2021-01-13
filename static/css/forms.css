@@ -45,10 +45,7 @@
 }
 
 
-.comment-content{
-    font-size:0.9em;
-    color:#4a4444;
-}
+
 
 .comment-author{
     font-size:0.75em;
@@ -323,6 +320,20 @@
     color:#fba62f;
 }
 
+.btn-add-obs:focus{
+    outline: none;
+    box-shadow: none;
+}
+
+.btn-save-obs{
+    color:#367dbe;
+    padding:0;
+}
+
+.btn-save-obs:hover{
+    color:#fba62f;
+}
+
 #formComments{
     height: inherit;
     /* overflow-y: scroll; */
@@ -343,6 +354,11 @@
     /* overflow-y: scroll; */
     margin: 8px 4px;
     padding:10px;
+    font-size:12px;
+}
+
+.div-form-comment ol,ul{
+    padding-left:10%;
 }
 
 .ql-toolbar.ql-snow{
@@ -355,4 +371,9 @@
 
 .ql-formats{
     margin:0 !important;
+}
+
+.comment-content{
+    /* font-size:0.9em; */
+    color:#4a4444;
 }
