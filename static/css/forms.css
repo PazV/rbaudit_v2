@@ -80,101 +80,7 @@
     overflow-y: scroll;
 }
 
-.icon-pdf{
-    content: url('/static/images/pdf.png');
-    background-image:url('/static/images/pdf.png');
-    width:50px;
-    height:50px;
-    display: block;
-    box-sizing: border-box;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
 
-.icon-excel{
-    content:url('/static/images/excel.png');
-    background-image: url('/static/images/excel.png');
-    width:50px;
-    height:50px;
-    display: block;
-    box-sizing: border-box;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-
-.icon-powerpoint{
-    content:url('/static/images/power_point.png');
-    background-image: url('/static/images/power_point.png');
-    width:50px;
-    height:50px;
-    display: block;
-    box-sizing: border-box;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-
-.icon-word{
-    content:url('/static/images/word.png');
-    background-image: url('/static/images/word.png');
-    width:50px;
-    height:50px;
-    display: block;
-    box-sizing: border-box;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-
-.icon-zip{
-    content:url('/static/images/zip_icon.png');
-    background-image: url('/static/images/zip_icon.png');
-    width:50px;
-    height:50px;
-    display: block;
-    box-sizing: border-box;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-
-.icon-generic-file{
-    content:url('/static/images/generic_file.png');
-    background-image: url('/static/images/generic_file.png');
-    width:50px;
-    height:50px;
-    display: block;
-    box-sizing: border-box;
-    background-repeat: no-repeat;
-    background-size: contain;
-}
-
-.download-file{
-    margin:6px 8px;
-}
-
-.download-icon-div{
-    /* display: grid; */
-    display: flex;
-    width: 90px;
-    margin:2px 8px;
-    line-height: 80%;
-
-}
-
-.spn-icon-text{
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-    /*white-space: nowrap;*/
-    font-size:0.7em;
-    text-align: center;
-    display:flex;
-}
-
-.checkbox-download-files{
-    /* position:absolute; */
-    position: sticky;
-    /* margin-right: inherit;
-    margin-top: 8px; */
-    margin: initial;
-}
 
 
 /*----FORM MENU PATH----*/
@@ -276,7 +182,7 @@
 }
 
 #divFormDocs{
-    height:25%;
+    height:30%;
 }
 
 #divRSobs_doc{
@@ -300,6 +206,12 @@
 }
 
 .card-body-obs{
+    padding:2px;
+    height: inherit;
+    /* overflow-y: scroll; */
+}
+
+.card-body-docs{
     padding:2px;
     height: inherit;
     /* overflow-y: scroll; */
@@ -376,4 +288,139 @@
 .comment-content{
     /* font-size:0.9em; */
     color:#4a4444;
+}
+
+.btn-docs-header{
+    color:white;
+    padding:0;
+}
+
+.btn-docs-header:hover{
+    color:#fba62f;
+}
+
+.docs-bg{
+    /* background-color:#ececec; */
+    border-radius: 5px;
+    height: inherit;
+    overflow-y: scroll;
+}
+
+.icon-pdf{
+    content: url('/static/images/pdf.png');
+    background-image:url('/static/images/pdf.png');
+    width:35px;
+    height:35px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.icon-excel{
+    content:url('/static/images/excel.png');
+    background-image: url('/static/images/excel.png');
+    width:35px;
+    height:35px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.icon-powerpoint{
+    content:url('/static/images/power_point.png');
+    background-image: url('/static/images/power_point.png');
+    width:35px;
+    height:35px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.icon-word{
+    content:url('/static/images/word.png');
+    background-image: url('/static/images/word.png');
+    width:35px;
+    height:35px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.icon-zip{
+    content:url('/static/images/zip_icon.png');
+    background-image: url('/static/images/zip_icon.png');
+    width:35px;
+    height:35px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.icon-generic-file{
+    content:url('/static/images/generic_file.png');
+    background-image: url('/static/images/generic_file.png');
+    width:35px;
+    height:35px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.download-file{
+    /* margin:6px 8px; */
+    margin:auto;
+}
+
+.download-icon-div{
+    /* display: grid; */
+    display: flex;
+    width: 95px;
+    margin:2px 8px;
+    line-height: 80%;
+
+}
+
+.spn-icon-text{
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size:0.7em;
+    max-width: 65px;
+    text-align: center;
+    display:flex;
+}
+
+.checkbox-download-files{
+    /* position:absolute; */
+    position: sticky;
+    /* margin-right: inherit;
+    margin-top: 8px; */
+    margin: initial;
+}
+
+#formDocuments{
+    padding:2px;
+}
+
+.btn-edit-obs{
+    color: #367dbe;
+}
+
+.btn-edit-obs:hover{
+    color: #fba62f;
+}
+
+.btn-edit-obs:active{
+    color: #fba62f;
+}
+
+.btn-edit-obs:focus{
+    outline:none;
+    box-shadow: none;
 }

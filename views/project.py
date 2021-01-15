@@ -1478,7 +1478,7 @@ def addFormComment():
                         'type':'new_form_comment',
                         'form_id':data['form_id']
                     }
-                    GF.sendMailNotification(mail_data)
+                    # GF.sendMailNotification(mail_data)
 
 
                 response['success']=True
@@ -1521,6 +1521,8 @@ def getFormComments():
 
                 if comments!=[]:
                     for c in comments:
+                        c['author_date']='{created}'.format(**c)
+                        c['author_name']='{user}'.format(**c)
                         c['author']='Agregado por {user} el {created}.'.format(**c)
                 response['data']=comments
                 response['success']=True
@@ -2672,7 +2674,7 @@ def getFormDocuments():
                             doc_class='icon-generic-file'
                         file_display,ext=os.path.splitext(x['file_name_display'])
                         file_link='/project/downloadZipFile/%s/%s/%s'%(data['project_id'],data['form_id'],x['file_name'])
-                        html+='<div class="download-icon-div"><input type="checkbox" class="checkbox-download-files" data-document="%s"><div style="display:grid;"><a href="%s" target="_blank" data-toggle="tooltip" title="%s" class="download-file"><i class="%s"></i></a><span class="spn-icon-text">%s</span></div></div>'%(x['file_id'],file_link,file_display.decode('utf8'),doc_class,file_display.decode('utf8'))
+                        html+='<div class="download-icon-div"><input type="checkbox" class="checkbox-download-files" data-document="%s"><div style="display:grid;"><a href="%s" target="_blank" data-toggle="tooltip" title="%s" class="download-file"><i class="%s"></i></a><span class="spn-icon-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['file_id'],file_link,file_display.decode('utf8'),doc_class,file_display.decode('utf8'),file_display.decode('utf8'))
                         response['data']=html
                 else:
                     response['data']='<h4 style="color:#737a80;">No hay documentos cargados<h4>'

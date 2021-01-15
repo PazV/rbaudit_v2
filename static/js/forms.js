@@ -8,6 +8,7 @@ $(document).ready(function(){
     if (window.location.pathname=='/project/'+me.user_info['project_factor']+'/'+me.user_info['form_id']){
         getFormToResolve(me.user_info['project_id'],me.user_info['form_id'],1,me.user_info['user_id']);
         getFormObservations(me.user_info);
+        getFormDocuments(me.user_info);
 
     }
 
@@ -2222,9 +2223,10 @@ $(document).ready(function(){
 
     $("#btnAddObservation").on('click',function(){
         $(this).attr("disabled",true);
+        $("#divFormObs").css("height","95%");
         $(".obs-bg").css("height","60%");
         $(".card-body-obs").append('<div id="comment_editor" style="height:30%;"></div>');
-        $(".card-body-obs").append('<div class="row-wo-margin justify-content-end" style="display:flex;" id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id=""><i class="fa fa-times-circle"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-save"></i></button></div>');
+        $(".card-body-obs").append('<div class="row-wo-margin justify-content-end" style="display:flex;" id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id="btnCancelNewObs"><i class="fa fa-times-circle"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-save"></i></button></div>');
 
         $("#btnSaveNewObs").click(function(){
             // var data={};
@@ -2239,9 +2241,7 @@ $(document).ready(function(){
                 // $("#btnSaveNewObs").prop("disabled",true);
 
 
-                // data['user_id']=me.user_info['user_id'];
-                // data['form_id']=me.user_info['form_id'];
-                // data['project_id']=me.user_info['project_id'];
+
                 data.append('user_id',me.user_info['user_id']);
                 data.append('form_id',me.user_info['form_id']);
                 data.append('project_id',me.user_info['project_id']);
@@ -2279,10 +2279,12 @@ $(document).ready(function(){
                             $("#comment_editor_buttons").remove();
                             $(".obs-bg").css("height","100%")
                             $("#btnAddObservation").attr("disabled",false);
+                            $("#divFormObs").css("height","65%");
 
                         }
                         else{
                             $("#btnAddObservation").attr("disabled",false);
+                            $("#divFormObs").css("height","65%");
                         }
                     },
                     error:function(){
@@ -2303,6 +2305,15 @@ $(document).ready(function(){
                     content:'Debes agregar un comentario.'
                 });
             }
+        });
+
+        $("#btnCancelNewObs").click(function(){
+            $("div").remove(".ql-toolbar");
+            $("#comment_editor").remove();
+            $("#comment_editor_buttons").remove();
+            $(".obs-bg").css("height","100%")
+            $("#btnAddObservation").attr("disabled",false);
+            $("#divFormObs").css("height","65%");
         });
 
         // $("#formComments").append('<div id="editor" style="width:100%; height:100px;"></div><button class="btn btn-primary pull-right">Guardar</button>');
@@ -2585,8 +2596,41 @@ function getFormObservations(user_info){
                 $("#formComments").empty();
                 if (res.data.length!=0){
                     for (var x of res.data){
-                        $("#formComments").append('<div class="div-form-comment"><span class="comment-author">'+x['author']+'</span><p class="comment-content">'+x['comment']+'</p></div>');
+                        // $("#formComments").append('<div class="div-form-comment"><span class="comment-author">'+x['author']+'</span><p class="comment-content">'+x['comment']+'</p></div>');
+
+                        $("#formComments").append('<div class="div-form-comment"><div class="row-wo-margin row justify-content-between"><div><img width="25px" height="25px" alt="profile" src="/static/images/logo_wn_white.png"/><span class="spn-obs-name">'+x['author_name']+'</span><span class="spn-obs-date">'+x['author_date']+'</span></div><div><button class="btn btn-sm btn-edit-obs"><i class="fa fa-edit"></i></button></div></div><div class="comment-content">'+x['comment']+'</div></div>');
+
                     }
+                    $(".btn-edit-obs").click(function(){
+                        console.log($(this).parents(".div-form-comment"));
+
+
+                        $("#divFormObs").css("height","95%");
+                        $(".obs-bg").css("height","98%"); //en agregar comentario aquí está a 60%, considerar al momento de regresar al tamaño original
+
+                        $('<div id="comment_editor" style="height:30%;"></div>').insertAfter($(this).parents(".div-form-comment"));
+
+                        $('<div class="row-wo-margin justify-content-end" style="display:flex;" id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id="btnCancelNewObs"><i class="fa fa-times-circle"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-save"></i></button></div>').insertAfter($("#comment_editor"));
+
+                        var toolbarOptions=[
+                            ['bold','italic','underline','strike'],
+                            [{'list':'ordered'},{'list':'bullet'}],
+                            [{'color': ['black','white','yellow','red','blue','green','gray'] }, {'background': ['black','white','yellow','red','blue','green']}],
+                        ]
+                        var quill = new Quill('#comment_editor', {
+                            modules:{
+                                toolbar:toolbarOptions
+                            },
+                            theme: 'snow'
+                        });
+
+                        var text_content=$(this).parents(".div-form-comment").find(".comment-content").html();
+                        console.log(text_content);
+                        quill.container.firstChild.innerHTML =text_content;
+
+                    });
+
+
                 }
                 else{
                     $("#formComments").append('<div class="comment-content">No ha sido agregada ninguna observación.</div>');
@@ -2598,6 +2642,39 @@ function getFormObservations(user_info){
                     theme:'dark',
                     title:'Atención',
                     content:res.msg_response
+                });
+            }
+        },
+        error:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
+}
+
+function getFormDocuments(user_info){
+    $.ajax({
+        url:'/project/getFormDocuments',
+        type:'POST',
+        data:JSON.stringify({'user_id':user_info['user_id'],'form_id':user_info['form_id'],'project_id':user_info['project_id']}),
+        success:function(response2){
+            try{
+                var res2=JSON.parse(response2);
+            }catch(err){
+                ajaxError();
+            }
+            if (res2.success){
+                $("#formDocuments").empty();
+                $("#formDocuments").append(res2.data);
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res2.msg_response
                 });
             }
         },

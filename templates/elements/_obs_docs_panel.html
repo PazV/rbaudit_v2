@@ -6,11 +6,7 @@
                 <button class="btn btn-sm btn-add-obs" data-toggle="tooltip" title="Agregar observación" id="btnAddObservation"><i class="fa fa-plus-circle"></i></button>
             </div>
             <div class="card-body card-body-obs">
-                <div class="obs-bg" >
-                    <!-- <div class="row-wo-margin">
-                        <img width="25px" height="25px" alt="profile" src="/static/images/logo_wn_white.png"/>
-                        <span class="spn-obs-name">Paz García</span><span class="spn-obs-date">13-12-20 12:34:33</span>
-                    </div> -->
+                <div class="obs-bg">                    
                     <div id="formComments" >
 
                     </div>
@@ -19,13 +15,22 @@
             </div>
         </div>
     </div>
-    <div id="divFormDocs" style="display:none;">
-        <div class="card">
-            <div class="card-header card-header-blue">
-                Documentos
+    <div id="divFormDocs">
+        <div class="card" style="height:95%;">
+            <div class="card-header card-header-blue justify-content-between">
+                Archivos
+                <div class="row-wo-margin">
+                    <button class="btn btn-sm btn-docs-header" data-toggle="tooltip" title="Cargar archivo"><i class="fa fa-cloud-upload"></i></button>
+                    <button class="btn btn-sm btn-docs-header" data-toggle="tooltip" title="Descargar archivos"><i class="fa fa-cloud-download"></i></button>
+                    <button class="btn btn-sm btn-docs-header" data-toggle="tooltip" title="Eliminar archivo"><i class="fa fa-trash"></i></button>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body card-body-docs">
+                <div class="docs-bg">
+                    <div id="formDocuments" class="row-wo-margin row">
 
+                    </div>
+                </div>
             </div>
         </div>
     </div>
