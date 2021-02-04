@@ -34,6 +34,7 @@ def home():
     g.user_info=json.dumps(user_info)
     g.profile_picture_class=user_info['profile_picture_class']
     g.notifications=False
+    g.consultant=user_info['consultant']
     return render_template('home.html',g=g)
 
 @bp.route('/consultant')
@@ -54,6 +55,7 @@ def consultant():
         g.user_info=json.dumps(user_info)
         g.profile_picture_class=user_info['profile_picture_class']
         g.notifications=False
+        g.consultant=user_info['consultant']
         return render_template('consultant_home.html',g=g)
     else:
         db.query("""

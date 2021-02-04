@@ -32,6 +32,7 @@ def notifications(project_factor):
     g=GF.userInfo([{'project_id':project_id},{'project_factor':project_factor}])
     g.project_factor=project_factor
     g.notifications=False
+    g.consultant=user_info['consultant']
     # g.user_info=json.dumps(user_info)
     # g.profile_picture_class=user_info['profile_picture_class']
     return render_template('notifications.html',g=g)

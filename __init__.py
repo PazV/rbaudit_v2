@@ -69,6 +69,8 @@ def create_app(test_config=None):
     app.register_blueprint(users.bp)
     from views import login
     app.register_blueprint(login.bp)
+    from views import myprojects
+    app.register_blueprint(myprojects.bp)
     from views import activities
     app.register_blueprint(activities.bp)
     app.add_url_rule('/',endpoint='home.home')

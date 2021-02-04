@@ -6,7 +6,7 @@ $(document).ready(function(){
     split_date[2]="01";
     var first_day=split_date.join("-");
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
-
+    
     loadProjects(me.user_info); //carga de inicio los proyectos
     var location=window.location.pathname;
 
@@ -45,7 +45,7 @@ $(document).ready(function(){
         }
     }
     else{
-        
+
         $("#topnb_leftmenu").css("visibility","visible");
         if (me.user_info.consultant===true){
             $("#consultant_home").css("display","initial");
@@ -796,10 +796,30 @@ function loadProjects(user_info){
                     ajaxError();
                 }
                 if (res.success){
-                    $("#projectListContainer ul").children().remove();
+                    // $("#projectListContainer ul").children().remove();
+                    // $.each(res.data,function(i,item){
+                    //     $("#projectListContainer ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
+                    // });
+                    $("#myProjectsUl").children().remove();
+                    // $.each(res.data,function(i,item){
+                    //     $("#myProjectsUl").append('<li class="proj-list-li"><div class="row row-wo-margin justify-content-between"><a class="proj-list-a" target="_self" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:93%;">'+item.name+'</a><a class="a-project-ext-link" target="_blank" href="/project/'+item.project_factor+'"><i class="fa fa-external-link"></i></a></div></li>')
+                    // });
                     $.each(res.data,function(i,item){
-                        $("#projectListContainer ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
+                        $("#myProjectsUl").append('<li class="proj-list-li"><div class="row row-wo-margin justify-content-between"><a class="proj-list-a" name="'+item.project_id+'" style="width:93%;">'+item.name+'</a><a class="a-project-ext-link" target="_blank" href="/project/'+item.project_factor+'"><i class="fa fa-external-link"></i></a></div></li>')
                     });
+
+
+
+                    $(".proj-list-a").click(function(){
+                        // console.log(this);
+                        console.log($(this)[0].name);
+                        $("#spnMyProjectName").html($(this).html());
+                        $("#spnMyProjectName").attr('title',$(this).html());
+                        $("#div-include-fmp").empty();
+                        getFirstMenuFolders($(this)[0].name);
+                    });
+
+
                     $(".get-project-info").click(function(){
                         var project_id=$(this).siblings('a')[0].name;
                         $.ajax({
@@ -1088,4 +1108,145 @@ function getWorkspaceProjects(user_info,workspace_id){
             });
         }
     });
+}
+
+function getFirstMenuFolders(project_id){
+    $.ajax({
+        url:'/my-projects/getFirstMenuFolders',
+        type:'POST',
+        data:JSON.stringify({'project_id':project_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#divMPFoldersCont").empty();
+                $("#divMPFoldersCont").append(res.data);
+                $(".folder-icon-div").dblclick(function(){
+                    //incluir carpeta en path superior
+
+                    $("#div-include-fmp").append('<div class="div-return-menu-subfolder" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a><div>');
+                    $("#div-include-fmp").addClass('row');
+                    //evento para regresar a la carpeta anterior
+                    $(".return-menu-subfolder").click(function(){
+                        returnSubFolder($(this).data('folder'),project_id);
+                        console.log($(this));
+                        $(this).parent('.div-return-menu-subfolder') .remove();
+                    });
+                    //obtener subcarpetas
+                    getSubfoldersForms($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+                });
+
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function getSubfoldersForms(folder_id,project_id){
+    $.ajax({
+        url:'/my-projects/getSubfoldersForms',
+        type:'POST',
+        data:JSON.stringify({'folder_id':folder_id,'project_id':project_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#divMPFoldersCont").empty();
+                $("#divMPFoldersCont").append(res.data);
+                $(".folder-icon-div").dblclick(function(){
+                    console.log($($(this).children(".checkbox-folder-menu")).data('document'));
+
+                    $("#div-include-fmp").append('<div class="div-return-menu-subfolder" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    //evento para regresar a la carpeta anterior
+                    $(".return-menu-subfolder").click(function(){
+                        returnSubFolder($(this).data('folder'),project_id);
+
+                        // $(this).remove();
+                        $(this).parent('.div-return-menu-subfolder') .remove();
+                    });
+
+                    getSubfoldersForms($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function returnSubFolder(parent_id,project_id){
+    $.ajax({
+        url:'/my-projects/returnSubFolder',
+        type:'POST',
+        data:JSON.stringify({'parent_id':parent_id,'project_id':project_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#divMPFoldersCont").empty();
+                $("#divMPFoldersCont").append(res.data);
+                $(".folder-icon-div").dblclick(function(){
+                    console.log($($(this).children(".checkbox-folder-menu")).data('document'));
+
+                    $("#div-include-fmp").append('<div class="div-return-menu-subfolder" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    //evento para regresar a la carpeta anterior
+                    $(".return-menu-subfolder").click(function(){
+                        returnSubFolder($(this).data('folder'),project_id);
+                        // $(this).remove();
+                        $(this).parent('.div-return-menu-subfolder') .remove();
+                    });
+
+                    getSubfoldersForms($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
 }

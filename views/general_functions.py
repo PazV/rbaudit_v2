@@ -121,6 +121,7 @@ class GeneralFunctions:
                 user_info.update(x)
         g.user_info=json.dumps(user_info)
         g.profile_picture_class=user_info['profile_picture_class']
+        g.consultant=user_info['consultant']
         return g
 
     def getNotifLink(self,link_content,project_id,form_id):

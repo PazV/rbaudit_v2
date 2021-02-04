@@ -1,0 +1,107 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super() }}
+
+<div class="row" style="height:100%;">
+    <div class="row-wo-margin div-leftmenusb">
+        {% include 'elements/_left_menu_sidebar.html' %}
+    </div>
+    <div class="div-mproj-title">
+        <span class="spn-act-title">Mis proyectos</span>
+        <div class="row row-wo-margin" style="height:inherit">
+            <div class="div-proj-content div-mproj-list">
+                <input type="text" class="form-control form-control-sm " id="myProjectsFinderInput" placeholder="&#xf002; Buscar">
+                <div id="myProjectsDiv">
+                    <ul id="myProjectsUl">
+                        <!-- <li class="proj-list-li">
+                            <div class="row row-wo-margin justify-content-between">
+                                <a class="proj-list-a" href="/project/#" name="Prueba" style="width:93%;">Proyecto prueba</a>
+                                <a class="a-project-ext-link" href="#"><i class="fa fa-external-link"></i></a>
+                            </div>
+                        </li> -->
+                    </ul>
+                </div>
+            </div>
+            <div class="div-proj-content" >
+                <div class="div-myProject-right-containers">
+                    <div class="card" style="height:100%;">
+                        <div class="card-header header-folders-menu justify-content-between row row-wo-margin">
+                            <span id="spnMyProjectName" data-toggle="tooltip"></span>
+                            <div>
+                                <button class="btn btn-sm btn-mP-top-menu dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Nuevo"><i class="fa fa-plus-circle"></i></button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="#">Nueva carpeta</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#">Nuevo formulario</a>
+                                    <a class="dropdown-item" href="#">Importar formulario</a>
+                                    <a class="dropdown-item" href="#">Clonar formulario</a>
+                                    <a class="dropdown-item" href="#">Clonar formulario desde otro proyecto</a>
+                                </div>
+                                <button class="btn btn-sm btn-mP-top-menu" data-toggle="tooltip" title="Editar carpeta"><i class="fa fa-edit"></i></button>
+                                <button class="btn btn-sm btn-mP-top-menu" data-toggle="tooltip" title="Eliminar carpeta"><i class="fa fa-trash-o"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body myProject-menu-container">
+                            {% include 'elements/_form_menu_path.html' %}
+                            <div class="div-mP-folders-container row row-wo-margin" id="divMPFoldersCont">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="div-myProject-right-containers">
+                    <div class="row row-wo-margin justify-content-around" style="height:30%; margin:auto;">
+                        <div class="div-myproject-sel-info row row-wo-margin" style="width:30%;">
+                            <i class="fa fa-calendar icon-myproject-info"></i>
+                            <div class="m-auto">
+                                <div class="div-myproject-info-title">Creado
+                                </div>
+                                <div class="div-myproject-info-content">30-03-2021
+                                </div>
+                            </div>
+                        </div>
+                        <div class="div-myproject-sel-info row row-wo-margin" style="width:30%;">
+                            <i class="fa fa-calendar icon-myproject-info"></i>
+                            <div class="m-auto">
+                                <div class="div-myproject-info-title">Inicia
+                                </div>
+                                <div class="div-myproject-info-content">30-03-2021
+                                </div>
+                            </div>
+                        </div>
+                        <div class="div-myproject-sel-info row row-wo-margin" style="width:30%;">
+                            <i class="fa fa-calendar icon-myproject-info" style="color:#e46969;"></i>
+                            <div class="m-auto">
+                                <div class="div-myproject-info-title">Termina
+                                </div>
+                                <div class="div-myproject-info-content">30-03-2021
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="div-myproject-sel-info row row-wo-margin" style="height:30%;">
+                        <i class="fa fa-building-o icon-myproject-info"></i>
+                        <div class="m-auto">
+                            <div class="div-myproject-info-title">Empresa
+                            </div>
+                            <div class="div-myproject-info-content">30-03-2021
+                            </div>
+                        </div>
+                    </div>
+                    <div class="div-myproject-sel-info row row-wo-margin" style="height:30%;">
+                        <i class="fa fa-user-circle-o icon-myproject-info"></i>
+                        <div class="m-auto">
+                            <div class="div-myproject-info-title">Actualizado última vez
+                            </div>
+                            <div class="div-myproject-info-content">30-03-2021
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

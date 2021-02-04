@@ -265,7 +265,7 @@
     /* height: inherit; */
     /* overflow-y: scroll; */
     margin: 8px 4px;
-    padding:10px;
+    padding:5px;
     font-size:12px;
 }
 
@@ -275,6 +275,7 @@
 
 .ql-toolbar.ql-snow{
     padding:2px !important;
+    width: 90%;
 }
 
 .ql-container{
@@ -410,6 +411,9 @@
 
 .btn-edit-obs{
     color: #367dbe;
+    /* color:white; */
+    padding:2px;
+    line-height: 1;
 }
 
 .btn-edit-obs:hover{
@@ -423,4 +427,29 @@
 .btn-edit-obs:focus{
     outline:none;
     box-shadow: none;
+}
+
+#comment_editor{
+    /* height: 30%; */
+    height: 100%;
+    width: 90%;
+}
+
+@media screen and (max-width:1212px){
+    #comment_editor{
+        height: 90%;
+    }
+}
+
+#divEditorAndButtons{
+    height: 30%;
+}
+
+#comment_editor_buttons{
+    display: inline-grid;
+    margin: auto;
+}
+
+.ql-snow .ql-color-picker .ql-picker-options{
+    width: 112px !important;
 }

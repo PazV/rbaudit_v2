@@ -103,7 +103,7 @@ naranja: #ed8b00
     display:initial;
 }
 
-.proj-list-li{
+/* .proj-list-li{
     background-color:#ffffff;
     display:block;
     border-radius:4px;
@@ -111,9 +111,9 @@ naranja: #ed8b00
     border-color:#dee2e6;
     border-width:thin;
     text-indent:5%;
-}
+} */
 
-.proj-list-a{
+/* .proj-list-a{
     font-size:24px;
     font-family:sans-serif;
     color:#343a40;
@@ -132,7 +132,7 @@ naranja: #ed8b00
 
 .proj-list-li:hover .proj-list-a, .proj-list-li.hover .proj-list-a{
     display:block;
-}
+} */
 
 
 .proj-list-ul{

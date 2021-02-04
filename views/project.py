@@ -214,6 +214,8 @@ def getProjects():
         if request.method=='POST':
             valid,data=GF.getDict(request.form,'post')
             if valid:
+                #provisional
+                # data['user_id']=27
                 projects=db.query("""
                     (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
                     from project.project a
@@ -1509,6 +1511,7 @@ def getFormComments():
             if valid:
                 comments=db.query("""
                     select
+                        b.comment_id,
                         to_char(b.created, 'DD-MM-YYYY HH24:MI:SS') as created,
                         b.comment,
                         (select a.name from system.user a where a.user_id=b.user_id) as user
@@ -4278,3 +4281,63 @@ def getPublishingHistory():
         app.logger.info(request.form)
         GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
+
+@bp.route('/getFormPath', methods=['GET','POST'])
+@is_logged_in
+def getFormPath():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                folders=[]
+                last_folder=db.query("""
+                    select a.folder_id,
+                    b.name,
+                    b.parent_id
+                    from project.form a,
+                    project.folder b
+                    where a.form_id=%s
+                    and a.project_id=%s
+                    and a.folder_id=b.folder_id
+                """%(data['form_id'],data['project_id'])).dictresult()
+                folders.append(last_folder[0]['name'])
+                if last_folder[0]['parent_id']!=-1:
+                    resp_succ,resp_folders=getFolderParent(last_folder[0]['parent_id'],folders)
+                    if resp_succ==True:
+                        response['data']=resp_folders
+                else:
+                    response['data']=folders
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        app.logger.info(request.form)
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+
+def getFolderParent(folder_id,folders):
+    try:
+        f=db.query("""
+            select folder_id,
+            name, parent_id
+            from project.folder
+            where folder_id=%s
+        """%(folder_id)).dictresult()
+        folders.append(f[0]['name'])
+        if f[0]['parent_id']!=-1:
+            getFolderParent(f[0]['parent_id'],folders)
+            return True, folders
+        else:
+            return True,folders
+    except:
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        return False,[]

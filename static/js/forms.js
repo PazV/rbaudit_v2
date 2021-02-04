@@ -9,6 +9,7 @@ $(document).ready(function(){
         getFormToResolve(me.user_info['project_id'],me.user_info['form_id'],1,me.user_info['user_id']);
         getFormObservations(me.user_info);
         getFormDocuments(me.user_info);
+        getFormPath(me.user_info);
 
     }
 
@@ -2225,8 +2226,12 @@ $(document).ready(function(){
         $(this).attr("disabled",true);
         $("#divFormObs").css("height","95%");
         $(".obs-bg").css("height","60%");
-        $(".card-body-obs").append('<div id="comment_editor" style="height:30%;"></div>');
-        $(".card-body-obs").append('<div class="row-wo-margin justify-content-end" style="display:flex;" id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id="btnCancelNewObs"><i class="fa fa-times-circle"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-save"></i></button></div>');
+
+        $("#divEditorAndButtons").append('<div id="comment_editor"></div>');
+        $("#divEditorAndButtons").append('<div id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-send"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id="btnCancelNewObs"><i class="fa fa-times-circle"></i></button></div>');
+
+        // $(".card-body-obs").append('<div id="comment_editor"></div>');
+        // $(".card-body-obs").append('<div class="row-wo-margin justify-content-end" style="display:flex;" id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id="btnCancelNewObs"><i class="fa fa-times-circle"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-save"></i></button></div>');
 
         $("#btnSaveNewObs").click(function(){
             // var data={};
@@ -2320,7 +2325,7 @@ $(document).ready(function(){
         var toolbarOptions=[
             ['bold','italic','underline','strike'],
             [{'list':'ordered'},{'list':'bullet'}],
-            [{'color': ['black','white','yellow','red','blue','green','gray'] }, {'background': ['black','white','yellow','red','blue','green']}],
+            [{'color': ['black','red','blue','green','gray'] }, {'background': ['white','yellow','red','blue','green']}],
         ]
         var quill = new Quill('#comment_editor', {
             modules:{
@@ -2598,24 +2603,24 @@ function getFormObservations(user_info){
                     for (var x of res.data){
                         // $("#formComments").append('<div class="div-form-comment"><span class="comment-author">'+x['author']+'</span><p class="comment-content">'+x['comment']+'</p></div>');
 
-                        $("#formComments").append('<div class="div-form-comment"><div class="row-wo-margin row justify-content-between"><div><img width="25px" height="25px" alt="profile" src="/static/images/logo_wn_white.png"/><span class="spn-obs-name">'+x['author_name']+'</span><span class="spn-obs-date">'+x['author_date']+'</span></div><div><button class="btn btn-sm btn-edit-obs"><i class="fa fa-edit"></i></button></div></div><div class="comment-content">'+x['comment']+'</div></div>');
+                        $("#formComments").append('<div class="div-form-comment"><div class="row-wo-margin row justify-content-between"><div><img width="25px" height="25px" alt="profile" src="/static/images/default-user.png"/><span class="spn-obs-name">'+x['author_name']+'</span><span class="spn-obs-date">'+x['author_date']+'</span></div><div data-id="'+x['comment_id']+'"><button class="btn btn-sm btn-edit-obs"><i class="fa fa-edit"></i></button></div></div><div class="comment-content">'+x['comment']+'</div></div>');
 
                     }
                     $(".btn-edit-obs").click(function(){
-                        console.log($(this).parents(".div-form-comment"));
-
+                        // console.log($(this).parents(".div-form-comment"));
+                        console.log($(this).parent('div').data('id'));
 
                         $("#divFormObs").css("height","95%");
                         $(".obs-bg").css("height","98%"); //en agregar comentario aquí está a 60%, considerar al momento de regresar al tamaño original
 
-                        $('<div id="comment_editor" style="height:30%;"></div>').insertAfter($(this).parents(".div-form-comment"));
+                        $('<div id="comment_editor"></div>').insertAfter($(this).parents(".div-form-comment"));
 
-                        $('<div class="row-wo-margin justify-content-end" style="display:flex;" id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id="btnCancelNewObs"><i class="fa fa-times-circle"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-save"></i></button></div>').insertAfter($("#comment_editor"));
+                        $('<div id="comment_editor_buttons"><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Agregar observación" id="btnSaveNewObs"><i class="fa fa-send"></i></button><button class="btn btn-sm btn-save-obs" data-toggle="tooltip" title="Cancelar" id="btnCancelNewObs"><i class="fa fa-times-circle"></i></button></div>').insertAfter($("#comment_editor"));
 
                         var toolbarOptions=[
                             ['bold','italic','underline','strike'],
                             [{'list':'ordered'},{'list':'bullet'}],
-                            [{'color': ['black','white','yellow','red','blue','green','gray'] }, {'background': ['black','white','yellow','red','blue','green']}],
+                            [{'color': ['black','red','blue','green','gray'] }, {'background': ['white','yellow','red','blue','green']}],
                         ]
                         var quill = new Quill('#comment_editor', {
                             modules:{
@@ -2625,7 +2630,6 @@ function getFormObservations(user_info){
                         });
 
                         var text_content=$(this).parents(".div-form-comment").find(".comment-content").html();
-                        console.log(text_content);
                         quill.container.firstChild.innerHTML =text_content;
 
                     });
@@ -2675,6 +2679,51 @@ function getFormDocuments(user_info){
                     theme:'dark',
                     title:'Atención',
                     content:res2.msg_response
+                });
+            }
+        },
+        error:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
+}
+
+function getFormPath(user_info){
+    $.ajax({
+        url:'/project/getFormPath',
+        type:'POST',
+        data:JSON.stringify({'form_id':user_info['form_id'],'user_id':user_info['user_id'],'project_id':user_info['project_id']}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                console.log(res['data']);
+                $("#div-include-fmp").empty();
+                var data_len=res.data.length;
+                console.log(data_len);
+                for (var x=data_len-1; x>=0; x--){
+                    console.log(res.data[x]);
+                    if (x==0){
+                        $("#div-include-fmp").append('<i class="fa fa-folder-open last-icon-form-path"><span class="spn-form-menu-path">'+res.data[x]+'</span></i>');
+                    }
+                    else{
+                        $("#div-include-fmp").append('<i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+res.data[x]+'</span></i><i class="fa fa-angle-right icon-form-path"></i>');
+                    }
+
+                }
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
                 });
             }
         },
