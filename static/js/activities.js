@@ -3,35 +3,28 @@ $(document).ready(function(){
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
     var date = new Date();
     var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split("T")[0];
-    $("#activ_date").val(lastDay);
-    $("#tableActList").DataTable();
-    // loadUserActivities(me.user_info.user_id,lastDay);
-    loadUserActivities(me.user_info.user_id,[]);
-    // console.log(this.user_info);
-    $("#activ_date").on('change',function(x){
-        // console.log(x.currentTarget.value);
-        // loadUserActivities(me.user_info.user_id,x.currentTarget.value);
-        loadUserActivities(me.user_info.user_id,[]);
-    });
 
-    $("#btnSearchUserAct").click(function(){
-        // loadUserActivities(me.user_info.user_id,$("#activ_date").val());
-        loadUserActivities(me.user_info.user_id,[]);
-    });
+    $("#tableActList").DataTable();
+    loadUserActivities(me.user_info.user_id,[]);
 
     $("#actFilterType").on('change',function(){
         $("#divActFilterInput").empty();
         var selected=$("option:selected", this);
         var sel_name=$(selected).data('name');
-        
+
         if ($(selected).data('type')=='text'){
             $("#divActFilterInput").append('<input type="text" class="form-control form-control-sm" id="textTypeActFilter" placeholder="'+$(selected).html()+'">');
         }
         if ($(selected).data('type')=='date') {
-            $("#divActFilterInput").append('<label class="col-form-label-sm" for="actFilterDateFrom">De:</label><input type="date" class="form-control form-control-sm" id="actFilterDateFrom"><label class="col-form-label-sm" for="actFilterDateTo">Hasta:</label><input type="date" class="form-control form-control-sm" id="actFilterDateTo">')
+            $("#divActFilterInput").append('<label class="col-form-label-sm" for="actFilterDateFrom" style="margin-right:3px;">De:</label><input type="date" class="form-control form-control-sm" id="actFilterDateFrom" style="margin-right:3px;"><label class="col-form-label-sm" for="actFilterDateTo" style="margin-right:3px;">Hasta:</label><input type="date" class="form-control form-control-sm" id="actFilterDateTo">')
         }
         if ($(selected).data('type')=='select'){
-            $("#divActFilterInput").append('<select id="selActFilterStatus" class="form-control form-control-sm"><option value="3">Publicado</option><option value="4">Resolviendo</option><option value="5">Enviado a revisión</option><option value="6">Revisando</option><option value="7">Cerrado</option></select>');
+            if ($(selected).data('name')=='status'){
+                $("#divActFilterInput").append('<select id="selActFilterStatus" class="form-control form-control-sm"><option value="3">Sin iniciar</option><option value="4">Resolviendo</option><option value="5">Enviado a revisión</option><option value="6">Revisando</option><option value="7">Cerrado</option></select>');
+            }
+            if ($(selected).data('name')=='priority'){
+                $("#divActFilterInput").append('<select id="selActFilterPriority" class="form-control form-control-sm"><option value="red">Rojo</option><option value="orange">Naranja</option><option value="yellow">Amarillo</option></select>');
+            }
         }
         $("#btnActFilterSearch").css("display","initial");
 
@@ -40,24 +33,86 @@ $(document).ready(function(){
 
 
     $("#btnActFilterSearch").click(function(){
+
         var type=$("option:selected", $("#actFilterType")).data('type');
         var sel_name=$("option:selected", $("#actFilterType")).data('name');
         if (type=='text'){
-            $(".div-act-filters-container").append('<div class="div-act-filters-content" data-name="'+sel_name+'" data-val="'+$("#textTypeActFilter").val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button>'+$("#textTypeActFilter").val()+'</div>');
+            if ($("#textTypeActFilter").val().trim().length>0){
+                // $(".div-act-filters-container").append('<div class="div-act-filters-content" data-name="'+sel_name+'" data-val="'+$("#textTypeActFilter").val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button>'+$("#textTypeActFilter").val()+'</div>');
+
+                ///////////////////////////////con nombre de actividad
+                $(".div-act-filters-container").append('<div class="div-act-filters-content row row-wo-margin" data-name="'+sel_name+'" data-val="'+$("#textTypeActFilter").val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button><div style="line-height:1; margin-left:3px;"><div style="color:gray; text-align:center;">'+$("option:selected", $("#actFilterType")).html()+'</div><div style="text-align:center;"> '+$("#textTypeActFilter").val()+'</div></div>');
+
+                $("#textTypeActFilter").val("");
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Debes escribir algo en el campo de búsqueda.'
+                });
+            }
+
         }
         if (type=='date'){
-            $(".div-act-filters-container").append('<div class="div-act-filters-content" data-name="'+sel_name+'" data-val="'+$("#actFilterDateFrom").val()+','+$("#actFilterDateTo").val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button>'+$("#actFilterDateFrom").val()+' - '+$("#actFilterDateTo").val()+'</div>');
+            if ($("#actFilterDateFrom").val()=="" || $("#actFilterDateTo").val()==""){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Debes seleccionar una fecha para ambos campos de búsqueda.'
+                });
+            }
+            else{
+                if ($("#actFilterDateTo").val()>=$("#actFilterDateFrom").val()){
+                    // $(".div-act-filters-container").append('<div class="div-act-filters-content" data-name="'+sel_name+'" data-val="'+$("#actFilterDateFrom").val()+','+$("#actFilterDateTo").val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button>'+$("#actFilterDateFrom").val()+' - '+$("#actFilterDateTo").val()+'</div>');
+
+                    /////////////// con nombre de actividad
+                    $(".div-act-filters-container").append('<div class="div-act-filters-content row row-wo-margin" data-name="'+sel_name+'" data-val="'+$("#actFilterDateFrom").val()+','+$("#actFilterDateTo").val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button><div style="line-height:0.9; margin-left:3px;"><div style="color:gray; text-align:center;">Vencimiento</div><div style="text-align:center;">'+$("#actFilterDateFrom").val()+' - '+$("#actFilterDateTo").val()+'</div></div>');
+
+
+                    $("#actFilterDateFrom").val("");
+                    $("#actFilterDateTo").val("");
+
+
+
+
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'La fecha del campo <b>hasta</b> debe ser mayor o igual a la del campo <b>de</b>.'
+                    });
+                }
+            }
         }
         if (type=='select'){
-            $(".div-act-filters-container").append('<div class="div-act-filters-content" data-name="'+sel_name+'" data-val="'+$("option:selected",$("#selActFilterStatus")).val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button>'+$("option:selected",$("#selActFilterStatus"))[0].innerText+'</div>');
+            // $(".div-act-filters-container").append('<div class="div-act-filters-content" data-name="'+sel_name+'" data-val="'+$("option:selected",$("#selActFilterStatus")).val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button>'+$("option:selected",$("#selActFilterStatus"))[0].innerText+'</div>');
+
+            //////////////////con nombre de actividad
+            if (sel_name=='status'){
+                $(".div-act-filters-container").append('<div class="div-act-filters-content row row-wo-margin" data-name="'+sel_name+'" data-val="'+$("option:selected",$("#selActFilterStatus")).val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button><div style="line-height:0.9; margin-left:3px;"><div style="color:gray; text-align:center;">Estado</div><div style="text-align:center;">'+$("option:selected",$("#selActFilterStatus"))[0].innerText+'</div></div>');
+            }
+            if (sel_name=='priority'){
+                $(".div-act-filters-container").append('<div class="div-act-filters-content row row-wo-margin" data-name="'+sel_name+'" data-val="'+$("option:selected",$("#selActFilterPriority")).val()+'"><button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button><div style="line-height:0.9; margin-left:3px;"><div style="color:gray; text-align:center;">Prioridad</div><div style="text-align:center;">'+$("option:selected",$("#selActFilterPriority"))[0].innerText+'</div></div>');
+            }
+
         }
 
         $(".btn-destroy-act-filter-content").click(function(){
-            console.log($(this));
+
             $(this).parent('div .div-act-filters-content').remove();
             var filters=$(".div-act-filters-content");
             loadUserActivities(me.user_info.user_id,filters);
+            if ($(".div-act-filters-container").children().length==0){
+                $(".div-act-filters-container").css("display","none");
+            }
         });
+
+        if ($(".div-act-filters-container").children().length>0){
+            $(".div-act-filters-container").css("display","flex");
+        }
+
 
         var filters=$(".div-act-filters-content");
         loadUserActivities(me.user_info.user_id,filters);
@@ -90,6 +145,7 @@ function loadUserActivities(user_id,filters){
             error:ajaxError,
         },
         columns:[
+            {data:'priority_class',"width":"5%", "className":"dt-head-center dt-body-center"},
             {data:'company_name',"width":"35%", "className":"dt-head-center dt-body-left"},
             {data:'name',"width":"35%", "className":"dt-head-center dt-body-left"},
             {data:'form_name',"width":"35%", "className":"dt-head-center dt-body-left"},

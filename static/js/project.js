@@ -6,7 +6,7 @@ $(document).ready(function(){
     split_date[2]="01";
     var first_day=split_date.join("-");
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
-    
+    // console.log(this.user_info);
     loadProjects(me.user_info); //carga de inicio los proyectos
     var location=window.location.pathname;
 

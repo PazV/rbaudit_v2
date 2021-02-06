@@ -7,13 +7,7 @@
     </div>
     <div class="div-act-title">
         <span class="spn-act-title">Mis actividades</span>
-        <div class="form-group row row-wo-margin" style="margin-left:3px; display:none;">
-            <label for="activ_date" class="col-sm-2 col-form-label">Mostrar hasta:</label>
-            <div>
-                <input type="date" class="form-control" id="activ_date">
-            </div>
-            <button class="btn btn-primary " id="btnSearchUserAct" style="margin-left:5px;"><i class="fa fa-search"></i></button>
-        </div>
+
 
         <div class="form-inline" style="margin-left:20px;">
             <div class="form-group" id="divActFilters">
@@ -25,6 +19,7 @@
                     <option data-name="form_name" data-type="text">Actividad</option>
                     <option data-name="resolve_before" data-type="date">Vencimiento</option>
                     <option data-name="status" data-type="select">Estado</option>
+                    <option data-name="priority" data-type="select">Prioridad</option>
                 </select>
                 <div id="divActFilterInput" class="row row-wo-margin">
 
@@ -32,16 +27,15 @@
                 <button class="btn btn-sm btn-primary" id="btnActFilterSearch" style="display:none; margin-left:5px;"><i class="fa fa-search"></i></button>
             </div>
         </div>
-        <div class="div-act-filters-container row row-wo-margin">
-            <!-- <div class="div-act-filters-content">
-                <button class="btn btn-sm btn-destroy-act-filter-content"><i class="fa fa-times"></i></button>Seamaritima
-            </div> -->
+        <div class="div-act-filters-container row row-wo-margin" style="display:none;">
+
         </div>
 
         <div class="div-act-table">
             <table id="tableActList" class="display cell-border compact" style="font-size:14px;">
                 <thead>
                     <tr>
+                        <th>-</th>
                         <th>Empresa</th>
                         <th>Proyecto</th>
                         <th>Actividad</th>
