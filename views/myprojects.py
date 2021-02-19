@@ -42,6 +42,38 @@ def myProjects():
     g.consultant=user_info['consultant']
     return render_template('my_projects.html',g=g)
 
+@bp.route('/consultant')
+@is_logged_in
+def myProjectsConsultant():
+    #buscar si está en lista de consultores
+    is_consultant=db.query("""
+        select * from system.consultants
+        where user_id=%s
+    """%session['user_id']).dictresult()
+    if is_consultant!=[]:
+        user_info=db.query("""
+            select user_id,profile_picture_class,workspace_id
+            from system.user where user_id=%s
+        """%session['user_id']).dictresult()[0]
+        user_info['consultant_workspaces']=is_consultant[0]['workspaces']
+        user_info['consultant']=True
+        g.user_info=json.dumps(user_info)
+        g.profile_picture_class=user_info['profile_picture_class']
+        g.notifications=False
+        g.consultant=user_info['consultant']
+        return render_template('my_projects_consultant.html',g=g)
+    else:
+        db.query("""
+            update system.user_session
+            set logged=False,
+            finish_session='now'
+            where session_id=%s
+            and user_id=%s
+        """%(session['session_id'],session['user_id']))
+        session.clear()
+        return redirect(url_for('login.login'))
+
+
 @bp.route('/getFirstMenuFolders', methods=['GET','POST'])
 @is_logged_in
 def getFirstMenuFolders():
@@ -63,9 +95,13 @@ def getFirstMenuFolders():
                     order by folder_id asc
                 """%data['project_id']).dictresult()
 
+                if data['mode']=='main':
+                    div_class='folder-icon-div'
+                else:
+                    div_class='folder-icon-div-mod'
                 html=''
                 for x in folders:
-                    html+='<div class="folder-icon-div"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
                 response['data']=html
 
@@ -112,23 +148,40 @@ def getSubfoldersForms():
                     select
                         form_id,
                         name,
-                        project_id
+                        project_id,
+                        status_id
                     from
                         project.form
                     where
                         folder_id=%s
                     and project_id=%s
-                    and status_id > 2
+                    --and status_id > 2
                 """%(data['folder_id'],data['project_id'])).dictresult()
+
+                if data['mode']=='main':
+                    div_class='folder-icon-div'
+                else:
+                    div_class='folder-icon-div-mod'
 
                 html=''
                 for x in folders:
-                    html+='<div class="folder-icon-div"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+                    # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
                 for y in forms:
-                    link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(y['project_id'])),str(y['form_id']))
+                    if int(y['status_id']) in (1,2):
+                        icon_class='icon-form-menu-up'
+                        link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(y['project_id'])),'createform','step-2',str(y['form_id']))
+                    else:
+                        icon_class='icon-form-menu'
+                        link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(y['project_id'])),str(y['form_id']))
                     # f['link']='<a href="%s" target="_blank"><i class="fa fa-external-link"></i></a>'%link
-                    html+='<div class="folder-icon-div"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="icon-form-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,y['name'].decode('utf8'),y['name'].decode('utf8'))
+
+
+                    # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
+
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
 
                 response['data']=html
                 response['success']=True
@@ -180,23 +233,38 @@ def returnSubFolder():
                     select
                         form_id,
                         name,
-                        project_id
+                        project_id,
+                        status_id
                     from
                         project.form
                     where
                         folder_id=%s
                     and project_id=%s
-                    and status_id > 2
+                    --and status_id > 2
                 """%(parent['parent_id'],data['project_id'])).dictresult()
+
+                if data['mode']=='main':
+                    div_class='folder-icon-div'
+                else:
+                    div_class='folder-icon-div-mod'
 
                 html=''
                 for x in folders:
-                    html+='<div class="folder-icon-div"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+                    # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
                 for y in forms:
-                    link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(y['project_id'])),str(y['form_id']))
+                    if int(y['status_id']) in (1,2):
+                        icon_class='icon-form-menu-up'
+                        link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(y['project_id'])),'createform','step-2',str(y['form_id']))
+                    else:
+                        icon_class='icon-form-menu'
+                        link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(y['project_id'])),str(y['form_id']))
                     # f['link']='<a href="%s" target="_blank"><i class="fa fa-external-link"></i></a>'%link
-                    html+='<div class="folder-icon-div"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="icon-form-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,y['name'].decode('utf8'),y['name'].decode('utf8'))
+                    # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
+
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
 
                 response['data']=html
                 response['success']=True

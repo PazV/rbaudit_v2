@@ -851,14 +851,19 @@ $(document).ready(function(){
 });
 
 function getUserTable(user_info){
-    if (window.location.pathname.includes('/home/consultant')){
-
-        var workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
+    if (window.location.pathname.includes('/consultant')){
+        if (window.location.pathname.includes('/my-projects/consultant')){
+            var workspace_id=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+        }
+        if (window.location.pathname.includes('/activity-list/consultant')){
+            var workspace_id=$("#actListConsultWorkspace").find("option:selected").attr("name");
+        }
     }
     else{
         var workspace_id=user_info['workspace_id'];
-
     }
+
+    
     $("#grdAdminUsers").DataTable({
         "scrollY":"225px",
         "scrollCollapse":true,

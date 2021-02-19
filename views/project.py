@@ -216,17 +216,21 @@ def getProjects():
             if valid:
                 #provisional
                 # data['user_id']=27
+                filters=''
+                if data['filters']!='':
+                    filters+=" and a.name ilike '%%%s%%'"%data['filters']
                 projects=db.query("""
-                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                     from project.project a
-                    where a.manager=%s or a.partner=%s
+                    where (a.manager=%s or a.partner=%s) %s
                     union
-                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                     from project.project a, project.project_users b
-                    where a.project_id=b.project_id
+                    where a.project_id=b.project_id %s
                     and b.user_id=%s)
                     order by created desc
-                """%(int(cfg.project_factor),data['user_id'],data['user_id'],int(cfg.project_factor),data['user_id'])).dictresult()
+                """%(int(cfg.project_factor),data['user_id'],data['user_id'],filters,int(cfg.project_factor),filters,data['user_id'])).dictresult()
+                
                 # app.logger.info(projects)
                 response['success']=True
                 response['data']=projects
@@ -3095,7 +3099,18 @@ def getSettingsForEditing():
                             union
                             select partner as user from project.project where project_id=%s and partner=%s
                         """%(data['form_id'],data['user_id'],data['form_id'],data['user_id'],data['project_id'],data['user_id'],data['project_id'],data['user_id'])).dictresult()
-                        if allowed_users!=[]:
+
+                        consultant=db.query("""
+                            select consultants from system.workspace where workspace_id=%s
+                        """%data['workspace_id']).dictresult()
+                        consult_list=[]
+                        consult_match=False
+                        if consultant!=[]:
+                            consult_list=consultant[0]['consultants'].split(",")
+                            if str(data['user_id']) in consult_list:
+                                consult_match=True
+
+                        if allowed_users!=[] or consult_match==True:
                             settings=db.query("""
                                 select b.form_id, b.name, b.status_id,
                                 b.columns_number,
@@ -3921,29 +3936,24 @@ def getConsultantProjects():
 
                     ws_users_str=','.join(str(e['user_id']) for e in ws_users)
 
-                    app.logger.info("""
-                        (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
-                        from project.project a
-                        where a.manager in (%s) or a.partner in (%s)
-                        union
-                        select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
-                        from project.project a, project.project_users b
-                        where a.project_id=b.project_id
-                        and b.user_id in (%s))
-                        order by name asc
-                    """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str))
+                    filters=''
+                    if data['filters']!='':
+                        filters+=" and a.name ilike '%%%s%%'"%data['filters']
+
 
                     projects=db.query("""
-                        (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                        (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                         from project.project a
-                        where a.manager in (%s) or a.partner in (%s)
+                        where (a.manager in (%s) or a.partner in (%s)) %s
                         union
-                        select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY HH24:MI:SS') as created
+                        select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                         from project.project a, project.project_users b
                         where a.project_id=b.project_id
-                        and b.user_id in (%s))
+                        and b.user_id in (%s) %s)
                         order by name asc
-                    """%(int(cfg.project_factor),ws_users_str,ws_users_str,int(cfg.project_factor),ws_users_str)).dictresult()
+                    """%(int(cfg.project_factor),ws_users_str,ws_users_str,filters,int(cfg.project_factor),ws_users_str,filters)).dictresult()
+
+
                 else:
                     projects=[]
                 response['data']=projects

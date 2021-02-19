@@ -152,7 +152,8 @@ naranja: #ed8b00
 }
 
 .green-modal{
-    background-color: var(--verde);
+    /* background-color: var(--verde); */
+    background-color: #4096d3;
     color:white;
 }
 
@@ -216,7 +217,9 @@ naranja: #ed8b00
 
 .fieldset-legend-permits{
     width: auto;
+    font-size:1.3rem;
 }
+
 
 #grdProjFormInfo th,td{
     border-bottom:1px solid #ddd;

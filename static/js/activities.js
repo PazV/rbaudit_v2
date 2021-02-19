@@ -5,7 +5,14 @@ $(document).ready(function(){
     var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split("T")[0];
 
     $("#tableActList").DataTable();
-    loadUserActivities(me.user_info.user_id,[]);
+
+    if (window.location.pathname.includes('/activity-list/consultant')){
+        //cargar espacios de trabajo
+        getConsultWorkspaces(me.user_info,true,'activity_list');
+    }
+    else{
+        loadUserActivities(me.user_info.user_id,[]);
+    }
 
     $("#actFilterType").on('change',function(){
         $("#divActFilterInput").empty();
@@ -120,6 +127,12 @@ $(document).ready(function(){
 
     });
 
+    $("#actListConsultWorkspace").on('change',function(){
+        var selected=$("option:selected", this);
+        var sel_value=$(selected).attr('name');
+        loadWorkspaceActivities(me.user_info.user_id,[],sel_value);
+    });
+
 });
 
 function loadUserActivities(user_id,filters){
@@ -154,4 +167,93 @@ function loadUserActivities(user_id,filters){
             {data:'link',"width":"5%", "className":"dt-center"}
         ]
     })
+}
+
+function loadWorkspaceActivities(user_id,filters,workspace_id){
+
+    filter_list=[];
+    for (var x of filters){
+        filter_list.push({'field':$(x).data('name'),'value':$(x).data('val')});
+    }
+
+    $("#tableActList").DataTable({
+        "scrollY":"250px",
+        "scrollCollapse":true,
+        "lengthChange":false,
+        serverSide:true,
+        destroy:true,
+        searching:false,
+        ordering:false,
+        ajax:{
+            data:{'user_id':user_id,'filters':JSON.stringify(filter_list),'workspace_id':workspace_id},
+            url:'/activity-list/getWorkspaceActivities',
+            dataSrc:'data',
+            type:'POST',
+            error:ajaxError,
+        },
+        columns:[
+            {data:'priority_class',"width":"5%", "className":"dt-head-center dt-body-center"},
+            {data:'company_name',"width":"35%", "className":"dt-head-center dt-body-left"},
+            {data:'name',"width":"35%", "className":"dt-head-center dt-body-left"},
+            {data:'form_name',"width":"35%", "className":"dt-head-center dt-body-left"},
+            {data:'resolve_before',"width":"10%", "className":"dt-center"},
+            {data:'status',"width":"15%", "className":"dt-head-center dt-body-left"},
+            {data:'link',"width":"5%", "className":"dt-center"}
+        ]
+    })
+}
+
+function getConsultWorkspaces(user_info,is_first,template){
+    //el segundo parámetro sirve para saber si es la primera vez que se carga el select, para también mandar a llamar los proyectos en cuanto termina la petición ajax de los espacios de trabajo, se obtendrán los proyectos del último espacio de trabajo regresado en orden alfabético
+    if (template=='activity_list'){
+        var sel_id="#actListConsultWorkspace";
+    }
+    if (template=='my_projects'){
+        var sel_id="#myProjectsConsultWorkspace";
+    }
+    $.ajax({
+        url:'/project/getConsultantWorkspaces',
+        type:'POST',
+        data:JSON.stringify({'user_id':user_info.user_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError()
+            }
+            if (res.success){
+                $.each(res.data,function(i,item){
+                    $(sel_id).append($('<option>',{
+                        text:item.name,
+                        name:item.workspace_id,
+                        selected:true
+                    }));
+                });
+                if (is_first===true){
+
+                    var ws_len=res.data.length;
+                    if (template=='activity_list'){
+                        loadWorkspaceActivities(user_info.user_id,[],res.data[ws_len-1]['workspace_id']);
+                    }
+                    if (template=='my_projects'){
+                        getWorkspaceProjects(user_info,res.data[ws_len-1]['workspace_id'],'')
+                    }
+                }
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        error:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
 }

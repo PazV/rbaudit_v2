@@ -1,0 +1,65 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super() }}
+<div class="row" style="height:100%;">
+    <div class="row-wo-margin div-leftmenusb">
+        {% include 'elements/_left_menu_sidebar.html' %}
+    </div>
+    <div class="div-act-title">
+        <div class="row row-wo-margin">
+            <div>
+                <span class="spn-act-title">Mis actividades (consultor)</span>
+            </div>
+            <div class="form-inline">
+                <label for="actListConsultWorkspace" class="col-form-label-sm" style="margin-right:3px;">Espacios de trabajo</label>
+                <select id="actListConsultWorkspace" class="form-control form-control-sm">
+                    
+                </select>
+            </div>
+
+        </div>
+
+
+
+        <div class="form-inline" style="margin-left:20px;">
+            <div class="form-group" id="divActFilters">
+                <label for="actFilterType" class="col-form-label-sm" style="margin-right:5px;">Filtrar por: </label>
+                <select id="actFilterType" class="form-control form-control-sm">
+                    <option name="not-valid" data-type="not-valid" disabled selected>Seleccionar opción</option>
+                    <option data-name="company_name" data-type="text">Empresa</option>
+                    <option data-name="project_name" data-type="text">Proyecto</option>
+                    <option data-name="form_name" data-type="text">Actividad</option>
+                    <option data-name="resolve_before" data-type="date">Vencimiento</option>
+                    <option data-name="status" data-type="select">Estado</option>
+                    <option data-name="priority" data-type="select">Prioridad</option>
+                </select>
+                <div id="divActFilterInput" class="row row-wo-margin">
+
+                </div>
+                <button class="btn btn-sm btn-primary" id="btnActFilterSearch" style="display:none; margin-left:5px;"><i class="fa fa-search"></i></button>
+            </div>
+        </div>
+        <div class="div-act-filters-container row row-wo-margin" style="display:none;">
+
+        </div>
+
+        <div class="div-act-table">
+            <table id="tableActList" class="display cell-border compact" style="font-size:14px;">
+                <thead>
+                    <tr>
+                        <th>-</th>
+                        <th>Empresa</th>
+                        <th>Proyecto</th>
+                        <th>Actividad</th>
+                        <th>Vencimiento</th>
+                        <th>Estado</th>
+                        <th>Ir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

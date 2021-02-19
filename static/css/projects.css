@@ -135,7 +135,18 @@
     background-size: contain;
 }
 
-.folder-icon-div{
+.icon-form-menu-up{
+    content:url('/static/images/hoja-de-calculo-up.png');
+    background-image: url('/static/images/hoja-de-calculo-up.png');
+    width:35px;
+    height:35px;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.folder-icon-div,.folder-icon-div-mod{
     /* display: grid; */
     display: flex;
     width: 75px;
@@ -250,16 +261,21 @@
 }
 
 #spnMyProjectName{
-    max-width: 85%;
+    max-width: 83%;
     overflow-x: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
-.div-return-menu-subfolder{
-    max-width: 60px;
+.div-return-menu-subfolder, .div-return-menu-subfolder-mod{
+    max-width: 90px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     margin-right:3px;
+}
+
+.custom-control-label{
+    vertical-align: text-bottom !important;
+    font-size: 0.875rem !important;
 }

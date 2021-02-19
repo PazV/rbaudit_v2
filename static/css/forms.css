@@ -92,6 +92,14 @@
     padding:5px;
 }
 
+.div-form-menu-path-mod{
+    height:30px;
+    /* width: inherit; */
+    font-size: 14px;
+    color:var(--text-color-grey);
+    padding:5px;
+}
+
 .icon-form-path{
     margin-right:5px;
     font-size: 14px;
@@ -103,12 +111,12 @@
     font-size: 14px;
 }
 
-.spn-form-menu-path{
+.spn-form-menu-path, .spn-form-menu-path-mod{
     font-family:sans-serif;
     margin-left: 3px;
 }
 
-.a-home-form-path-menu{
+.a-home-form-path-menu, .a-home-form-path-menu-mod{
     color:var(--text-color-grey);
     /* display: inherit; */
 }
@@ -452,4 +460,22 @@
 
 .ql-snow .ql-color-picker .ql-picker-options{
     width: 112px !important;
+}
+
+.mod-menu-explorer{
+    width:38%;
+    margin-left:1%;
+    margin-bottom:1%;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.25rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+
+#divColumnsSettings{
+    font-size: 14px;
+    max-height: 350px;
+    overflow-y: scroll;
+    overflow-x: auto;
 }

@@ -7,18 +7,24 @@
         {% include 'elements/_left_menu_sidebar.html' %}
     </div>
     <div class="div-mproj-title">
-        <span class="spn-act-title">Mis proyectos</span>
+        <div class="row row-wo-margin">
+            <div>
+                <span class="spn-act-title">Mis proyectos</span>
+            </div>
+            <div class="form-inline">
+                <label for="myProjectsConsultWorkspace" class="col-form-label-sm" style="margin-right:3px;">Espacios de trabajo</label>
+                <select id="myProjectsConsultWorkspace" class="form-control form-control-sm">
+                </select>
+            </div>
+        </div>
+
+
         <div class="row row-wo-margin" style="height:inherit">
             <div class="div-proj-content div-mproj-list">
                 <input type="text" class="form-control form-control-sm " id="myProjectsFinderInput" placeholder="&#xf002; Buscar">
                 <div id="myProjectsDiv">
                     <ul id="myProjectsUl">
-                        <!-- <li class="proj-list-li">
-                            <div class="row row-wo-margin justify-content-between">
-                                <a class="proj-list-a" href="/project/#" name="Prueba" style="width:93%;">Proyecto prueba</a>
-                                <a class="a-project-ext-link" href="#"><i class="fa fa-external-link"></i></a>
-                            </div>
-                        </li> -->
+
                     </ul>
                 </div>
             </div>
@@ -77,13 +83,14 @@
                         </div>
                     </div>
                     <div class="div-myproject-sel-info row row-wo-margin" style="height:30%;">
-                        <div class="" style="width:10%; margin:auto;">
-                            <i class="fa fa-building-o icon-myproject-info" style="display:table;"></i>
+                        <div style="width:10%; margin:auto;">
+                            <i class="fa fa-building-o icon-myproject-info m-4"></i>
                         </div>
-                        <div class="" style="width:90%;">
+                        <div style="width:90%;">
                             <div class="div-myproject-info-title">Empresa
                             </div>
-                            <div class="div-myproject-info-content" id="divMPcompanyName" style="width:95%; margin:0; line-height:0.9; text-align:center;"><p></p></div>
+                            <div class="div-myproject-info-content" id="divMPcompanyName" style="width:95%; margin:0; line-height:0.9; text-align:center;"><p></p>
+                            </div>
                         </div>
                     </div>
                     <div class="div-myproject-sel-info row row-wo-margin" style="height:30%;">

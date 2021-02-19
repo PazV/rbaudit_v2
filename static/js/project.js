@@ -7,15 +7,19 @@ $(document).ready(function(){
     var first_day=split_date.join("-");
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
     // console.log(this.user_info);
-    loadProjects(me.user_info); //carga de inicio los proyectos
+    loadProjects(me.user_info,''); //carga de inicio los proyectos
     var location=window.location.pathname;
 
     if (location.split('/')[1]=='project'){
 
-        loadFormPanel(me.user_info,location);
-        loadTreeMenu(me.user_info['project_id']);
-        loadFormsToCheck(me.user_info,location);
+        // loadFormPanel(me.user_info,location);
+        // loadTreeMenu(me.user_info['project_id']);
+        // loadFormsToCheck(me.user_info,location);
         $("#btnOpenNotifications").css("visibility","visible");
+    }
+
+    if (window.location.pathname.includes('/my-projects/consultant')){
+        getConsultWorkspaces(me.user_info,true,'my_projects')
     }
 
     if (window.location.pathname.includes('/home/') ||  (window.location.pathname.includes('/notifications/'))){
@@ -60,20 +64,31 @@ $(document).ready(function(){
         $("#NPdateFrom").val(first_day);
         $("#NPdateTo").val(today);
         var workspace_id;
-
-        if (window.location.pathname=='/home/'){
-
-            workspace_id=me.user_info['workspace_id'];
+        if (window.location.pathname.includes('/consultant')){
+            if (window.location.pathname.includes('/my-projects/consultant')){
+                workspace_id=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+            }
+            if (window.location.pathname.includes('/activity-list/consultant')){
+                workspace_id=$("#actListConsultWorkspace").find("option:selected").attr("name");
+            }
         }
         else{
-
-            if (me.user_info['consultant']===true){
-                workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
-            }
-            else{
-                workspace_id=me.user_info['workspace_id'];
-            }
+            workspace_id=me.user_info['workspace_id'];
         }
+
+        // if (window.location.pathname=='/home/'){
+        //
+        //     workspace_id=me.user_info['workspace_id'];
+        // }
+        // else{
+        //
+        //     if (me.user_info['consultant']===true){
+        //         workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
+        //     }
+        //     else{
+        //         workspace_id=me.user_info['workspace_id'];
+        //     }
+        // }
 
         $.ajax({
             url:'/users/getUserList',
@@ -111,14 +126,31 @@ $(document).ready(function(){
 
     $("#btnSaveProject").click(function(){
         var include_creator; //variable para identificar si se creó desde el espacio de trabajo propio o si se creó como consultor, para no agregarlo en la lista de usuarios del proyecto
-        if (window.location.pathname=='/home/'){
+        if (window.location.pathname.includes('/consultant')){
+            if (window.location.pathname.includes('/my-projects/consultant')){
+                var ws=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+                include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
+            }
+            if (window.location.pathname.includes('/activity-list/consultant')){
+                var ws=$("#actListConsultWorkspace").find("option:selected").attr("name");
+                include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
+            }
+        }
+        else{
             var ws=me.user_info['workspace_id'];
             include_creator=true; //cuando se crea desde el espacio de trabajo propio, se incluye al usuario en los usuarios del proyecto
         }
-        else{
-            var ws=$("#consultant_workspaces").find("option:selected").attr("name");
-            include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
-        }
+
+
+
+        // if (window.location.pathname=='/home/'){
+        //     var ws=me.user_info['workspace_id'];
+        //     include_creator=true; //cuando se crea desde el espacio de trabajo propio, se incluye al usuario en los usuarios del proyecto
+        // }
+        // else{
+        //     var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+        //     include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
+        // }
 
         $("#frmNewProject :input").focusout();
         var form_input=$("#frmNewProject .form-control");
@@ -160,12 +192,25 @@ $(document).ready(function(){
                                     text:'Ok',
                                     action:function(){
                                         $("#mod_new_project").modal("hide");
-                                        if (window.location.pathname=='/home/'){
-                                            loadProjects(me.user_info);
+                                        if (window.location.pathname.includes('/consultant')){
+                                            if (window.location.pathname.includes('/my-projects/consultant')){
+                                                 getWorkspaceProjects(me.user_info,ws,$("#myProjectsFinderInput").val())
+                                            }
                                         }
                                         else{
-                                            getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"))
+                                            if (window.location.pathname.includes('/my-projects')){
+                                                loadProjects(me.user_info,$("#myProjectsFinderInput").val());
+                                            }
                                         }
+
+
+
+                                        // if (window.location.pathname=='/home/'){
+                                        //     loadProjects(me.user_info);
+                                        // }
+                                        // else{
+                                        //     getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"))
+                                        // }
 
                                         //mandar a llamar función que vuelva a cargar el div de proyectos
                                     }
@@ -235,14 +280,21 @@ $(document).ready(function(){
     $("#mod_clone_project").on('show.bs.modal',function(){
         $("#ClPdateFrom").val(first_day);
         $("#ClPdateTo").val(today);
-        if (window.location.pathname.includes('/home/consultant')){
-            var workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
+
+        if (window.location.pathname.includes('/consultant')){
             var consultant_mode=true;
+            if (window.location.pathname.includes('/my-projects/consultant')){
+                var workspace_id=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+            }
+            if (window.location.pathname.includes('/activity-list/consultant')){
+                var workspace_id=$("#actListConsultWorkspace").find("option:selected").attr("name");
+            }
         }
         else{
             var workspace_id=me.user_info['workspace_id'];
             var consultant_mode=false;
         }
+
         $.ajax({
             url:'/project/getAvailableProjects',
             type:'POST',
@@ -338,12 +390,21 @@ $(document).ready(function(){
             }
         }
         if (valid===true){
-            if (window.location.pathname=='/home/'){
-                var ws=me.user_info['workspace_id'];
+
+            if (window.location.pathname.includes('/consultant')){
+                if (window.location.pathname.includes('/my-projects/consultant')){
+                    var ws=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+                }
+                if (window.location.pathname.includes('/activity-list/consultant')){
+                    var ws=$("#actListConsultWorkspace").find("option:selected").attr("name");
+                }
             }
             else{
-                var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+                var ws=me.user_info['workspace_id'];
             }
+
+
+
             var data=getForm('#frmCloneProject',[{'id':'#ClPpartner','name':'partner'},{'id':'#ClPmanager','name':'manager'},{'id':'#ClPcloned_from','name':'cloned_project'}]);
             data['created_by']=me.user_info['user_id'];
             data['project_id']=-1;
@@ -375,13 +436,16 @@ $(document).ready(function(){
                                     text:'Ok',
                                     action:function(){
                                         $("#mod_clone_project").modal("hide");
-                                        if (window.location.pathname=='/home/'){
-                                            loadProjects(me.user_info);
+                                        if (window.location.pathname.includes('/consultant')){
+                                            if (window.location.pathname.includes('/my-projects/consultant')){
+                                                 getWorkspaceProjects(me.user_info,ws,$("#myProjectsFinderInput").val())
+                                            }
                                         }
                                         else{
-                                            getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"))
+                                            if (window.location.pathname.includes('/my-projects')){
+                                                loadProjects(me.user_info,$("#myProjectsFinderInput").val());
+                                            }
                                         }
-                                        // loadProjects(me.user_info);
                                     }
                                 }
                             }
@@ -416,11 +480,16 @@ $(document).ready(function(){
     });
 
     $("#mod_delete_project").on('show.bs.modal',function(){
-        if (window.location.pathname=='/home/'){
-            var ws=me.user_info['workspace_id'];
+        if (window.location.pathname.includes('/consultant')){
+            if (window.location.pathname.includes('/my-projects/consultant')){
+                var ws=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+            }
+            if (window.location.pathname.includes('/activity-list/consultant')){
+                var ws=$("#actListConsultWorkspace").find("option:selected").attr("name");
+            }
         }
         else{
-            var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+            var ws=me.user_info['workspace_id'];
         }
         $.ajax({
             url:'/project/permissionDeleteProject',
@@ -449,16 +518,33 @@ $(document).ready(function(){
                         });
                     }
                     else{
-                        if (window.location.pathname=='/home/'){
-                            var ws=me.user_info['workspace_id'];
-                            var url='/project/getProjects';
-                            var aj_data={'user_id':me.user_info['user_id']};
+                        if (window.location.pathname.includes('/consultant')){
+                            // if (window.location.pathname.includes('/my-projects/consultant')){
+                            //     var ws=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+                            // }
+                            // if (window.location.pathname.includes('/activity-list/consultant')){
+                            //     var ws=$("#actListConsultWorkspace").find("option:selected").attr("name");
+                            // }
+                            var url='/project/getConsultantProjects';
+                            var aj_data={'user_id':me.user_info['user_id'],'workspace_id':ws,'filters':''};
                         }
                         else{
-                            var ws=$("#consultant_workspaces").find("option:selected").attr("name");
-                            var url='/project/getConsultantProjects';
-                            var aj_data={'user_id':me.user_info['user_id'],'workspace_id':ws}
+                            // var ws=me.user_info['workspace_id'];
+                            var url='/project/getProjects';
+                            var aj_data={'user_id':me.user_info['user_id'],'filters':''}
                         }
+
+
+                        // if (window.location.pathname=='/home/'){
+                        //     var ws=me.user_info['workspace_id'];
+                        //     var url='/project/getProjects';
+                        //     var aj_data={'user_id':me.user_info['user_id']};
+                        // }
+                        // else{
+                        //     var ws=$("#consultant_workspaces").find("option:selected").attr("name");
+                        //     var url='/project/getConsultantProjects';
+                        //     var aj_data={'user_id':me.user_info['user_id'],'workspace_id':ws}
+                        // }
 
 
                         $.ajax({
@@ -774,12 +860,47 @@ $(document).ready(function(){
     });
 
     $("#consultant_workspaces").on('change',function(){
-        getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"));
+
+        getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"),$("#myProjectsFinderInput").val());
+
     });
+
+    $("#myProjectsConsultWorkspace").on('change',function(){
+        $("#myProjectsFinderInput").val("");
+        var selected=$("option:selected", this);
+        var sel_value=$(selected).attr('name');
+        getWorkspaceProjects(me.user_info,sel_value,$("#myProjectsFinderInput").val());
+    });
+
+    $("#myProjectsFinderInput").on('keyup',function(a){
+        if (window.location.pathname.includes('/consultant')){
+            var selected=$("option:selected", $("#myProjectsConsultWorkspace"));
+            var sel_value=$(selected).attr('name');
+            getWorkspaceProjects(me.user_info,sel_value,a.target.value);
+        }
+        else{
+            loadProjects(me.user_info,a.target.value);
+        }
+    });
+
+    $("#aHomeMP").click(function(){
+        console.log($(this).data('projectid'));
+        if (window.location.pathname.includes('/my-projects')){
+            $("#div-include-fmp").empty();
+            getFirstMenuFolders($(this).data('projectid'));
+        }
+    });
+
+    $("#aHomeMPMod").click(function(){
+        $("#div-include-fmp-mod").empty();
+        getFirstMenuFoldersMod($("#aHomeMP").data('projectid'));
+    });
+
+
 
 });
 
-function loadProjects(user_info){
+function loadProjects(user_info,filter_str){
     if (window.location.pathname.includes('/home/consultant')){
         //do nothing
 
@@ -788,7 +909,7 @@ function loadProjects(user_info){
         $.ajax({
             url:'/project/getProjects',
             type:'POST',
-            data:JSON.stringify({'user_id':user_info['user_id']}),
+            data:JSON.stringify({'user_id':user_info['user_id'],'filters':filter_str.trim()}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -796,27 +917,26 @@ function loadProjects(user_info){
                     ajaxError();
                 }
                 if (res.success){
-                    // $("#projectListContainer ul").children().remove();
-                    // $.each(res.data,function(i,item){
-                    //     $("#projectListContainer ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
-                    // });
                     $("#myProjectsUl").children().remove();
-                    // $.each(res.data,function(i,item){
-                    //     $("#myProjectsUl").append('<li class="proj-list-li"><div class="row row-wo-margin justify-content-between"><a class="proj-list-a" target="_self" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:93%;">'+item.name+'</a><a class="a-project-ext-link" target="_blank" href="/project/'+item.project_factor+'"><i class="fa fa-external-link"></i></a></div></li>')
-                    // });
                     $.each(res.data,function(i,item){
-                        $("#myProjectsUl").append('<li class="proj-list-li"><div class="row row-wo-margin justify-content-between"><a class="proj-list-a" name="'+item.project_id+'" style="width:93%;">'+item.name+'</a><a class="a-project-ext-link" target="_blank" href="/project/'+item.project_factor+'"><i class="fa fa-external-link"></i></a></div></li>')
+                        $("#myProjectsUl").append('<li class="proj-list-li"><div class="row row-wo-margin justify-content-between"><a class="proj-list-a" name="'+item.project_id+'" style="width:93%;" data-companyname="'+item.company_name+'" data-startdate="'+item.start_date+'" data-finishdate="'+item.finish_date+'" data-createdate="'+item.created+'" data-projectfactor="'+item.project_factor+'">'+item.name+'</a><a class="a-project-ext-link" target="_blank" href="/project/'+item.project_factor+'"><i class="fa fa-external-link"></i></a></div></li>')
                     });
 
-
-
                     $(".proj-list-a").click(function(){
-                        // console.log(this);
-                        console.log($(this)[0].name);
                         $("#spnMyProjectName").html($(this).html());
                         $("#spnMyProjectName").attr('title',$(this).html());
                         $("#div-include-fmp").empty();
+
+                        $("#aHomeMP").data('projectid',$(this).attr('name'));
+                        $("#aHomeMP").data('projectfactor',$(this).data('projectfactor'));
+
+                        $("#divMPcreateDate").html($(this).data('createdate'));
+                        $("#divMPstartDate").html($(this).data('startdate'));
+                        $("#divMPfinishDate").html($(this).data('finishdate'));
+                        $("#divMPcompanyName").find('p').html($(this).data('companyname'));
+                        // $("#divMPlastUpdated").html($(this).cata(''))
                         getFirstMenuFolders($(this)[0].name);
+                        $(".btn-mP-top-menu").prop("disabled",false);
                     });
 
 
@@ -1018,7 +1138,7 @@ function getConsultantWorkspaces(user_info,is_first){
                 if (is_first===true){
 
                     var ws_len=res.data.length;
-                    getWorkspaceProjects(user_info,res.data[ws_len-1]['workspace_id']);
+                    getWorkspaceProjects(user_info,res.data[ws_len-1]['workspace_id'],$("#myProjectsFinderInput").val());
                 }
 
             }
@@ -1040,11 +1160,12 @@ function getConsultantWorkspaces(user_info,is_first){
     });
 }
 
-function getWorkspaceProjects(user_info,workspace_id){
+function getWorkspaceProjects(user_info,workspace_id,filter_str){
+    console.log(filter_str);
     $.ajax({
         url:'/project/getConsultantProjects',
         type:'POST',
-        data:JSON.stringify({'user_id':user_info['user_id'],'workspace_id':workspace_id}),
+        data:JSON.stringify({'user_id':user_info['user_id'],'workspace_id':workspace_id,'filters':filter_str.trim()}),
         success:function(response){
             try{
                 var res=JSON.parse(response);
@@ -1052,10 +1173,28 @@ function getWorkspaceProjects(user_info,workspace_id){
                 ajaxError();
             }
             if (res.success){
-                $("#projectListContainerCons ul").children().remove();
+                $("#myProjectsUl").children().remove();
                 $.each(res.data,function(i,item){
-                    $("#projectListContainerCons ul").append('<li class="proj-list-li"><div class="row"><a class="proj-list-a" href="/project/'+item.project_factor+'" name="'+item.project_id+'" style="width:90%;">'+item.name+'</a><a class="proj-list-a get-project-info" href="#" style="width:10%;" data-toggle="tooltip" title="Obtener información sobre este proyecto"><i class="fa fa-info"></i></a></div></li>');
+                    $("#myProjectsUl").append('<li class="proj-list-li"><div class="row row-wo-margin justify-content-between"><a class="proj-list-a" name="'+item.project_id+'" style="width:93%;" data-companyname="'+item.company_name+'" data-startdate="'+item.start_date+'" data-finishdate="'+item.finish_date+'" data-createdate="'+item.created+'" data-projectfactor="'+item.project_factor+'">'+item.name+'</a><a class="a-project-ext-link" target="_blank" href="/project/'+item.project_factor+'"><i class="fa fa-external-link"></i></a></div></li>')
                 });
+
+                $(".proj-list-a").click(function(){
+                    $("#spnMyProjectName").html($(this).html());
+                    $("#spnMyProjectName").attr('title',$(this).html());
+                    $("#div-include-fmp").empty();
+
+                    $("#aHomeMP").data('projectid',$(this).attr('name'));
+                    $("#aHomeMP").data('projectfactor',$(this).data('projectfactor'));
+
+                    $("#divMPcreateDate").html($(this).data('createdate'));
+                    $("#divMPstartDate").html($(this).data('startdate'));
+                    $("#divMPfinishDate").html($(this).data('finishdate'));
+                    $("#divMPcompanyName").find('p').html($(this).data('companyname'));
+                    getFirstMenuFolders($(this)[0].name);
+                    $(".btn-mP-top-menu").prop("disabled",false);
+                });
+
+
                 $(".get-project-info").click(function(){
                     var project_id=$(this).siblings('a')[0].name;
                     $.ajax({
@@ -1108,13 +1247,14 @@ function getWorkspaceProjects(user_info,workspace_id){
             });
         }
     });
+
 }
 
 function getFirstMenuFolders(project_id){
     $.ajax({
         url:'/my-projects/getFirstMenuFolders',
         type:'POST',
-        data:JSON.stringify({'project_id':project_id}),
+        data:JSON.stringify({'project_id':project_id,'mode':'main'}),
         success:function(response){
             try{
                 var res=JSON.parse(response);
@@ -1133,7 +1273,7 @@ function getFirstMenuFolders(project_id){
                     $(".return-menu-subfolder").click(function(){
                         returnSubFolder($(this).data('folder'),project_id);
                         console.log($(this));
-                        $(this).parent('.div-return-menu-subfolder') .remove();
+                        $(this).parent('.div-return-menu-subfolder').remove();
                     });
                     //obtener subcarpetas
                     getSubfoldersForms($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
@@ -1162,7 +1302,7 @@ function getSubfoldersForms(folder_id,project_id){
     $.ajax({
         url:'/my-projects/getSubfoldersForms',
         type:'POST',
-        data:JSON.stringify({'folder_id':folder_id,'project_id':project_id}),
+        data:JSON.stringify({'folder_id':folder_id,'project_id':project_id,'mode':'main'}),
         success:function(response){
             try{
                 var res=JSON.parse(response);
@@ -1209,7 +1349,7 @@ function returnSubFolder(parent_id,project_id){
     $.ajax({
         url:'/my-projects/returnSubFolder',
         type:'POST',
-        data:JSON.stringify({'parent_id':parent_id,'project_id':project_id}),
+        data:JSON.stringify({'parent_id':parent_id,'project_id':project_id,'mode':'main'}),
         success:function(response){
             try{
                 var res=JSON.parse(response);
@@ -1231,6 +1371,171 @@ function returnSubFolder(parent_id,project_id){
                     });
 
                     getSubfoldersForms($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function getFirstMenuFoldersMod(project_id){
+    $.ajax({
+        url:'/my-projects/getFirstMenuFolders',
+        type:'POST',
+        data:JSON.stringify({'project_id':project_id,'mode':'mod'}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#divMPFoldersContMod").empty();
+                $("#divMPFoldersContMod").append(res.data);
+                $(".folder-icon-div-mod").dblclick(function(){
+                    //incluir carpeta en path superior
+
+                    $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a><div>');
+
+                    $("#div-include-fmp-mod").addClass('row');
+                    //evento para regresar a la carpeta anterior
+                    $(".return-menu-subfolder-mod").click(function(){
+                        returnSubFolderMod($(this).data('folder'),project_id);
+                        console.log($(this));
+                        $(this).parent('.div-return-menu-subfolder-mod').remove();
+
+                    });
+                    //obtener subcarpetas
+                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+
+                    $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
+                    $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                });
+
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function getSubfoldersFormsMod(folder_id,project_id){
+    $.ajax({
+        url:'/my-projects/getSubfoldersForms',
+        type:'POST',
+        data:JSON.stringify({'folder_id':folder_id,'project_id':project_id,'mode':'mod'}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#divMPFoldersContMod").empty();
+                $("#divMPFoldersContMod").append(res.data);
+                $(".folder-icon-div-mod").dblclick(function(){
+                    console.log($($(this).children(".checkbox-folder-menu")).data('document'));
+
+                    $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    $("#div-include-fmp-mod").addClass('row');
+                    //evento para regresar a la carpeta anterior
+                    $(".return-menu-subfolder-mod").click(function(){
+                        returnSubFolderMod($(this).data('folder'),project_id);
+
+                        // $(this).remove();
+                        $(this).parent('.div-return-menu-subfolder-mod').remove();
+                    });
+
+                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+
+                    $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
+                    $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function returnSubFolderMod(parent_id,project_id){
+    $.ajax({
+        url:'/my-projects/returnSubFolder',
+        type:'POST',
+        data:JSON.stringify({'parent_id':parent_id,'project_id':project_id,'mode':'mod'}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#divMPFoldersContMod").empty();
+                $("#divMPFoldersContMod").append(res.data);
+                console.log($(".return-menu-subfolder-mod").length);
+                if ($(".return-menu-subfolder-mod").length!=0){
+                    var folder_name=$(".return-menu-subfolder-mod").last()[0].text;
+                    var folder_id=$(".return-menu-subfolder-mod").last().data('folder');
+                }
+                else{
+                    var folder_name='Home';
+                    var folder_id=-1;
+                }
+                $("#newFormFolder").val(folder_name);
+                $("#newFormFolder").data('folderid',folder_id);
+                $(".folder-icon-div-mod").dblclick(function(){
+                    // console.log($($(this).children(".checkbox-folder-menu")).data('document'));
+
+                    $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    $("#div-include-fmp-mod").addClass('row');
+                    //evento para regresar a la carpeta anterior
+                    $(".return-menu-subfolder-mod").click(function(){
+                        returnSubFolderMod($(this).data('folder'),project_id);
+                        // $(this).remove();
+                        $(this).parent('.div-return-menu-subfolder-mod').remove();
+                    });
+
+                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+
+                    $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
+                    $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
                 });
             }
             else{

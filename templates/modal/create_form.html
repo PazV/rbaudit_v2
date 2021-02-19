@@ -1,0 +1,97 @@
+<div class="modal fade" id="mod_create_form" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header green-modal">
+                <span class="spn-modal-header">Nuevo formulario</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <div class="row row-wo-margin">
+                        <form id="frmCreateformStep1" style="width:60%;">
+                            <h6 id="newFormProjectName"></h6>
+                            <div class="form-group row no-space-bottom">
+                                <label for="newFormName" class="col-sm-2 col-form-label col-form-label-sm">Nombre: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control form-control-sm" id="newFormName" placeholder="Nombre de formulario" name="name"/>
+                                </div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <div class="col-sm-10 hide-error-msg" id="errnewFormName">
+                                    Campo inválido
+                                </div>
+                            </div>
+                            <div class="form-group row no-space-bottom">
+                                <label for="newFormFolder" class="col-form-label col-sm-2 col-form-label-sm">Carpeta: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" id="newFormFolder" readonly class="form-control form-control-sm" placeholder="Selecciona carpeta" name="folder" data-folderid="" />
+                                </div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <div class="col-sm-10 hide-error-msg" id="errnewFormFolder">
+                                    Campo inválido
+                                </div>
+                            </div>
+                            <div class="form-group row justify-content-between no-space-bottom">
+                                <div class="col-sm-4 row mr-0" style="margin-left:initial;">
+                                    <label class="col-form-label col-form-label-sm" style="width:50%;">Filas: </label>
+                                    <div style="width:50%;">
+                                        <input type="number" class="form-control form-control-sm" id="newFormRows" name="rows" min=1/>
+                                    </div>
+                                </div>
+                                <div class="col-sm-7 row mr-0">
+                                    <label class="col-form-label col-form-label-sm" style="width:30%;">Columnas: </label>
+                                    <div style="width:30%;">
+                                        <input type="number" class="form-control form-control-sm" id="newFormColumns" name="columns_number" min=1 value=1 readonly/>
+                                    </div>
+                                    <div class="btn-group btn-group-sm" role="group" style="width:30%;">
+                                        <button type="button" class="btn btn-secondary btn-sm" style="border:.5px solid #595f65;" id="btnRemoveColumn"><i class="fa fa-minus"></i></button>
+                                        <button type="button" class="btn btn-secondary btn-sm" style="border:.5px solid #595f65;" id="btnAddColumn"><i class="fa fa-plus"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row justify-content-between">
+                                <div class="col-sm-5 offset-sm-2 hide-error-msg" id="errnewFormColumns">
+                                    Campo inválido
+                                </div>
+                                <div class=" col-sm-5 hide-error-msg" id="errnewFormRows">
+                                    Campo inválido
+                                </div>
+                            </div>
+                        </form>
+                        <div id="divNewFormFolders" class="mod-menu-explorer">
+                            {% include 'elements/_form_menu_path_mod.html' %}
+                            <div class="div-mP-folders-container row row-wo-margin" id="divMPFoldersContMod">
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="frmColumnsSettings" style="margin-bottom:3px; max-height:150px; overflow-y:auto;">
+                        <fieldset class="form-fieldset">
+                            <legend class="form-fieldset-legend">Columna 1</legend>
+                            <div class="form-group row">
+                                <label class="col-sm-2 col-form-label col-form-label-sm" >Nombre: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control form-control-sm" placeholder="Nombre de la columna" name="col_1"/>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="custom-control custom-checkbox">
+                                    <input class="custom-control-input" type="checkbox" id="checkcol_1" name="checkcol_1">
+                                    <label class="custom-control-label" for="checkcol_1">Editable</label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark btn-sm" id="btnSaveCreateForm"><span class="hide-text">Crear </span><i class="fa fa-check-square-o"></i></button>
+                <button type="button" class="btn btn-outline-dark close-modal btn-sm"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -10,6 +10,11 @@
         <li class="nav-item ">
             <a class="nav-link sb-elem" href="/my-projects"><img src="/static/images/icons/sb_verproyectos.png" class="sb-icon" height="20" width="20"/><span class="lfs-original">Ver mis proyectos</span><span class="lfs-reduced">Ver proyectos</span></a>
         </li>
+        {% if g.consultant==True %}
+            <li class="nav-item ">
+                <a class="nav-link sb-elem" href="/my-projects/consultant"><img src="/static/images/icons/sb_consultor.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Proy. Modo consultor</span></a>
+            </li>
+        {% endif %}
         <li class="nav-item ">
             <a class="nav-link sb-elem" href="#mod_new_project" data-toggle="modal"><img src="/static/images/icons/sb_crearproyecto.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Crear proyecto</span></a>
         </li>
@@ -22,15 +27,17 @@
         <li class="nav-item ">
             <a class="nav-link sb-elem" href="/activity-list"><img src="/static/images/icons/sb_actporvencer.png" class="sb-icon" height="20" width="20"/><span class="lfs-original">Actividades por vencer</span><span class="lfs-reduced">Act. por vencer</span></a>
         </li>
+        {% if g.consultant==True %}
+            <li class="nav-item ">
+                <a class="nav-link sb-elem" href="/activity-list/consultant"><img src="/static/images/icons/sb_consultor.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Act. Modo consultor</span></a>
+            </li>
+        {% endif %}
         <li class="nav-item ">
             <a class="nav-link sb-elem" href="#mod_my_account" data-toggle="modal"><img src="/static/images/icons/sb_micuenta.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Mi cuenta</span></a>
         </li>
         {% if g.consultant==True %}
             <li class="nav-item ">
-                <a class="nav-link sb-elem" href="#mod_my_account" data-toggle="modal"><img src="/static/images/icons/sb_consultor.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Modo consultor</span></a>
-            </li>
-            <li class="nav-item ">
-                <a class="nav-link sb-elem" href="#mod_my_account" data-toggle="modal"><img src="/static/images/icons/sb_usuarios.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Usuarios</span></a>
+                <a class="nav-link sb-elem" href="#mod_admin_users" data-toggle="modal"><img src="/static/images/icons/sb_usuarios.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Usuarios</span></a>
             </li>
         {% endif %}
     </ul>

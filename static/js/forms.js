@@ -13,7 +13,8 @@ $(document).ready(function(){
 
     }
 
-    $("#btnGotoFormStep2").click(function(){
+    // $("#btnGotoFormStep2").click(function(){
+    $("#btnSaveCreateForm").click(function(){
         $("#frmCreateformStep1 :input").focusout();
         $("#frmColumnsSettings .form-control").focusout();
         var form_input=$("#frmCreateformStep1 .form-control");
@@ -40,7 +41,8 @@ $(document).ready(function(){
             if (parseInt(data['rows'])>0){
                 if (parseInt(data['columns_number'])>0){
                     data['user_id']=me.user_info['user_id'];
-                    data['project_id']=me.user_info['project_id'];
+                    // data['project_id']=me.user_info['project_id'];
+                    data['project_id']=$("#aHomeMP").data('projectid');
                     data['form_id']=-1;
                     // data['folder_id']=$(".file-tree").find('.selected').data('folder');
                     data['folder_id']=$("#newFormFolder").data('folderid');
@@ -58,9 +60,47 @@ $(document).ready(function(){
                                 ajaxError();
                             }
                             if (res.success){
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:'El formulario ha sido creado, será abierto en una nueva pestaña.',
+                                    buttons:{
+                                        confirm:{
+                                            text:'Aceptar',
+                                            action:function(){
+                                                if ($("#div-include-fmp-mod").children().length==0){
+                                                    getFirstMenuFolders($("#aHomeMP").data('projectid'));
+                                                }
+                                                else{
+                                                    getSubfoldersForms($("#div-include-fmp-mod").children('.div-return-menu-subfolder-mod').last().find('a').data('folder'),$("#aHomeMP").data('projectid'));
 
-                                window.location.pathname='/project/'+me.user_info.project_factor+'/createform/step-2/'+res.form_id;
-                                loadFormTable(res.form_id,1,me.user_info['user_id']);
+                                                    var path_children=$("#div-include-fmp-mod").children('.div-return-menu-subfolder-mod');
+                                                    $("#div-include-fmp").empty();
+                                                    $("#div-include-fmp").addClass('row');
+                                                    console.log(path_children);
+                                                    for (var x of path_children){
+                                                        console.log($(x).find('a.return-menu-subfolder-mod').data('folder'));
+                                                        $("#div-include-fmp").append('<div class="div-return-menu-subfolder" data-toggle="tooltip" title="'+$(x)[0].title+'"><a href="#" class="return-menu-subfolder" data-folder="'+$(x).find('a.return-menu-subfolder-mod').data('folder')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(x)[0].title+'</span></i></a><div>');
+                                                    }
+                                                    $(".return-menu-subfolder").click(function(e){
+                                                        returnSubFolder($(e.currentTarget).data('folder'),$("#aHomeMP").data('projectid'));
+                                                        $(e.currentTarget).parent('.div-return-menu-subfolder').remove();
+                                                    });
+
+                                                }
+
+
+
+                                                var project_factor=$("#aHomeMP").data('projectfactor');
+                                                // window.location.pathname='/project/'+project_factor+'/createform/step-2/'+res.form_id;
+                                                window.open('/project/'+project_factor+'/createform/step-2/'+res.form_id,'_blank');
+                                                loadFormTable(res.form_id,1,me.user_info['user_id']);
+                                                $("#mod_create_form").modal('hide');
+                                            }
+                                        }
+                                    }
+                                });
+
                             }
                             else{
                                 $.alert({
@@ -127,7 +167,7 @@ $(document).ready(function(){
         var col_number=parseInt($("#newFormColumns").val())+1;
         $("#newFormColumns").val(col_number);
         var col_name='col_'+col_number;
-        var a=$("#frmColumnsSettings").append('<fieldset class="form-fieldset"><legend class="form-fieldset-legend">Columna '+col_number+'</legend><div class="form-group row"><label class="col-sm-2 col-form-label">Nombre: </label><div class="col-sm-10"><input type="text" class="form-control" placeholder="Nombre de la columna" name="'+col_name+'"/></div></div><div class="col-sm-4"><div class="custom-control custom-checkbox"><input class="custom-control-input" type="checkbox" value="" id="check'+col_name+'" name="check'+col_name+'"><label class="custom-control-label" for="check'+col_name+'">Editable</label></div></div></fieldset>');
+        var a=$("#frmColumnsSettings").append('<fieldset class="form-fieldset"><legend class="form-fieldset-legend">Columna '+col_number+'</legend><div class="form-group row"><label class="col-sm-2 col-form-label col-form-label-sm">Nombre: </label><div class="col-sm-10"><input type="text" class="form-control form-control-sm" placeholder="Nombre de la columna" name="'+col_name+'"/></div></div><div class="col-sm-4"><div class="custom-control custom-checkbox"><input class="custom-control-input" type="checkbox" value="" id="check'+col_name+'" name="check'+col_name+'"><label class="custom-control-label" for="check'+col_name+'">Editable</label></div></div></fieldset>');
 
         $(a).find('.form-control:last').on('focusout',function(){
             var input=$(this);
@@ -138,6 +178,7 @@ $(document).ready(function(){
                 input.removeClass("valid-field").addClass("invalid-field");
             }
         });
+        $("#frmColumnsSettings").animate({ scrollTop: $('#frmColumnsSettings').prop("scrollHeight")}, 1000);
     });
 
     $("#frmColumnsSettings .form-control").focusout(function(){
@@ -1534,7 +1575,7 @@ $(document).ready(function(){
         $.ajax({
             url:'/project/getSettingsForEditing',
             type:'POST',
-            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id']}),
+            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id'],'project_id':me.user_info['project_id'],'workspace_id':me.user_info['workspace_id']}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -2002,7 +2043,7 @@ $(document).ready(function(){
         $.ajax({
             url:'/project/getProjects',
             type:'POST',
-            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+            data:JSON.stringify({'user_id':me.user_info['user_id'],'filters':''}),
             success:function(response){
                 try{
                     var res=JSON.parse(response);
@@ -2336,7 +2377,46 @@ $(document).ready(function(){
 
     });
 
+    $("#amodCreateForm").click(function(){
+        if ($("#div-include-fmp").children().length==0){
+            getFirstMenuFoldersMod($("#aHomeMP").data('projectid'));
+            $("#newFormFolder").val("Home");
+            $("#newFormFolder").data('folderid',-1);
+        }
+        else{
+            // console.log($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'))
+            getSubfoldersFormsMod($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'));
+            var path_children=$("#div-include-fmp").children('.div-return-menu-subfolder');
+            $("#div-include-fmp-mod").addClass('row');
+            for (var x of path_children){
+                $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(x)[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$(x).find('a.return-menu-subfolder').data('folder')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(x)[0].title+'</span></i></a><div>');
+            }
+            $(".return-menu-subfolder-mod").click(function(e){
+                returnSubFolderMod($(e.currentTarget).data('folder'),$("#aHomeMP").data('projectid'));
+                $(e.currentTarget).parent('.div-return-menu-subfolder-mod').remove();
+            });
+            $("#newFormFolder").val($(path_children[path_children.length-1])[0].title);
+            $("#newFormFolder").data('folderid',$(path_children[path_children.length-1]).find('a.return-menu-subfolder').data('folder'));
+        }
 
+    });
+
+
+
+    $("#mod_create_form").on('shown.bs.modal',function(){
+        $("#newFormProjectName").html($("#spnMyProjectName").html());
+    });
+
+    $("#mod_create_form").on('hidden.bs.modal',function(){
+        $("#newFormProjectName").html('');
+        $("#divMPFoldersContMod").empty();
+        $("#div-include-fmp-mod").empty();
+        var columns=$("#frmColumnsSettings").find("fieldset");
+        for (var x=columns.length; x>1; x--){
+            $("#frmColumnsSettings").find("fieldset:last-child").remove();
+        }
+        resetForm("#frmCreateformStep1",['input|INPUT']);
+    });
 
 
 
