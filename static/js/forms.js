@@ -884,7 +884,7 @@ $(document).ready(function(){
         this.blur();
     });
 
-    $("#btnImportNewForm").click(function(){
+    $("#btnSaveCreateFormImport").click(function(){
         $("#frmCreateformStep1Import .form-control,.custom-file-input").focusout();
         var valid=false;
         var form_input=$("#frmCreateformStep1Import :input");
@@ -898,7 +898,8 @@ $(document).ready(function(){
         if (valid===true){
             var data = new FormData();
             data.append('user_id',me.user_info['user_id']);
-            data.append('project_id',me.user_info['project_id']);
+            // data.append('project_id',me.user_info['project_id']);
+            data.append('project_id',$("#aHomeMP").data('projectid'));
             data.append('form_id',-1);
             // data.append('folder_id',$(".file-tree").find('.selected').data('folder'));
             data.append('folder_id',$("#newFormImportFolder").data('folderid'));
@@ -925,7 +926,53 @@ $(document).ready(function(){
                         ajaxError();
                     }
                     if (res.success){
-                        window.location.pathname='/project/'+me.user_info.project_factor;
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:'El formulario ha sido creado, será abierto en una nueva pestaña.',
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+
+                                        if ($("#div-include-fmp-mod-import").children().length==0){
+                                            getFirstMenuFolders($("#aHomeMP").data('projectid'));
+                                        }
+                                        else{
+                                            getSubfoldersForms($("#div-include-fmp-mod-import").children('.div-return-menu-subfolder-mod').last().find('a').data('folder'),$("#aHomeMP").data('projectid'));
+
+                                            var path_children=$("#div-include-fmp-mod-import").children('.div-return-menu-subfolder-mod');
+                                            $("#div-include-fmp").empty();
+                                            $("#div-include-fmp").addClass('row');
+                                            console.log(path_children);
+                                            for (var x of path_children){
+                                                console.log($(x).find('a.return-menu-subfolder-mod').data('folder'));
+                                                $("#div-include-fmp").append('<div class="div-return-menu-subfolder" data-toggle="tooltip" title="'+$(x)[0].title+'"><a href="#" class="return-menu-subfolder" data-folder="'+$(x).find('a.return-menu-subfolder-mod').data('folder')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(x)[0].title+'</span></i></a><div>');
+                                            }
+                                            $(".return-menu-subfolder").click(function(e){
+                                                returnSubFolder($(e.currentTarget).data('folder'),$("#aHomeMP").data('projectid'));
+                                                $(e.currentTarget).parent('.div-return-menu-subfolder').remove();
+                                            });
+
+                                        }
+
+
+
+                                        var project_factor=$("#aHomeMP").data('projectfactor');
+                                        // window.location.pathname='/project/'+project_factor+'/createform/step-2/'+res.form_id;
+                                        window.open('/project/'+project_factor+'/createform/step-2/'+res.form_id,'_blank');
+                                        loadFormTable(res.form_id,1,me.user_info['user_id']);
+                                        $("#mod_create_form_import").modal('hide');
+
+
+
+
+                                    }
+                                }
+                            }
+                        })
+
+                        // window.location.pathname='/project/'+me.user_info.project_factor;
                     }
                     else{
                         $.alert({
@@ -2379,20 +2426,20 @@ $(document).ready(function(){
 
     $("#amodCreateForm").click(function(){
         if ($("#div-include-fmp").children().length==0){
-            getFirstMenuFoldersMod($("#aHomeMP").data('projectid'));
+            getFirstMenuFoldersMod($("#aHomeMP").data('projectid'),"#divMPFoldersContMod","#newFormFolder","#div-include-fmp-mod");
             $("#newFormFolder").val("Home");
             $("#newFormFolder").data('folderid',-1);
         }
         else{
             // console.log($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'))
-            getSubfoldersFormsMod($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'));
+            getSubfoldersFormsMod($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'),"#divMPFoldersContMod","#newFormFolder","#div-include-fmp-mod");
             var path_children=$("#div-include-fmp").children('.div-return-menu-subfolder');
             $("#div-include-fmp-mod").addClass('row');
             for (var x of path_children){
                 $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(x)[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$(x).find('a.return-menu-subfolder').data('folder')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(x)[0].title+'</span></i></a><div>');
             }
             $(".return-menu-subfolder-mod").click(function(e){
-                returnSubFolderMod($(e.currentTarget).data('folder'),$("#aHomeMP").data('projectid'));
+                returnSubFolderMod($(e.currentTarget).data('folder'),$("#aHomeMP").data('projectid'),"#divMPFoldersContMod","#newFormFolder","#div-include-fmp-mod");
                 $(e.currentTarget).parent('.div-return-menu-subfolder-mod').remove();
             });
             $("#newFormFolder").val($(path_children[path_children.length-1])[0].title);
@@ -2400,7 +2447,6 @@ $(document).ready(function(){
         }
 
     });
-
 
 
     $("#mod_create_form").on('shown.bs.modal',function(){
@@ -2418,6 +2464,44 @@ $(document).ready(function(){
         resetForm("#frmCreateformStep1",['input|INPUT']);
     });
 
+    $("#amodCreateFormImport").click(function(){
+        if ($("#div-include-fmp").children().length==0){
+            getFirstMenuFoldersMod($("#aHomeMP").data('projectid'),"#divMPFoldersContModImport","#newFormImportFolder","#div-include-fmp-mod-import");
+            $("#newFormFolder").val("Home");
+            $("#newFormFolder").data('folderid',-1);
+        }
+        else{
+            // console.log($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'))
+            getSubfoldersFormsMod($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'),"#divMPFoldersContModImport","#newFormImportFolder","#div-include-fmp-mod-import");
+            var path_children=$("#div-include-fmp").children('.div-return-menu-subfolder');
+            // $("#div-include-fmp-mod").addClass('row');
+            $("#div-include-fmp-mod-import").addClass('row');
+            for (var x of path_children){
+                // $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(x)[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$(x).find('a.return-menu-subfolder').data('folder')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(x)[0].title+'</span></i></a><div>');
+                $("#div-include-fmp-mod-import").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(x)[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$(x).find('a.return-menu-subfolder').data('folder')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(x)[0].title+'</span></i></a><div>');
+            }
+            $(".return-menu-subfolder-mod").click(function(e){
+                returnSubFolderMod($(e.currentTarget).data('folder'),$("#aHomeMP").data('projectid'),"#divMPFoldersContModImport","#newFormImportFolder","#div-include-fmp-mod-import");
+                $(e.currentTarget).parent('.div-return-menu-subfolder-mod').remove();
+            });
+            // $("#newFormFolder").val($(path_children[path_children.length-1])[0].title);
+            // $("#newFormFolder").data('folderid',$(path_children[path_children.length-1]).find('a.return-menu-subfolder').data('folder'));
+            $("#newFormImportFolder").val($(path_children[path_children.length-1])[0].title);
+            $("#newFormImportFolder").data('folderid',$(path_children[path_children.length-1]).find('a.return-menu-subfolder').data('folder'));
+        }
+    });
+
+    $("#mod_create_form_import").on('shown.bs.modal',function(){
+        $("#newFormImportProjectName").html($("#spnMyProjectName").html());
+    });
+
+    $("#mod_create_form").on('hidden.bs.modal',function(){
+        $("#newFormImportProjectName").html('');
+        $("#divMPFoldersContModImport").empty();
+        $("#div-include-fmp-mod-import").empty();
+
+        resetForm("#frmCreateformStep1Import",['input|INPUT']);
+    });
 
 
 });

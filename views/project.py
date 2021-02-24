@@ -230,7 +230,7 @@ def getProjects():
                     and b.user_id=%s)
                     order by created desc
                 """%(int(cfg.project_factor),data['user_id'],data['user_id'],filters,int(cfg.project_factor),filters,data['user_id'])).dictresult()
-                
+
                 # app.logger.info(projects)
                 response['success']=True
                 response['data']=projects
@@ -1670,6 +1670,7 @@ def importNewForm():
                     db.insert('form.%s'%table_name,ins)
                 response['success']=True
                 response['msg_response']='El formulario ha sido agregado.'
+                response['form_id']=form['form_id']
             else:
                 response['success']=False
                 response['msg_response']='No tienes permisos para realizar esta acción.'

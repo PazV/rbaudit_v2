@@ -893,8 +893,15 @@ $(document).ready(function(){
 
     $("#aHomeMPMod").click(function(){
         $("#div-include-fmp-mod").empty();
-        getFirstMenuFoldersMod($("#aHomeMP").data('projectid'));
+        getFirstMenuFoldersMod($("#aHomeMP").data('projectid'),"#divMPFoldersContMod","#newFormFolder","#div-include-fmp-mod");
     });
+
+    $("#aHomeMPModImport").click(function(){
+        $("#div-include-fmp-mod-import").empty();
+        getFirstMenuFoldersMod($("#aHomeMP").data('projectid'),"#divMPFoldersContModImport","#newFormImportFolder","#div-include-fmp-mod-import");
+    });
+
+
 
 
 
@@ -1391,7 +1398,7 @@ function returnSubFolder(parent_id,project_id){
     })
 }
 
-function getFirstMenuFoldersMod(project_id){
+function getFirstMenuFoldersMod(project_id,div_id,folder_input,home_div_id){
     $.ajax({
         url:'/my-projects/getFirstMenuFolders',
         type:'POST',
@@ -1403,26 +1410,34 @@ function getFirstMenuFoldersMod(project_id){
                 ajaxError();
             }
             if (res.success){
-                $("#divMPFoldersContMod").empty();
-                $("#divMPFoldersContMod").append(res.data);
+                // $("#divMPFoldersContMod").empty();
+                // $("#divMPFoldersContMod").append(res.data);
+                $(div_id).empty();
+                $(div_id).append(res.data);
                 $(".folder-icon-div-mod").dblclick(function(){
                     //incluir carpeta en path superior
 
-                    $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a><div>');
+                    // $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a><div>');
+                    $(home_div_id).append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a><div>');
 
-                    $("#div-include-fmp-mod").addClass('row');
+                    // $("#div-include-fmp-mod").addClass('row');
+                    $(home_div_id).addClass('row');
+
+
                     //evento para regresar a la carpeta anterior
                     $(".return-menu-subfolder-mod").click(function(){
-                        returnSubFolderMod($(this).data('folder'),project_id);
+                        returnSubFolderMod($(this).data('folder'),project_id,div_id,folder_input,home_div_id);
                         console.log($(this));
                         $(this).parent('.div-return-menu-subfolder-mod').remove();
 
                     });
                     //obtener subcarpetas
-                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id,div_id,folder_input,home_div_id);
 
-                    $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
-                    $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                    // $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
+                    // $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                    $(folder_input).val($(this).find('.mp-a-folder')[0].title);
+                    $(folder_input).data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
                 });
 
             }
@@ -1444,7 +1459,7 @@ function getFirstMenuFoldersMod(project_id){
     })
 }
 
-function getSubfoldersFormsMod(folder_id,project_id){
+function getSubfoldersFormsMod(folder_id,project_id,div_id,folder_input,home_div_id){
     $.ajax({
         url:'/my-projects/getSubfoldersForms',
         type:'POST',
@@ -1456,25 +1471,31 @@ function getSubfoldersFormsMod(folder_id,project_id){
                 ajaxError();
             }
             if (res.success){
-                $("#divMPFoldersContMod").empty();
-                $("#divMPFoldersContMod").append(res.data);
+                // $("#divMPFoldersContMod").empty();
+                // $("#divMPFoldersContMod").append(res.data);
+                $(div_id).empty();
+                $(div_id).append(res.data);
                 $(".folder-icon-div-mod").dblclick(function(){
                     console.log($($(this).children(".checkbox-folder-menu")).data('document'));
 
-                    $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
-                    $("#div-include-fmp-mod").addClass('row');
+                    // $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    $(home_div_id).append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    // $("#div-include-fmp-mod").addClass('row');
+                    $(home_div_id).addClass('row');
                     //evento para regresar a la carpeta anterior
                     $(".return-menu-subfolder-mod").click(function(){
-                        returnSubFolderMod($(this).data('folder'),project_id);
+                        returnSubFolderMod($(this).data('folder'),project_id,div_id,folder_input,home_div_id);
 
                         // $(this).remove();
                         $(this).parent('.div-return-menu-subfolder-mod').remove();
                     });
 
-                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id,div_id,folder_input,home_div_id);
 
-                    $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
-                    $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                    // $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
+                    // $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                    $(folder_input).val($(this).find('.mp-a-folder')[0].title);
+                    $(folder_input).data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
                 });
             }
             else{
@@ -1495,7 +1516,7 @@ function getSubfoldersFormsMod(folder_id,project_id){
     })
 }
 
-function returnSubFolderMod(parent_id,project_id){
+function returnSubFolderMod(parent_id,project_id,div_id,folder_input,home_div_id){
     $.ajax({
         url:'/my-projects/returnSubFolder',
         type:'POST',
@@ -1507,8 +1528,10 @@ function returnSubFolderMod(parent_id,project_id){
                 ajaxError();
             }
             if (res.success){
-                $("#divMPFoldersContMod").empty();
-                $("#divMPFoldersContMod").append(res.data);
+                // $("#divMPFoldersContMod").empty();
+                // $("#divMPFoldersContMod").append(res.data);
+                $(div_id).empty();
+                $(div_id).append(res.data);
                 console.log($(".return-menu-subfolder-mod").length);
                 if ($(".return-menu-subfolder-mod").length!=0){
                     var folder_name=$(".return-menu-subfolder-mod").last()[0].text;
@@ -1518,24 +1541,30 @@ function returnSubFolderMod(parent_id,project_id){
                     var folder_name='Home';
                     var folder_id=-1;
                 }
-                $("#newFormFolder").val(folder_name);
-                $("#newFormFolder").data('folderid',folder_id);
+                // $("#newFormFolder").val(folder_name);
+                // $("#newFormFolder").data('folderid',folder_id);
+                $(folder_input).val(folder_name);
+                $(folder_input).data('folderid',folder_id);
                 $(".folder-icon-div-mod").dblclick(function(){
                     // console.log($($(this).children(".checkbox-folder-menu")).data('document'));
 
-                    $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
-                    $("#div-include-fmp-mod").addClass('row');
+                    // $("#div-include-fmp-mod").append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    $(home_div_id).append('<div class="div-return-menu-subfolder-mod" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder-mod" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
+                    // $("#div-include-fmp-mod").addClass('row');
+                    $(home_div_id).addClass('row');
                     //evento para regresar a la carpeta anterior
                     $(".return-menu-subfolder-mod").click(function(){
-                        returnSubFolderMod($(this).data('folder'),project_id);
+                        returnSubFolderMod($(this).data('folder'),project_id,div_id,folder_input,home_div_id);
                         // $(this).remove();
                         $(this).parent('.div-return-menu-subfolder-mod').remove();
                     });
 
-                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id);
+                    getSubfoldersFormsMod($($(this).children(".checkbox-folder-menu")).data('document'),project_id,div_id,folder_input,home_div_id);
 
-                    $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
-                    $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                    // $("#newFormFolder").val($(this).find('.mp-a-folder')[0].title);
+                    // $("#newFormFolder").data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
+                    $(folder_input).val($(this).find('.mp-a-folder')[0].title);
+                    $(folder_input).data('folderid',$($(this).children(".checkbox-folder-menu")).data('document'));
                 });
             }
             else{
