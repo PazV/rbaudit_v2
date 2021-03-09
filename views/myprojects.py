@@ -97,11 +97,13 @@ def getFirstMenuFolders():
 
                 if data['mode']=='main':
                     div_class='folder-icon-div'
+                    check_class='checkbox-folder-menu'
                 else:
                     div_class='folder-icon-div-mod'
+                    check_class='checkbox-folder-menu-mod'
                 html=''
                 for x in folders:
-                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="'+check_class+'" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
                 response['data']=html
 
@@ -160,14 +162,20 @@ def getSubfoldersForms():
 
                 if data['mode']=='main':
                     div_class='folder-icon-div'
+                    form_div_class='form-icon-div'
+                    check_class='checkbox-folder-menu'
+                    check_form_class='checkbox-form-menu'
                 else:
                     div_class='folder-icon-div-mod'
+                    form_div_class='form-icon-div-mod'
+                    check_class='checkbox-folder-menu-mod'
+                    check_form_class='checkbox-form-menu-mod'
 
                 html=''
                 for x in folders:
                     # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
-                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="'+check_class+'" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
                 for y in forms:
                     if int(y['status_id']) in (1,2):
@@ -181,7 +189,7 @@ def getSubfoldersForms():
 
                     # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
 
-                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
+                    html+='<div class="'+form_div_class+'"><input type="checkbox" class="'+check_form_class+'" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
 
                 response['data']=html
                 response['success']=True
@@ -245,14 +253,20 @@ def returnSubFolder():
 
                 if data['mode']=='main':
                     div_class='folder-icon-div'
+                    form_div_class='form-icon-div'
+                    check_class='checkbox-folder-menu'
+                    check_form_class='checkbox-form-menu'
                 else:
                     div_class='folder-icon-div-mod'
+                    form_div_class='form-icon-div-mod'
+                    check_class='checkbox-folder-menu-mod'
+                    check_form_class='checkbox-form-menu-mod'
 
                 html=''
                 for x in folders:
                     # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
-                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
+                    html+='<div class="'+div_class+'"><input type="checkbox" class="'+check_class+'" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder"><i class="icon-folder-menu"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(x['folder_id'],x['name'].decode('utf8'),x['name'].decode('utf8'),x['name'].decode('utf8'))
 
                 for y in forms:
                     if int(y['status_id']) in (1,2):
@@ -264,7 +278,7 @@ def returnSubFolder():
                     # f['link']='<a href="%s" target="_blank"><i class="fa fa-external-link"></i></a>'%link
                     # html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="spn-icon-text-mp" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
 
-                    html+='<div class="'+div_class+'"><input type="checkbox" class="checkbox-folder-menu" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
+                    html+='<div class="'+form_div_class+'"><input type="checkbox" class="'+check_form_class+'" data-document="%s"><div style="display:grid;"><a data-toggle="tooltip" title="%s" class="mp-a-folder" href="%s" target="_blank"><i class="%s"></i></a><span class="block-with-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(y['form_id'],y['name'].decode('utf8'),link,icon_class,y['name'].decode('utf8'),y['name'].decode('utf8'))
 
                 response['data']=html
                 response['success']=True

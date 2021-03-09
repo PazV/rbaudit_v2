@@ -27,6 +27,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Color, colors, PatternFill, Border, Alignment, Side, NamedStyle
 from openpyxl.cell import Cell
 from time import gmtime, strftime, localtime
+import datetime
 
 bp = Blueprint('project', __name__, url_prefix='/project' )
 
@@ -1503,6 +1504,101 @@ def addFormComment():
         GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
     return json.dumps(response)
 
+@bp.route('/editFormComment', methods=['GET','POST'])
+@is_logged_in
+def editFormComment():
+    response={}
+    try:
+        if request.method=='POST':
+
+            # valid,data=GF.getDict(request.form,'post')
+            valid=True
+            data=request.form.to_dict()
+
+            if valid:
+
+                edits=db.query("""
+                    select edits from project.form_comments where comment_id=%s
+                """%data['comment_id']).dictresult()[0]['edits']
+
+                if edits!='':
+                    edits_list=eval(edits)
+                else:
+                    edits_list=[]
+                edits_list.append({'user_id':int(data['user_id']),'edit_date':datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")})
+                edits_str=str(edits_list).replace("'","''")
+
+                # db.query("""
+                #     update project.form_comments
+                #     set comment='%s',
+                #     edits='%s'
+                #     where form_id=%s
+                #     and comment_id=%s
+                # """%(data['comment'].encode('utf-8').replace("\n","<br>").replace("\r","<br>").replace("•","-").replace("\t"," "),edits_str,data['form_id'],data['comment_id']))
+                db.query("""
+                    update project.form_comments
+                    set comment='%s',
+                    edits='%s'
+                    where form_id=%s
+                    and comment_id=%s
+                """%(data['comment'],edits_str,data['form_id'],data['comment_id']))
+
+
+
+
+                # comment={
+                #     # 'comment':data['comment'].encode('utf-8'),
+                #     'comment':data['comment'].encode('utf-8').replace("\n","<br>").replace("\r","<br>").replace("•","-").replace("\t"," "),
+                #     # 'comment':data['comment'].encode('ascii',errors='ignore').replace("\n","<br>").replace("\r","<br>").replace("•","-"),
+                #     'user_id':data['user_id'],
+                #     'form_id':data['form_id'],
+                #     'created':'now'
+                # }
+                # new_comm=db.insert('project.form_comments',comment)
+
+                users=db.query("""
+                    select a.user_id, (select b.email from system.user b where a.user_id=b.user_id) as email from project.form_revisions a where a.form_id=%s
+                    union
+                    select c.assigned_to as user_id, (select d.email from system.user d where d.user_id=c.assigned_to) as email from project.form c where c.form_id=%s
+                """%(data['form_id'],data['form_id'])).dictresult()
+
+                info={
+                    'form_id':data['form_id'],
+                    'project_id':data['project_id'],
+                    'msg':data['comment'].encode('utf-8'),
+                    'user_from':data['user_id']
+                }
+                for u in users:
+                    info['user_to']=u['user_id']
+                    # se envía notificación a usuarios correspondientes
+                    GF.createNotification('add_comment',info)
+
+                    mail_data={
+                        'comment_id':data['comment_id'],
+                        'recipient_mail':u['email'],
+                        'type':'new_form_comment',
+                        'form_id':data['form_id']
+                    }
+                    # GF.sendMailNotification(mail_data)
+
+
+                response['success']=True
+                response['msg_response']='El comentario ha sido editado.'
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+
 @bp.route('/getFormComments', methods=['GET','POST'])
 @is_logged_in
 def getFormComments():
@@ -1518,6 +1614,7 @@ def getFormComments():
                         b.comment_id,
                         to_char(b.created, 'DD-MM-YYYY HH24:MI:SS') as created,
                         b.comment,
+                        b.edits,
                         (select a.name from system.user a where a.user_id=b.user_id) as user
                     from
                         project.form_comments b
@@ -1531,6 +1628,16 @@ def getFormComments():
                         c['author_date']='{created}'.format(**c)
                         c['author_name']='{user}'.format(**c)
                         c['author']='Agregado por {user} el {created}.'.format(**c)
+                        if c['edits']!='':
+                            edits_list=eval(c['edits'])
+                            el_str='<i>Ediciones:<br>'
+                            for el in edits_list:
+                                user=db.query("""
+                                    select name from system.user where user_id=%s
+                                """%el['user_id']).dictresult()[0]['name']
+                                el_str+="%s - %s <br>"%(user,el['edit_date'])
+                            c['edits']=el_str+'</li>'
+
                 response['data']=comments
                 response['success']=True
             else:
@@ -2637,6 +2744,7 @@ def cloneForm():
                             db.insert('form.%s'%table_name,entry)
                         response['success']=True
                         response['msg_response']='El formulario ha sido clonado exitosamente.'
+                        response['form_id']=inserted_form['form_id']
                     else:
                         response['success']=False
                         response['msg_response']='No tienes permisos para realizar esta acción.'

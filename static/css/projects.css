@@ -107,6 +107,8 @@
 
 .myProject-menu-container{
     padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .div-mP-folders-container{
@@ -146,7 +148,7 @@
     background-size: contain;
 }
 
-.folder-icon-div,.folder-icon-div-mod{
+.folder-icon-div,.folder-icon-div-mod,.form-icon-div,.form-icon-div-mod{
     /* display: grid; */
     display: flex;
     width: 75px;
@@ -155,7 +157,7 @@
     user-select: none;
 }
 
-.checkbox-folder-menu{
+.checkbox-folder-menu,.checkbox-folder-menu-mod,.checkbox-form-menu,.checkbox-form-menu-mod{
     /* position:absolute; */
     position: sticky;
     /* margin-right: inherit;

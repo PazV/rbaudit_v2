@@ -25,23 +25,26 @@ $(document).ready(function(){
             data['name']=encodeURIComponent($("#FIname").val());
             data['mode']=$("#mod_add_folder").data('mode');
             data['user_id']=me.user_info['user_id'];
-            if (data['mode']=='new'){
-                data['project_id']=$("#aHomeMP").data('projectid');
-                if ($("#div-include-fmp").children().length==0){
-                    data['parent_id']=-1;
-                }
-                else{
-                    // $("#div-include-fmp").children('.div-return-menu-subfolder').last()
+            data['project_id']=$("#aHomeMP").data('projectid');
+            if ($("#div-include-fmp").children().length==0){
+                data['parent_id']=-1;
+            }
+            else{
+                // $("#div-include-fmp").children('.div-return-menu-subfolder').last()
 
-                    data['parent_id']=$("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder');
-                }
+                data['parent_id']=$("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder');
+            }
+            if (data['mode']=='new'){
+
+
                 // data['parent_id']=$("#mod_add_folder").data('parent_id');
                 // data['project_id']=me.user_info['project_id'];
             }
             else{
                 data['folder_id']=$("#mod_add_folder").data('folder_id');
-            }
 
+            }
+            console.log(data['parent_id']);
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
