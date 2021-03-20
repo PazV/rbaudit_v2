@@ -1,0 +1,5 @@
+.template-delete-a, .template-newform-a, .template-edit-a{
+    font-size: 14px;
+    margin: 0 3px;
+    color: gray;
+}

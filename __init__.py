@@ -73,6 +73,8 @@ def create_app(test_config=None):
     app.register_blueprint(myprojects.bp)
     from views import activities
     app.register_blueprint(activities.bp)
+    from views import template
+    app.register_blueprint(template.bp)
     app.add_url_rule('/',endpoint='home.home')
     app.add_url_rule('/home', endpoint='home.home')
 

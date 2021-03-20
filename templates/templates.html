@@ -1,0 +1,32 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super() }}
+<div style="height:100%;">
+    <div class="form-group row row-wo-margin" style="margin-top:10px;">
+        <label for="newtTemplateName" class="col-sm-2 col-form-label">Nombre plantilla:</label>
+        <div class="col-sm-8">
+            <input type="text" class="form-control" id="newTemplateName">
+        </div>
+        <button class="btn btn-info" id="btnAddNewTemplate"><i class="fa fa-plus-square"></i></button>
+    </div>
+    <div class="row-wo-margin">
+
+
+        <div class="div-act-table">
+            <table id="tableTemplates" class="display cell-border compact" style="font-size:14px;">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Formularios</th>
+                        <th>Actualizado</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
