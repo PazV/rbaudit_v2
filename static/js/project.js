@@ -77,20 +77,6 @@ $(document).ready(function(){
             workspace_id=me.user_info['workspace_id'];
         }
 
-        // if (window.location.pathname=='/home/'){
-        //
-        //     workspace_id=me.user_info['workspace_id'];
-        // }
-        // else{
-        //
-        //     if (me.user_info['consultant']===true){
-        //         workspace_id=$("#consultant_workspaces").find("option:selected").attr("name");
-        //     }
-        //     else{
-        //         workspace_id=me.user_info['workspace_id'];
-        //     }
-        // }
-
         $.ajax({
             url:'/users/getUserList',
             type:'POST',
@@ -116,13 +102,25 @@ $(document).ready(function(){
                             selected:true
                         }));
                     });
+                    $.each(res.data,function(i,item){
+                        $("#NPProjUser").append($('<option>',{
+                            text:item.name,
+                            name:item.user_id,
+                            selected:true
+                        }));
+                    });
                 }
             }
-        })
+        });
+
+        getWorkspaceTemplates(workspace_id,"#NPproject_template");
+        getWorkspaceCompanies(workspace_id,"#NPcompany_name");
     });
 
     $("#mod_new_project").on('hidden.bs.modal',function(){
         resetForm("#frmNewProject",["input|INPUT","select|SELECT","textarea|TEXTAREA"]);
+        $("#NPProjUser").empty();
+        $("#divProjAddedUsersCont").empty();
     });
 
     $("#btnSaveProject").click(function(){
@@ -143,15 +141,109 @@ $(document).ready(function(){
         }
 
 
+        $("#frmNewProject :input").focusout();
+        var form_input=$("#frmNewProject .form-control");
+        var valid=true;
+        for (var x in form_input){
+            if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                valid=false;
+            }
+        }
+        if (valid===true){
+            var data=getForm('#frmNewProject',[{'id':'#NPpartner','name':'partner'},{'id':'#NPmanager','name':'manager'},{'id':'#NPcompany_name','name':'company_id'},{'id':'#NPproject_template','name':'template_id'}]);
+            data['created_by']=me.user_info['user_id'];
+            data['project_id']=-1;
+            data['user_id']=me.user_info['user_id'];
+            data['include_creator']=include_creator;
+            data['workspace_id']=ws;
+            data['project_users']=[];
+            var proj_users=$(".div-projuser-content");
+            if (proj_users.length!=0){
+                for (var pu of proj_users){
+                    data['project_users'].push($(pu).data('val'));
+                }
+            }
+            console.log(data);
+            $("#mod_new_project").modal("hide");
+            $("#mod_project_template_settings").modal("show");
+            // EasyLoading.show({
+            //     text:'Cargando...',
+            //     type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            // });
+            // $.ajax({
+            //     url:'/project/saveProject',
+            //     type:'POST',
+            //     data:JSON.stringify(data),
+            //     success:function(response){
+            //         EasyLoading.hide();
+            //         try{
+            //             var res=JSON.parse(response);
+            //         }catch(err){
+            //             ajaxError();
+            //         }
+            //         if (res.success){
+            //             $.alert({
+            //                 theme:'dark',
+            //                 title:'Atención',
+            //                 content:res.msg_response,
+            //                 buttons:{
+            //                     confirm:{
+            //                         text:'Ok',
+            //                         action:function(){
+            //                             $("#mod_new_project").modal("hide");
+            //                             if (window.location.pathname.includes('/consultant')){
+            //                                 if (window.location.pathname.includes('/my-projects/consultant')){
+            //                                      getWorkspaceProjects(me.user_info,ws,$("#myProjectsFinderInput").val())
+            //                                 }
+            //                             }
+            //                             else{
+            //                                 if (window.location.pathname.includes('/my-projects')){
+            //                                     loadProjects(me.user_info,$("#myProjectsFinderInput").val());
+            //                                 }
+            //                             }
+            //                         }
+            //                     }
+            //                 }
+            //             })
+            //         }
+            //         else{
+            //             $.alert({
+            //                 theme:'dark',
+            //                 title:'Atención',
+            //                 content:res.msg_response
+            //             });
+            //         }
+            //     },
+            //     failure:function(){
+            //         EasyLoading.hide();
+            //         $.alert({
+            //             theme:'dark',
+            //             title:'Atención',
+            //             content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            //         });
+            //     }
+            // });
+        }
 
-        // if (window.location.pathname=='/home/'){
-        //     var ws=me.user_info['workspace_id'];
-        //     include_creator=true; //cuando se crea desde el espacio de trabajo propio, se incluye al usuario en los usuarios del proyecto
-        // }
-        // else{
-        //     var ws=$("#consultant_workspaces").find("option:selected").attr("name");
-        //     include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
-        // }
+    });
+
+    $("#btnSaveProjectRequest").click(function(){
+        var include_creator; //variable para identificar si se creó desde el espacio de trabajo propio o si se creó como consultor, para no agregarlo en la lista de usuarios del proyecto
+        if (window.location.pathname.includes('/consultant')){
+            if (window.location.pathname.includes('/my-projects/consultant')){
+                var ws=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+                include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
+            }
+            if (window.location.pathname.includes('/activity-list/consultant')){
+                var ws=$("#actListConsultWorkspace").find("option:selected").attr("name");
+                include_creator=false; //cuando se crea desde otro espacio de trabajo (como consultor), no se incluye al usuario en los usuarios del proyecto
+            }
+        }
+        else{
+            var ws=me.user_info['workspace_id'];
+            include_creator=true; //cuando se crea desde el espacio de trabajo propio, se incluye al usuario en los usuarios del proyecto
+        }
+
 
         $("#frmNewProject :input").focusout();
         var form_input=$("#frmNewProject .form-control");
@@ -162,18 +254,28 @@ $(document).ready(function(){
             }
         }
         if (valid===true){
-            var data=getForm('#frmNewProject',[{'id':'#NPpartner','name':'partner'},{'id':'#NPmanager','name':'manager'}]);
+            var data=getForm('#frmNewProject',[{'id':'#NPpartner','name':'partner'},{'id':'#NPmanager','name':'manager'},{'id':'#NPcompany_name','name':'company_id'},{'id':'#NPproject_template','name':'template_id'}]);
             data['created_by']=me.user_info['user_id'];
-            data['project_id']=-1;
+            // data['project_id']=-1;
             data['user_id']=me.user_info['user_id'];
             data['include_creator']=include_creator;
             data['workspace_id']=ws;
+            data['project_users']=[];
+            var proj_users=$(".div-projuser-content");
+            if (proj_users.length!=0){
+                for (var pu of proj_users){
+                    data['project_users'].push($(pu).data('val'));
+                }
+            }
+            console.log(data);
+
+
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
             });
             $.ajax({
-                url:'/project/saveProject',
+                url:'/project/saveProjectRequest',
                 type:'POST',
                 data:JSON.stringify(data),
                 success:function(response){
@@ -184,61 +286,139 @@ $(document).ready(function(){
                         ajaxError();
                     }
                     if (res.success){
-                        $.alert({
-                            theme:'dark',
-                            title:'Atención',
-                            content:res.msg_response,
-                            buttons:{
-                                confirm:{
-                                    text:'Ok',
-                                    action:function(){
-                                        $("#mod_new_project").modal("hide");
-                                        if (window.location.pathname.includes('/consultant')){
-                                            if (window.location.pathname.includes('/my-projects/consultant')){
-                                                 getWorkspaceProjects(me.user_info,ws,$("#myProjectsFinderInput").val())
-                                            }
-                                        }
-                                        else{
-                                            if (window.location.pathname.includes('/my-projects')){
-                                                loadProjects(me.user_info,$("#myProjectsFinderInput").val());
-                                            }
-                                        }
+                        $("#mod_new_project").modal("hide");
 
-
-
-                                        // if (window.location.pathname=='/home/'){
-                                        //     loadProjects(me.user_info);
-                                        // }
-                                        // else{
-                                        //     getWorkspaceProjects(me.user_info,$("#consultant_workspaces").find("option:selected").attr("name"))
-                                        // }
-
-                                        //mandar a llamar función que vuelva a cargar el div de proyectos
-                                    }
-                                }
-                            }
-                        })
+                        $("#mod_project_template_settings").modal("show");
+                        $("#mod_project_template_settings").data('project_request_id',res.project_request_id);
                     }
-                    else{
-                        $.alert({
-                            theme:'dark',
-                            title:'Atención',
-                            content:res.msg_response
-                        });
-                    }
-                },
-                failure:function(){
-                    EasyLoading.hide();
+                }
+            });
+        }
+    });
+
+    $("#mod_project_template_settings").on('shown.bs.modal',function(){
+        getGrdProjectRequestTemplate($("#mod_project_template_settings").data('project_request_id'));
+        $.ajax({
+            url:'/project/getProjectRequestTemplateInfo',
+            type:'POST',
+            data:JSON.stringify({'project_request_id':$("#mod_project_template_settings").data('project_request_id')}),
+            success:function(response){
+                EasyLoading.hide();
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#PTSproject_template_info").append('<p>'+res.data+'</p>');
+                }
+                else {
                     $.alert({
                         theme:'dark',
                         title:'Atención',
-                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                        content:res.msg_response
                     });
+                }
+            },
+            failure:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        })
+    });
+
+    $("#grdProjectTemplateSettings").on('click','.proj-req-delete',function(e){
+        console.log("delete");
+        var prfid=$(e.target).data('prfid');
+        $.ajax({
+            url:'/templates/deleteProjectRequestForm',
+            type:'POST',
+            data:JSON.stringify({'project_request_form_id':prfid}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    getGrdProjectRequestTemplate(res.project_request_id);
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            failure:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        })
+    });
+
+    $("#grdProjectTemplateSettings").on('click','.proj-req-settings',function(e){
+        console.log(e);
+        var ready_ok=$($("#grdProjectTemplateSettings").DataTable().row($(e.target).parent('td')).data()['ready']).hasClass('proj-req-ok');
+        console.log(ready_ok);
+        var prfid=$(e.target).data('prfid');
+        $("#mod_publish_form").data('prfid',prfid);
+        $("#mod_publish_form").data('mode','project_request_settings');
+        $(".fieldset-permits").css('display','none');
+        if (ready_ok==false){
+            getProjectRequestUsers(prfid,["#FTPassigned_to","#FTPrevision_1"]);
+        }
+        else{
+            $.ajax({
+                url:'/project/getProjReqTempFormSettings',
+                type:'POST',
+                data:JSON.stringify({'project_request_form_id':prfid}),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $("#FTPresolve_date").val(res.data.resolve_date);
+
+                        for (var x in res.revisions){
+                            //primer revisor (este revisor no puede ser eliminado porque siempre debe haber al menos un revisor)
+                            var sel_list=["#FTPassigned_to"];
+                            if (x==0){
+                                sel_list.push("#FTPrevision_1");
+                            }
+                            else{
+                                var revision_number=$("#FTPrevisions").children().length+2;
+                                sel_list.push("#FTPrevision_"+revision_number);
+                                $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_'+revision_number+'" class="col-sm-3 col-form-label">Revisión '+revision_number+': </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_'+revision_number+'" name="revision_'+revision_number+'" data-revision="'+revision_number+'"></select></div>');
+                            }
+                        }
+                        getProjectRequestUsers(prfid,sel_list);
+                        $("#FTPassigned_to").removeAttr('selected').filter('[name='+res.data['assigned_to']+']').attr('selected', true);
+                        for (var y of res.revisions){
+                            console.log(y)
+                            $('#FTPrevision_'+y['revision_number']+' option').removeAttr('selected').filter('[name='+y['user_id']+']').attr('selected', true);
+                        }
+                    }
                 }
             })
         }
 
+
+        // $("#grdProjectTemplateSettings").DataTable().row($(e.target).parent('td')).data()
+
+        // $($("#grdProjectTemplateSettings").DataTable().row($(temp1.target).parent('td')).data()['ready']).hasClass('proj-req-notok')
+        //para saber si está listo o no
     });
+
 
     $("#frmNewProject .form-control").focusout(function(){
         if (this.id!=='NPcomments'){
@@ -1116,6 +1296,280 @@ $(document).ready(function(){
         }
     });
 
+    $("#btnOpenNewCompany").click(function(){
+        console.log("company button");
+        $("#mod_new_company").modal("show");
+    });
+
+    $("#btnSaveNewCompany").click(function(){
+        var frm = getForm('#frmNewCompany',null,null);
+        if (window.location.pathname.includes('/consultant')){
+            if (window.location.pathname.includes('/my-projects/consultant')){
+                var ws=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+            }
+            if (window.location.pathname.includes('/activity-list/consultant')){
+                var ws=$("#actListConsultWorkspace").find("option:selected").attr("name");
+            }
+        }
+        else{
+            var ws=me.user_info['workspace_id'];
+        }
+        $("#frmNewCompany :input").focusout();
+        var form_input=$("#frmNewCompany .form-control");
+        var valid=true;
+        for (var x in form_input){
+            if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                valid=false;
+            }
+        }
+        if (valid===true){
+            var data = new FormData();
+            data.append('workspace_id',ws);
+            data.append('business_name',frm['business_name'])
+            data.append('name',frm['name'])
+            data.append('created_by',me.user_info['user_id']);
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
+            $.ajax({
+                url:'/project/saveCompany',
+                type:'POST',
+                data:data,
+                processData:false,
+                contentType:false,
+                success:function(response){
+                    EasyLoading.hide();
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                    if (res.success){
+                        getWorkspaceCompanies(ws,"#NPcompany_name");
+                        $("#mod_new_company").modal("hide");
+                    }
+                },
+                failure:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+                    });
+                }
+            })
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debes llenar todos los campos para crear la empresa.'
+            });
+        }
+    });
+
+    $("#mod_new_company").on('hidden.bs.modal',function(){
+        resetForm("#frmNewCompany",["input|INPUT"])
+    });
+
+    $("#btnNPAddProjUser").click(function(){
+        var sel_option=$("#NPProjUser").find(":selected");
+        var users=$(".div-projuser-content");
+        var add=true;
+        if (users.length!=0){
+            for (var x of users){
+                if ($(x).data('val')==sel_option.attr('name')){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Este usuario ya ha sido agregado.'
+                    });
+                    var add=false;
+                    break;
+                }
+            }
+        }
+        if (add==true){
+            $('<div class="div-projuser-content row row-wo-margin" data-val="'+sel_option.attr('name')+'"><button class="btn btn-sm btn-destroy-projuser-content"><i class="fa fa-times"></i></button><div style="margin:1px 3px;"><div style="color:#676767; font-weight:bold; text-align:center;">'+sel_option.text()+'</div></div>').appendTo("#divProjAddedUsersCont");
+            $(".btn-destroy-projuser-content").click(function(){
+                $(this).parent('div .div-projuser-content').remove();
+            });
+        }
+    });
+
+    $("#btnSendProjectRequest").click(function(){
+        var rows_length=$("#grdProjectTemplateSettings").DataTable().rows()[0].length;
+        var grd_data=$("#grdProjectTemplateSettings").DataTable().rows().data();
+        var valid=true;
+        for (var i = 0; i < rows_length; i++){
+            if ($(grd_data[i]['ready']).hasClass('proj-req-notok')){
+                valid=false
+                break;
+            }
+        }
+        if (valid==true){
+            $.ajax({
+                url:'/project/sendProjectRequest',
+                type:'POST',
+                data:JSON.stringify({'project_request_id':$("#mod_project_template_settings").data('project_request_id')}),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response,
+                            buttons:{
+                                confirm:{
+                                    text:'Aceptar',
+                                    action:function(){
+                                        $("#mod_project_template_settings").modal("hide");
+                                    }
+                                }
+                            }
+                        })
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                failure:function(){
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            })
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debe configurar todos los formularios para poder enviar la solicitud.'
+            });
+        }
+        console.log(valid);
+    });
+
+    $("#mod_show_project_requests").on('show.bs.modal',function(){
+        $.ajax({
+            url:'/project/getPendingProjectRequests',
+            type:'POST',
+            data:JSON.stringify({'user_id':me.user_info['user_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $.each(res.data,function(i,item){
+                        $("#SPRrequests").append($('<option>',{
+                            text:item.name,
+                            name:item.project_request_factor,
+                            selected:true
+                        }));
+                    });
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            failure:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnReviewProjectRequest").click(function(){
+        var proj_req_factor=$("#SPRrequests").find("option:selected").attr("name");
+        window.location.pathname='/templates/review-request/'+proj_req_factor;
+    });
+
+    $("#grdProjectRequestReview").on('click','.proj-req-delete',function(e){
+        $.alert({
+            theme:'dark',
+            title:'Atención',
+            content:'¿Está seguro que desea eliminar esta actividad?',
+            buttons:{
+                confirm:{
+                    text:'Sí',
+                    action:function(){
+                        $.ajax({
+                            url:'/templates/deleteProjectRequestForm',
+                            type:'POST',
+                            data:JSON.stringify({'project_request_form_id':$(e.target).data('prfid')}),
+                            success:function(response){
+                                try{
+                                    var res=JSON.parse(response);
+                                }catch(err){
+                                    ajaxError();
+                                }
+                                if (res.success){
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res.msg_response,
+                                        buttons:{
+                                            confirm:{
+                                                text:'Aceptar',
+                                                action:function(){
+                                                    loadTableProjectRequestReview(me.user_info['project_request_id']);
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                                else{
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:res.msg_response
+                                    });
+                                }
+                            },
+                            failure:function(){
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Atención',
+                                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                });
+                            }
+                        })
+                    }
+                },
+                cancel:{
+                    text:'No'
+                }
+            }
+        })
+    });
+
+    $("#mod_show_project_requests").on('hide.bs.modal',function(){
+        $("#SPRrequests").empty();
+    });
 
 });
 
@@ -1805,6 +2259,149 @@ function returnSubFolderMod(parent_id,project_id,div_id,folder_input,home_div_id
                     title:'Atención',
                     content:res.msg_response
                 });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function getWorkspaceTemplates(workspace_id,select_id){
+    $.ajax({
+        url:'/templates/getWorkspaceTemplates',
+        type:'POST',
+        data:JSON.stringify({'workspace_id':workspace_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $.each(res.data,function(i,item){
+                    $(select_id).append($('<option>',{
+                        text:item.name,
+                        name:item.template_id,
+                        selected:true
+                    }));
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                })
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function getWorkspaceCompanies(ws,select){
+    $.ajax({
+        url:'/project/getWorkspaceCompanies',
+        type:'POST',
+        data:JSON.stringify({'workspace_id':ws}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $.each(res.data,function(i,item){
+                    $(select).append($('<option>',{
+                        text:item.name,
+                        name:item.company_id,
+                        selected:true
+                    }));
+                });
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                })
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    })
+}
+
+function getGrdProjectRequestTemplate(project_request_id){
+    $("#grdProjectTemplateSettings").DataTable({
+        "scrollY":"250px",
+        "scrollCollapse":true,
+        "lengthChange":false,
+        serverSide:true,
+        destroy:true,
+        searching:false,
+        ordering:false,
+        ajax:{
+            data:{'project_request_id':project_request_id},
+            url:'/project/getProjectRequestTemplate',
+            dataSrc:'data',
+            type:'POST',
+            error:ajaxError,
+        },
+        columns:[
+            {data:'ready',"width":"10%", "className":"dt-head-center dt-body-left"},
+            {data:'name',"width":"50%", "className":"dt-head-center dt-body-center"},
+            {data:'preview',"width":"20%", "className":"dt-head-center dt-body-center"},
+            {data:'settings',"width":"10%", "className":"dt-head-center dt-body-center"},
+            {data:'delete',"width":"10%", "className":"dt-head-center dt-body-center"},
+        ]
+
+    });
+}
+
+function getProjectRequestUsers(prfid,sel_list){
+    $.ajax({
+        url:'/project/getProjectResquestUsers',
+        type:'POST',
+        data:JSON.stringify({'project_request_form_id':prfid}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                for (var sl of sel_list){
+                    $.each(res.data,function(i,item){
+                        $(sl).append($('<option>',{
+                            text:item.name,
+                            name:item.user_id,
+                            selected:true
+                        }));
+                    });
+                }
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                })
             }
         },
         failure:function(){

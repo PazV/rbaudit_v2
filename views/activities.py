@@ -25,7 +25,7 @@ bp = Blueprint('activities', __name__, url_prefix='/activity-list')
 @is_logged_in
 def activityList():
     user_info=db.query("""
-        select user_id,profile_picture_class,workspace_id
+        select user_id,profile_picture_class,workspace_id,name
         from system.user where user_id=%s
     """%session['user_id']).dictresult()[0]
     #para saber si es consultor
@@ -41,6 +41,7 @@ def activityList():
     g.profile_picture_class=user_info['profile_picture_class']
     g.notifications=False
     g.consultant=user_info['consultant']
+    g.user_name=user_info['name'].decode('utf8')
     return render_template('activity_list.html',g=g)
 
 @bp.route('/consultant')
@@ -53,7 +54,7 @@ def activityListConsultant():
     """%session['user_id']).dictresult()
     if is_consultant!=[]:
         user_info=db.query("""
-            select user_id,profile_picture_class,workspace_id
+            select user_id,profile_picture_class,workspace_id,name
             from system.user where user_id=%s
         """%session['user_id']).dictresult()[0]
         user_info['consultant_workspaces']=is_consultant[0]['workspaces']
@@ -62,6 +63,7 @@ def activityListConsultant():
         g.profile_picture_class=user_info['profile_picture_class']
         g.notifications=False
         g.consultant=user_info['consultant']
+        g.user_name=user_info['name'].decode('utf8')
         return render_template('activity_list_consultant.html',g=g)
     else:
         db.query("""

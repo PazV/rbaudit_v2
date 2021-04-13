@@ -281,3 +281,129 @@
     vertical-align: text-bottom !important;
     font-size: 0.875rem !important;
 }
+
+.fieldset-project-users{
+    border:1px solid #ced4da;
+    padding:0 2%;
+    border-radius:5px;
+}
+
+.fieldset-legend-project-users{
+    width: auto;
+    font-size:1rem;
+    color:#212529;
+}
+
+.div-projectu-cont{
+    min-height:80px;
+    width:inherit;
+}
+
+.div-projuser-content{
+    font-size:0.8rem;
+    /* background-color:#69c5d8; */
+    /* background-color: rgb(54 125 190 / 40%); */
+    background-color: #69c5d8a6;
+    /* max-width:40px; */
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    height:32px;
+    margin:0 5px 5px;
+    padding:4px;
+    border-radius: 0.25rem;
+    width: fit-content;
+}
+
+.btn-destroy-projuser-content{
+    padding: 0;
+    color: #b9b9b9;
+}
+
+.btn-destroy-projuser-content:hover{
+    color:#908e8e;
+}
+
+.btn-destroy-projuser-content:focus{
+    outline: none;
+    box-shadow: none;
+}
+
+#divProjAddedUsersCont{
+    width:60%;
+    height:100px;
+    overflow-y: auto;
+}
+
+.proj-req-ok{
+    content:url('/static/images/checked.png');
+    background-image: url('/static/images/checked.png');
+    width:20px;
+    height:20px;
+    margin: auto;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.proj-req-notok{
+    content:url('/static/images/cancel.png');
+    background-image: url('/static/images/cancel.png');
+    width:20px;
+    height:20px;
+    margin: auto;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.proj-req-settings{
+    content:url('/static/images/settings.png');
+    background-image: url('/static/images/settings.png');
+    width:20px;
+    height:20px;
+    margin: auto;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.proj-req-preview{
+    content:url('/static/images/file_preview.png');
+    background-image: url('/static/images/file_preview.png');
+    width:20px;
+    height:20px;
+    margin: auto;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.proj-req-delete{
+    content:url('/static/images/delete.png');
+    background-image: url('/static/images/delete.png');
+    width:20px;
+    height:20px;
+    margin: auto;
+    display: block;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+#PTSproject_template_info{
+    column-count: 2;
+    column-gap: 40px;
+    max-height:80px;
+    /* column-rule: 1px solid lightblue; */
+}
+
+#RPRprojectRequestInfo{
+    column-count: 2;
+    column-gap: 40px;
+    max-height:120px;
+    font-size:14px;
+    padding:10px;
+}

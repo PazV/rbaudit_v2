@@ -2,9 +2,43 @@ $(document).ready(function(){
     var me = this;
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
     loadTemplatesTable();
-
+    console.log(me.user_info)
     if (window.location.pathname=='/templates/preview/'+me.user_info['template_factor']+'/'+me.user_info['t_form_id']){
         loadTempFormPreview(me.user_info['t_form_id'],1);
+    }
+    if (window.location.pathname.includes('/templates/review-request')){
+
+        $.ajax({
+            url:'/project/getProjectRequestTemplateInfo',
+            type:'POST',
+            data:JSON.stringify({'project_request_id':me.user_info['project_request_id']}),
+            success:function(response){
+
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    $("#RPRprojectRequestInfo").append('<p>'+res.data+'</p>');
+                }
+                else {
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            failure:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+        loadTableProjectRequestReview(me.user_info['project_request_id']);
     }
 
 
@@ -374,7 +408,103 @@ $(document).ready(function(){
         });
     });
 
+    $("#btnRestoreProjRequest").click(function(){
+        $.ajax({
+            url:'/templates/restoreProjRequest',
+            type:'POST',
+            data:JSON.stringify({'project_request_id':me.user_info.project_request_id}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    loadTableProjectRequestReview(me.user_info.project_request_id);
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            failure:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
 
+        })
+    });
+
+    $("#btnRestoreProjectRequestForm").click(function(){
+        $.ajax({
+            url:'/templates/restoreProjRequestForms',
+            type:'POST',
+            data:JSON.stringify({'project_request_id':$("#mod_project_template_settings").data('project_request_id')}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    getGrdProjectRequestTemplate($("#mod_project_template_settings").data('project_request_id'));
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    });
+                }
+            },
+            failure:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+
+        })
+    });
+
+    $("#btnApproveProjRequest").click(function(){
+        $.ajax({
+            url:'/project/createProjectFromProjReq',
+            type:'POST',
+            data:JSON.stringify({'project_request_id':me.user_info['project_request_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                if (res.success){
+                    window.location.pathname='/my-projects/'
+                }
+                else{
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:res.msg_response
+                    })
+                }
+            },
+            failure:function(){
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
 
 
 
@@ -597,5 +727,32 @@ function loadTempFormPreview(t_form_id,page){
                 content:'Ocurrió un error, favor de intentarlo de nuevo.'
             });
         }
+    });
+}
+
+function loadTableProjectRequestReview(project_request_id){
+    $("#grdProjectRequestReview").DataTable({
+        "scrollY":"350px",
+        "scrollCollapse":true,
+        "lengthChange":false,
+        serverSide:true,
+        destroy:true,
+        searching:false,
+        ordering:false,
+        ajax:{
+            data:{'project_request_id':project_request_id},
+            url:'/templates/getTableReviewProjectRequest',
+            dataSrc:'data',
+            type:'POST',
+            error:ajaxError,
+        },
+        columns:[
+            {data:'name',"width":"30%", "className":"dt-head-center dt-body-left"},
+            {data:'assigned_to',"width":"20%", "className":"dt-head-center dt-body-center"},
+            {data:'revisions',"width":"25%", "className":"dt-head-center dt-body-center"},
+            {data:'resolve_before',"width":"15%", "className":"dt-head-center dt-body-center"},
+            {data:'actions',"width":"10%", "className":"dt-head-center dt-body-center"},
+        ]
+
     });
 }

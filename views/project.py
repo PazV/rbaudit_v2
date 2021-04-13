@@ -4460,3 +4460,603 @@ def getFolderParent(folder_id,folders):
     except:
         app.logger.info(traceback.format_exc(sys.exc_info()))
         return False,[]
+
+@bp.route('/saveCompany', methods=['GET','POST'])
+@is_logged_in
+def saveCompany():
+    response={}
+    try:
+        if request.method=='POST':
+            data=request.form.to_dict()
+                # data['name']=data['name'].encode('utf8')
+                # data['business_name']=data['business_name'].encode('utf8')
+            db.insert("system.company",data)
+            response['success']=True
+            response['msg_response']='La empresa ha sido creada.'
+
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        app.logger.info(request.form)
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/getWorkspaceCompanies', methods=['GET','POST'])
+@is_logged_in
+def getWorkspaceCompanies():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                companies=db.query("""
+                    select company_id, name from system.company
+                    where workspace_id=%s and enabled=True
+                """%data['workspace_id']).dictresult()
+                response['success']=True
+                response['data']=companies
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        app.logger.info(request.form)
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+    return json.dumps(response)
+
+@bp.route('/saveProjectRequest', methods=['GET','POST'])
+@is_logged_in
+def saveProjectRequest():
+    #guardar un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                success,allowed=GF.checkPermission({'user_id':data['user_id'],'permission':'create_projects'})
+                if success:
+                    if allowed:
+                        if data['include_creator']==True:
+                            if data['user_id'] not in data['project_users']:
+                                data['project_users'].append(data['user_id'])
+                        data['project_users']=str(data['project_users'])
+                        data['created_by']=data['user_id']
+
+                        pr=db.insert("templates.project_request",data)
+
+                        template=db.query("""
+                            select t_form_id
+                            from templates.t_forms
+                            where template_id=%s
+                        """%data['template_id']).dictresult()
+
+                        for t in template:
+                            prf={
+                                'project_request_id':pr['project_request_id'],
+                                't_form_id':t['t_form_id']
+                            }
+                            db.insert("templates.project_request_forms",prf)
+
+                        response['project_request_id']=pr['project_request_id']
+                        response['msg_response']='El proyecto ha sido creado.'
+                        response['success']=True
+                    else:
+                        response['success']=False
+                        response['msg_response']='No tienes permisos para realizar esta acción.'
+                else:
+                    response['success']=False
+                    response['msg_response']='Ocurrió un error al intentar validar la información.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getProjectRequestTemplate', methods=['GET','POST'])
+@is_logged_in
+def getProjectRequestTemplate():
+    #guardar un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            project_request_id=request.form['project_request_id']
+            info=db.query("""
+                select a.project_request_form_id,
+                case when a.ready=True then 'proj-req-ok' else 'proj-req-notok' end as ready_class,
+                a.ready,
+                b.name,
+                b.t_form_id,
+                b.template_id*%d as template_factor
+                from
+                templates.project_request_forms a,
+                templates.t_forms b
+                where a.t_form_id=b.t_form_id
+                and a.enabled=True
+                and a.project_request_id=%s
+                order by b.name
+                offset %s limit %s
+            """%(int(cfg.project_factor),project_request_id,int(request.form['start']),int(request.form['length']))).dictresult()
+
+            info_total=db.query("""
+                select count(a.project_request_form_id)
+                from
+                templates.project_request_forms a,
+                templates.t_forms b
+                where a.t_form_id=b.t_form_id
+                and a.enabled=True
+                and a.project_request_id=%s
+            """%project_request_id).dictresult()
+
+            for x in info:
+                x['ready']='<div class="%s"></div>'%x['ready_class']
+                x['settings']='<a href="#mod_publish_form" class="proj-req-settings" data-toggle="modal" data-prfid="%s"></a>'%x['project_request_form_id']
+                x['preview']='<a href="/templates/preview/%s/%s"  class="proj-req-preview" target="_blank"></a>'%(x['template_factor'],x['t_form_id'])
+                x['delete']='<a href="#" class="proj-req-delete" data-prfid="%s"></a>'%x['project_request_form_id']
+
+            response['data']=info
+            response['recordsTotal']=info_total[0]['count']
+            response['recordsFiltered']=info_total[0]['count']
+            response['success']=True
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getProjectResquestUsers', methods=['GET','POST'])
+@is_logged_in
+def getProjectResquestUsers():
+    #guardar un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                user_list=db.query("""
+                    select
+                        a.project_users,
+                        a.partner,
+                        a.manager
+                    from
+                        templates.project_request a,
+                        templates.project_request_forms b
+                    where
+                        a.project_request_id=b.project_request_id
+                    and b.project_request_form_id=%s
+                """%data['project_request_form_id']).dictresult()[0]
+                project_users=eval(user_list['project_users'])
+                if user_list['manager'] not in project_users:
+                    project_users.append(user_list['manager'])
+                if user_list['partner'] not in project_users:
+                    project_users.append(user_list['partner'])
+                str_user_list=','.join(str(e) for e in project_users)
+
+                users=db.query("""
+                    select user_id, name
+                    from system.user
+                    where user_id in (%s)
+                """%str_user_list).dictresult()
+                response['data']=users
+                response['success']=True
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/saveProjReqTempFormSettings', methods=['GET','POST'])
+@is_logged_in
+def saveProjReqTempFormSettings():
+    #guardar un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                app.logger.info(data)
+                revision_list=[]
+                for k,v in data.iteritems():
+                    if k.split("_")[0]=='revision':
+                        revision_list.append('%s:%s'%(k,v))
+                rev_list_str=','.join(e for e in revision_list)
+                db.query("""
+                    update templates.project_request_forms
+                    set assigned_to=%s,
+                    resolve_before='%s',
+                    revisions='%s',
+                    ready=True
+                    where project_request_form_id=%s
+                """%(data['assigned_to'],data['resolve_date'],rev_list_str,data['project_request_form_id']))
+
+                project_request_id=db.query("""
+                    select project_request_id
+                    from templates.project_request_forms
+                    where project_request_form_id=%s
+                """%data['project_request_form_id']).dictresult()[0]
+                response['success']=True
+                response['msg_response']='Los datos de configuración han sido guardados.'
+                response['project_request_id']=project_request_id['project_request_id']
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getProjReqTempFormSettings', methods=['GET','POST'])
+@is_logged_in
+def getProjReqTempFormSettings():
+    #guardar un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                info=db.query("""
+                    select assigned_to,
+                    to_char(resolve_before,'YYYY-MM-DD') as resolve_date,
+                    revisions
+                    from templates.project_request_forms
+                    where project_request_form_id=%s
+                """%data['project_request_form_id']).dictresult()
+                rev_list=info[0]['revisions'].split(",")
+                new_rev_list=[]
+                for rl in rev_list:
+                    new_rev_list.append({
+                        'revision_number':rl.split(":")[0].split("_")[1],
+                        'user_id':rl.split(":")[1]
+                    })
+                response['success']=True
+                response['data']=info
+                response['revisions']=new_rev_list
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getProjectRequestTemplateInfo', methods=['GET','POST'])
+@is_logged_in
+def getProjectRequestTemplateInfo():
+    #guardar un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                app.logger.info(data)
+                info=db.query("""
+                    select
+                        a.name,
+                        b.name as company_name,
+                        to_char(a.start_date,'DD-MM-YYYY') as start_date,
+                        to_char(a.finish_date,'DD-MM-YYYY') as finish_date,
+                        (select c.name from system.user c where c.user_id=a.manager) as manager,
+                        (select c.name from system.user c where c.user_id=partner) as partner,
+                        a.manager as manager_id,
+                        a.partner as partner_id,
+                        a.project_users,
+                        d.name as template_name
+                    from
+                        templates.project_request a,
+                        system.company b,
+                        templates.templates d
+                    where a.company_id=b.company_id
+                    and a.project_request_id=%s
+                    and d.template_id=a.template_id
+                """%data['project_request_id']).dictresult()[0]
+                users=eval(info['project_users'])
+                if info['manager_id'] not in users:
+                    users.append(info['manager_id'])
+                if info['partner_id'] not in users:
+                    users.append(info['partner_id'])
+
+                users_str=','.join(str(e) for e in users)
+                users_names=db.query("""
+                    select name from system.user where user_id in (%s)
+                """%users_str).dictresult()
+                user_names_str=', '.join(e['name'] for e in users_names)
+
+                html='<b>Proyecto:</b> %s<br><b>Empresa:</b> %s<br><b>Plantilla:</b> %s<br><b>Gerente:</b> %s<br><b>Supervisor:</b> %s<br><b>Fecha:</b> %s - %s<br><b>Usuarios</b> %s<br>'%(info['name'],info['company_name'],info['template_name'],info['partner'],info['manager'],info['start_date'],info['finish_date'],user_names_str)
+                response['data']=html
+                response['success']=True
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/sendProjectRequest', methods=['GET','POST'])
+@is_logged_in
+def sendProjectRequest():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update templates.project_request
+                    set ready_to_review=True
+                    where project_request_id=%s
+                """%data['project_request_id'])
+                response['success']=True
+                response['msg_response']='La solicitud ha sido enviada para su revisión.'
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getPendingProjectRequests', methods=['GET','POST'])
+@is_logged_in
+def getPendingProjectRequests():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+
+                requests=db.query("""
+                    select  a.project_request_id*%d as project_request_factor,
+                    'Proyecto: '||a.name|| ' - Empresa: ' || (select b.name from system.company b where b.company_id=a.company_id) || '- Creado por: ' ||(select c.name from system.user c where c.user_id=a.created_by) as name
+                    from templates.project_request a
+                    where (a.manager=%s or partner=%s)
+                    and a.ready_to_review=True
+                """%(cfg.project_factor,data['user_id'],data['user_id'])).dictresult()
+                response['data']=requests
+                response['success']=True
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+
+@bp.route('/createProjectFromProjReq', methods=['GET','POST'])
+@is_logged_in
+def createProjectFromProjReq():
+    #guardar un proyecto
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                proj_req=db.query("""
+                    select * from templates.project_request
+                    where project_request_id=%s
+                """%data['project_request_id']).dictresult()[0]
+                new_project={
+                    'name':proj_req['name'],
+                    'company_name':'',
+                    'start_date':proj_req['start_date'],
+                    'finish_date':proj_req['finish_date'],
+                    'manager':proj_req['manager'],
+                    'partner':proj_req['partner'],
+                    'comments':proj_req['comments'],
+                    'crated_by':proj_req['created_by'],
+                    'created':'now()',
+                    'company_id':proj_req['company_id']
+                }
+                inserted_proj=db.insert("project.project",new_project)
+
+                folders=db.query("""
+                    select * from templates.t_folders
+                    where template_id=%s
+                    and parent_id=-1
+                    order by parent_id
+                """%proj_req['template_id']).dictresult()
+                for f in folders:
+                    new_folder=db.insert("project.folder",{
+                        'name':f['name'],
+                        'project_id':inserted_proj['project_id'],
+                        'parent_id':-1
+                    })
+
+
+                    insertProjectSubFolders(f['t_folder_id'],proj_req['template_id'],new_folder['folder_id'],inserted_proj['project_id'],data['project_request_id'])
+
+                response['success']=True
+                response['msg_response']='El proyecto ha sido creado.'
+
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,project_request_id):
+    try:
+        #revisar si tiene formularios
+        forms=db.query("""
+            select a.t_form_id, a.assigned_to, a.resolve_before, a.revisions,
+            b.name, b.columns,
+            c.created_by
+            from templates.project_request_forms a,
+            templates.t_forms b,
+            templates.project_request c
+            where a.t_form_id=b.t_form_id
+            and a.project_request_id=%s
+            and b.t_folder_id=%s
+            and a.project_request_id=c.project_request_id
+        """%(project_request_id, old_folder_id)).dictresult()
+        if forms!=[]:
+            for f in forms:
+                columns_number=len(eval(f['columns']))
+                rows=db.query("""
+                    select count(*) from template_tables.template_%s_tform_%s
+                """%(template_id,f['t_form_id'])).dictresult()[0]
+                new_form=db.insert("project.form",{
+                    'project_id':project_id,
+                    'name':f['name'],
+                    'columns_number':columns_number,
+                    'rows':rows['count'],
+                    'columns':f['columns'],
+                    'created_by':f['created_by'],
+                    'create_date':'now()',
+                    'folder_id':new_folder_id,
+                    'status_id':3,
+                    'assigned_to':f['assigned_to'],
+                    'notify_assignee':True,
+                    'notify_resolved':True,
+                    'revisions':f['revisions'],
+                    'user_last_update':f['created_by'],
+                    'last_updated':'now()'
+                })
+                revisions_list=f['revisions'].split(",")
+                for r in revisions_list:
+                    rev={
+                        'form_id':new_form['form_id'],
+                        'user_id':r.split(":")[1],
+                        'revision_number':r.split(":")[0].split("_")[1]
+                    }
+                    db.insert("project.form_revisions",rev)
+
+                columns=eval(f['columns'])
+
+                table_name='project_%s_form_%s'%(project_id,new_form['form_id'])
+                columns_str=""
+                including_columns=[]
+                for x in columns:
+                    columns_str+=" ,col_%s text default ''"%x['order']
+                    if x['editable']==False:
+                        including_columns.append("col_%s"%x['order'])
+
+                db.query("""
+                    CREATE TABLE form.%s(
+                        entry_id serial not null primary key,
+                        form_id integer not null,
+                        project_id integer not null
+                        %s
+                    );
+                """%(table_name,columns_str))
+
+                old_form_table="template_%s_tform_%s"%(template_id,f['t_form_id'])
+
+                old_info=db.query("""
+                    select * from template_tables.%s order by t_entry_id
+                """%old_form_table).dictresult()
+                for oi in old_info:
+                    entry={
+                        'form_id':new_form['form_id'],
+                        'project_id':project_id
+                    }
+                    if including_columns!=[]:
+                        for ic in including_columns:
+                            entry[ic]=oi[ic]
+                    db.insert('form.%s'%table_name,entry)
+                db.query("""
+                    alter table form.%s add rev_1 text default ''
+                """%table_name)
+
+
+        check_subfolder=db.query("""
+            select * from templates.t_folders
+            where parent_id=%s and template_id=%s
+        """%(old_folder_id,template_id)).dictresult()
+        app.logger.info(check_subfolder)
+        if check_subfolder!=[]:
+            for x in check_subfolder:
+                new_folder=db.insert("project.folder",{
+                    'name':x['name'],
+                    'project_id':project_id,
+                    'parent_id':new_folder_id
+                })
+                insertProjectSubFolders(x['folder_id'],template_id,new_folder['folder_id'],project_id,project_request_id)
+
+
+        else:
+            return False
+    except:
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))

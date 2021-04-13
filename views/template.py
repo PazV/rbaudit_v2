@@ -55,7 +55,7 @@ def templatesHome():
 
 @bp.route('/preview/<template_factor>/<t_form_id>',methods=['GET','POST'])
 @is_logged_in
-def resolveForm(template_factor,t_form_id):
+def seeTemplatePreview(template_factor,t_form_id):
     template_id=int(template_factor)/int(cfg.project_factor)
     g=GF.userInfo([{'template_id':template_id},{'template_factor':template_factor},{'t_form_id':t_form_id}])
     g.project_factor=cfg.project_factor
@@ -68,6 +68,15 @@ def resolveForm(template_factor,t_form_id):
     # else:
     #     g.notifications=True
     return render_template('template_form_preview.html',g=g)
+
+@bp.route('/review-request/<project_request_factor>',methods=['GET','POST'])
+@is_logged_in
+def reviewProjectRequest(project_request_factor):
+    project_request_id=int(project_request_factor)/int(cfg.project_factor)
+    g=GF.userInfo([{'project_request_id':project_request_id},{'project_factor':cfg.project_factor}])
+    g.project_factor=cfg.project_factor
+    g.project_request_factor=project_request_factor
+    return render_template('review_project_request.html',g=g)
 
 @bp.route('/getTemplatesTable', methods=['GET','POST'])
 @is_logged_in
@@ -670,6 +679,199 @@ def deleteTemplate():
                 response['success']=True
                 response['msg_response']='La plantilla ha sido eliminada.'
 
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error la intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getWorkspaceTemplates', methods=['GET','POST'])
+@is_logged_in
+def getWorkspaceTemplates():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                templates=db.query("""
+                    select a.template_id,
+                    a.name
+                    from templates.templates a,
+                    templates.templates_workspace b
+                    where a.template_id=b.template_id
+                    and b.workspace_id=%s
+                    and a.enabled=True
+                """%data['workspace_id']).dictresult()
+                response['data']=templates
+                response['success']=True
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error la intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getTableReviewProjectRequest', methods=['GET','POST'])
+@is_logged_in
+def getTableReviewProjectRequest():
+    response={}
+    try:
+        if request.method=='POST':
+            project_request_id=request.form['project_request_id']
+            proj_request=db.query("""
+                select
+                    a.project_request_form_id,
+                    a.t_form_id,
+                    b.name,
+                    (select c.name from system.user c where c.user_id=a.assigned_to) as assigned_to,
+                    to_char(a.resolve_before,'DD-MM-YYYY') as resolve_before,
+                    a.revisions as revisions_str,
+                    b.template_id*%d as template_factor
+                from
+                    templates.project_request_forms a,
+                    templates.t_forms b
+                where a.t_form_id=b.t_form_id
+                and a.project_request_id=%s
+                and a.enabled=True
+                order by b.name
+                offset %s limit %s
+            """%(int(cfg.project_factor),project_request_id,int(request.form['start']),int(request.form['length']))).dictresult()
+
+            for x in proj_request:
+                rev_list=x['revisions_str'].split(",")
+                rev_list2=[]
+                for r in rev_list:
+                    user=db.query("""
+                        select name from system.user where user_id=%s
+                    """%r.split(":")[1]).dictresult()[0]['name']
+                    rev_list2.append('%s:%s'%(r.split(":")[0].split("_")[1],user))
+                x['revisions']=', '.join(e for e in rev_list2)
+                # x['settings']='<a href="#mod_publish_form" class="proj-req-settings" data-toggle="modal" data-prfid="%s"></a>'%x['project_request_form_id']
+                # x['preview']='<a href="#" class="proj-req-preview"></a>'
+                # x['delete']='<a href="#" class="proj-req-delete"></a>'
+                x['actions']='<div class="row row-wo-margin"><a href="/templates/preview/%s/%s" class="proj-req-preview" data-prfid="%s" target="_blank"></a><a href="#mod_publish_form" class="proj-req-settings" data-toggle="modal" data-prfid="%s"></a><a href="#" class="proj-req-delete" data-prfid="%s"></a></div>'%(x['template_factor'],x['t_form_id'],x['project_request_form_id'],x['project_request_form_id'],x['project_request_form_id'])
+
+
+            count=db.query("""
+                select
+                    count(a.t_form_id)
+                from
+                    templates.project_request_forms a,
+                    templates.t_forms b
+                where a.t_form_id=b.t_form_id
+                and a.project_request_id=%s
+            """%project_request_id).dictresult()
+            response['data']=proj_request
+            response['recordsTotal']=count[0]['count']
+            response['recordsFiltered']=count[0]['count']
+            response['success']=True
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/deleteProjectRequestForm', methods=['GET','POST'])
+@is_logged_in
+def deleteProjectRequestForm():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update templates.project_request_forms
+                    set enabled=False where
+                    project_request_form_id=%s
+                """%data['project_request_form_id'])
+                project_request_id=db.query("""
+                    select project_request_id from templates.project_request_forms
+                    where project_request_form_id=%s
+                """%data['project_request_form_id']).dictresult()[0]
+                response['success']=True
+                response['msg_response']='La actividad ha sido eliminada.'
+                response['project_request_id']=project_request_id['project_request_id']
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error la intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/restoreProjRequest', methods=['GET','POST'])
+@is_logged_in
+def restoreProjRequest():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update templates.project_request_forms
+                    set enabled=True
+                    where ready=True
+                    and project_request_id=%s
+                """%data['project_request_id'])
+                response['success']=True
+                response['msg_response']='Las actividades han sido restauradas.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error la intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/restoreProjRequestForms', methods=['GET','POST'])
+@is_logged_in
+def restoreProjRequestForms():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update templates.project_request_forms
+                    set enabled=True
+                    where
+                    project_request_id=%s
+                """%data['project_request_id'])
+                response['success']=True
+                response['msg_response']='Las actividades han sido restauradas.'
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error la intentar obtener la información, favor de intentarlo de nuevo.'

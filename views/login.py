@@ -78,6 +78,7 @@ def signin():
                     inserted_session=db.insert('system.user_session',new_session)
                     g.session_id=inserted_session['session_id']
                     g.class_img=registered_user[0]['profile_picture_class']
+                    g.user_name=registered_user[0]['name'].decode('utf8')
                     session['user_id']=registered_user[0]['user_id']
                     session['session_id']=inserted_session['session_id']
                     session['logged_in']=True

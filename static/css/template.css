@@ -3,3 +3,7 @@
     margin: 0 3px;
     color: gray;
 }
+
+#grdProjectRequestReview th,td,tr{
+    font-size: 14px;
+}

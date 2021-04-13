@@ -231,19 +231,31 @@ $(document).ready(function(){
         else{
             if ($("#FTPrevisions").children().last().length==0){
                 $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_2" class="col-sm-3 col-form-label">Revisión 2: </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_2" name="revision_2" data-revision="2"></select></div>');
-                loadRevisionUsers("#FTPrevision_2",me.user_info['project_id']);
+                if ($("#mod_publish_form").data('mode')=='project_request_settings'){
+                    getProjectRequestUsers($("#mod_publish_form").data('prfid'),["#FTPrevision_2"])
+                }
+                else{
+                    loadRevisionUsers("#FTPrevision_2",me.user_info['project_id']);
+                }
+
             }
             else{
                 var revision_number=$("#FTPrevisions").children().length+2;
                 $("#FTPrevisions").append('<div class="form-group row" style="padding-top:5px;"><label for="FTPrevision_'+revision_number+'" class="col-sm-3 col-form-label">Revisión '+revision_number+': </label><div class="col-sm-7"><select class="form-control" id="FTPrevision_'+revision_number+'" name="revision_'+revision_number+'" data-revision="'+revision_number+'"></select></div>');
-                loadRevisionUsers("#FTPrevision_"+revision_number,me.user_info['project_id']);
+                if ($("#mod_publish_form").data('mode')=='project_request_settings'){
+                    getProjectRequestUsers($("#mod_publish_form").data('prfid'),["#FTPrevision_"+revision_number]);
+                }
+                else{
+                    loadRevisionUsers("#FTPrevision_"+revision_number,me.user_info['project_id']);
+                }
+
             }
         }
     });
 
     $("#btnFTPremoveRevision").click(function(){
         console.log($("#mod_publish_form").data('mode'));
-        if ($("#mod_publish_form").data('mode')){
+        if ($("#mod_publish_form").data('mode')=='edit'){
             console.log($("#FTPrevisions").children().last());
             if (!$("#FTPrevisions").children().last().is('disabled')){
                 console.log($("#FTPrevisions").children().last());
@@ -272,13 +284,8 @@ $(document).ready(function(){
         $("#btnPFpublishForm").prop("disabled",true);
         $("#FTPresolve_date").focusout();
         if ($("#FTPresolve_date").hasClass('valid-field')){
-            if ($("#mod_publish_form").data('mode')=='new'){
-                var url='/project/publishForm';
-                saveTableInfo("#grdPrefilledForm",'/project/savePrefilledForm',me.user_info,false);
-            }
-            else{
-                var url='/project/editPublishingInfo';
-            }
+
+
             var sel_list=[{'id':'#FTPassigned_to','name':'assigned_to'},{'id':'#FTPrevision_1','name':'revision_1'}];
             var revisions=$("#FTPrevisions").children();
             for (var x of revisions){
@@ -288,6 +295,19 @@ $(document).ready(function(){
             data['project_id']=me.user_info['project_id'];
             data['form_id']=me.user_info['form_id'];
             data['user_id']=me.user_info['user_id'];
+
+            if ($("#mod_publish_form").data('mode')=='new'){
+                var url='/project/publishForm';
+                saveTableInfo("#grdPrefilledForm",'/project/savePrefilledForm',me.user_info,false);
+            }
+            else if($("#mod_publish_form").data('mode')=='edit'){
+                var url='/project/editPublishingInfo';
+            }
+            else if ($("#mod_publish_form").data('mode')=='project_request_settings'){
+                var url='/project/saveProjReqTempFormSettings';
+                data['project_request_form_id']=$("#mod_publish_form").data('prfid');
+            }
+
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -317,7 +337,8 @@ $(document).ready(function(){
                                         if ($("#mod_publish_form").data('mode')=='new'){
                                             window.location.pathname='/project/'+me.user_info.project_factor;
                                         }
-                                        else{
+                                        else if ($("#mod_publish_form").data('mode')=='project_request_settings'){
+                                            getGrdProjectRequestTemplate(res.project_request_id);
                                             // window.location.reload();
                                         }
                                     }

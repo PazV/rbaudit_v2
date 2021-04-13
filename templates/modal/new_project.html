@@ -23,14 +23,12 @@
                         </div>
                         <div class="form-group row no-space-bottom">
                             <label for="NPcompany_name" class="col-sm-2 col-form-label col-form-label-sm">Empresa: </label>
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control form-control-sm" id="NPcompany_name" placeholder="Nombre de la empresa" name="company_name"/>
+                            <div class="col-sm-9">
+                                <select class="form-control form-control-sm" id="NPcompany_name" name="company_id">
+                                </select>
+                                <!-- <input type="text" class="form-control form-control-sm" id="NPcompany_name" placeholder="Nombre de la empresa" name="company_name"/> -->
                             </div>
-                        </div>
-                        <div class="row justify-content-end">
-                            <div class="col-sm-10 hide-error-msg" id="errNPcompany_name">
-                                Este campo es requerido
-                            </div>
+                            <button class="btn btn-info btn-sm" id="btnOpenNewCompany" type="button"><i class="fa fa-plus"></i></button>
                         </div>
                         <div class="form-group row no-space-bottom">
                             <label for="NPperiod" class="col-sm-2 col-form-label col-form-label-sm">Periodo: </label>
@@ -72,11 +70,34 @@
                             <textarea class="form-control form-control-sm" id="NPcomments" placeholder="Agregar comentarios acerca del proyecto" name="comments" style="width: 80%; margin-right: 1.5%;"></textarea>
                         </div>
                     </form>
+                    <fieldset class="fieldset-project-users">
+                        <legend class="fieldset-legend-project-users">Usuarios del proyecto</legend>
+                        <div class="row row-wo-margin div-projectu-cont">
+                            <div style="width:40%;">
+                                <div class="form-group row no-space-bottom justify-content-center">
+                                    <label for="NPProjUser" class="col-form-label col-form-label-sm" style="margin:0 5px;">Usuario: </label>
+                                    <select class="form-control form-control-sm" id="NPProjUser" name="user_id" style="width:auto; margin:0 5px;">
+                                    </select>
+                                    <!-- <div class="col-sm">
+
+                                    </div> -->
+                                    <button type="button" class="btn btn-info btn-sm" id="btnNPAddProjUser" style="margin:0 5px;">Agregar</button>
+                                </div>
+                            </div>
+                            <div id="divProjAddedUsersCont" class="row row-wo-margin">
+
+                            </div>
+                        </div>
+                    </fieldset>
+
+
                 </div>
             </div>
             <div class="modal-footer green-modal">
-                <button type="button" class="btn btn-outline-dark btn-sm" id="btnSaveProject"><span class="hide-text">Crear </span><i class="fa fa-check-square-o"></i></button>
+
                 <button type="button" class="btn btn-outline-dark close-modal btn-sm"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
+                <!-- <button type="button" class="btn btn-outline-dark btn-sm" id="btnSaveProject"><span class="hide-text">Siguiente </span><i class="fa fa-angle-right"></i></button> -->
+                <button type="button" class="btn btn-outline-dark btn-sm" id="btnSaveProjectRequest"><span class="hide-text">Siguiente </span><i class="fa fa-angle-right"></i></button>
             </div>
         </div>
     </div>

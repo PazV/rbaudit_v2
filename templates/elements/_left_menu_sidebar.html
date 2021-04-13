@@ -3,7 +3,7 @@
         <li class="nav-item">
             <div class="row row-wo-margin align-items-center">
                 <img class="sidebar-profile-img" width="35" height="35" src="/static/images/default-user.png"/>
-                <a class="sb-user-name nav-link" href="#"><span class="small-no-text">Paz García</span></a>
+                <a class="sb-user-name nav-link" href="#"><span class="small-no-text" id="spnSidebarUsername">{{ g.user_name }}</span></a>
             </div>
         </li>
         <hr class="hr-sidebar" />
@@ -43,10 +43,10 @@
                 <a class="nav-link sb-elem" href="/templates"><img src="/static/images/icons/sb_template.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Plantillas</span></a>
             </li>
         {% endif %}
-        <!-- <li class="nav-item ">
-            <a class="nav-link sb-elem" href="#" data-toggle="modal"><img src="/static/images/icons/sb_solicitud.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Solicitudes        </span></a> -->
-            <!-- <i class="fa fa-circle" style="color:#f75858"></i> -->
-        <!-- </li> -->
+        <li class="nav-item ">
+            <a class="nav-link sb-elem" href="#mod_show_project_requests" data-toggle="modal"><img src="/static/images/icons/sb_solicitud.png" class="sb-icon" height="20" width="20"/><span class="small-no-text">Solicitudes    </span><i class="fa fa-circle" style="color:#f75858"></i></a>
+
+        </li>
     </ul>
     <div class="mt-auto">
         <button class="btn btn-light btn-sm" style="width:100%;" id="btnSignOut"><i class="fa fa-power-off lms-icon-off"></i><span class="small-no-text">Cerrar sesión</span></button>

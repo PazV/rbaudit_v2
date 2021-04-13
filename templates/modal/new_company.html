@@ -1,0 +1,44 @@
+<div class="modal fade" id="mod_new_company" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header green-modal">
+                <span class="spn-modal-header">Nueva empresa</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <form id="frmNewCompany">
+                        <div class="form-group row no-space-bottom" id="divFIparent">
+                            <label for="NCbusiness_name" class="col-sm-3 col-form-label col-form-label-sm">Razón social: </label>
+                            <div class="col-sm-9">
+                                <input id="NCbusiness_name" type="text" class="form-control form-control-sm" name="business_name" placeholder="Razón social"/>
+                            </div>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-sm-9 hide-error-msg" id="errNCcompany_name">
+                                Campo requerido
+                            </div>
+                        </div>
+                        <div class="form-group row no-space-bottom">
+                            <label for="NCcompany_name" class="col-sm-4 col-form-label col-form-label-sm">Nombre corto: </label>
+                            <div class="col-sm-8">
+                                <input id="NCcompany_name" type="text" placeholder="Nombre corto" class="form-control form-control-sm" name="name"/>
+                            </div>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-sm-9 hide-error-msg" id="errNCcompany_name">
+                                Campo requerido
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer green-modal">
+                <button type="button" class="btn btn-outline-dark btn-sm" id="btnSaveNewCompany"><span class="hide-text">Guardar </span><i class="fa fa-save"></i></button>
+                <button type="button" class="btn btn-outline-dark close-modal btn-sm"><span class="hide-text">Salir </span><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
