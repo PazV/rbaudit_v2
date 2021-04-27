@@ -5038,13 +5038,14 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
                 db.query("""
                     alter table form.%s add rev_1 text default ''
                 """%table_name)
+                GF.sendMailNotification({'form_id':new_form['form_id'],'type':'new_form'})
 
 
         check_subfolder=db.query("""
             select * from templates.t_folders
             where parent_id=%s and template_id=%s
         """%(old_folder_id,template_id)).dictresult()
-        
+
         if check_subfolder!=[]:
             for x in check_subfolder:
                 new_folder=db.insert("project.folder",{
