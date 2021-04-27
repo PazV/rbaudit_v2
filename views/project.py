@@ -5044,7 +5044,7 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
             select * from templates.t_folders
             where parent_id=%s and template_id=%s
         """%(old_folder_id,template_id)).dictresult()
-        app.logger.info(check_subfolder)
+        
         if check_subfolder!=[]:
             for x in check_subfolder:
                 new_folder=db.insert("project.folder",{
@@ -5052,7 +5052,8 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
                     'project_id':project_id,
                     'parent_id':new_folder_id
                 })
-                insertProjectSubFolders(x['folder_id'],template_id,new_folder['folder_id'],project_id,project_request_id)
+
+                insertProjectSubFolders(x['t_folder_id'],template_id,new_folder['folder_id'],project_id,project_request_id)
 
 
         else:
