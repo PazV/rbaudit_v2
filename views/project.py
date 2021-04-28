@@ -4991,7 +4991,8 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
                     'notify_resolved':True,
                     'revisions':f['revisions'],
                     'user_last_update':f['created_by'],
-                    'last_updated':'now()'
+                    'last_updated':'now()',
+                    'resolve_before':f['resolve_before']
                 })
                 revisions_list=f['revisions'].split(",")
                 for r in revisions_list:
