@@ -475,6 +475,10 @@ $(document).ready(function(){
     });
 
     $("#btnApproveProjRequest").click(function(){
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
         $.ajax({
             url:'/project/createProjectFromProjReq',
             type:'POST',
@@ -485,6 +489,7 @@ $(document).ready(function(){
                 }catch(err){
                     ajaxError();
                 }
+                EasyLoading.hide();
                 if (res.success){
                     window.location.pathname='/my-projects/'
                 }
@@ -497,6 +502,7 @@ $(document).ready(function(){
                 }
             },
             failure:function(){
+                EasyLoading.hide();
                 $.alert({
                     theme:'dark',
                     title:'Atención',
@@ -504,6 +510,217 @@ $(document).ready(function(){
                 });
             }
         });
+    });
+
+////para editar nombre de carpeta
+    $("#btnEditTempFolder").click(function(){
+        if ($(".checkbox-folder-menu:checked").length+$(".checkbox-form-menu:checked").length>1){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debes seleccionar solo un elemento para editarlo'
+            });
+        }
+        else{
+            if ($(".checkbox-folder-menu:checked").length+$(".checkbox-form-menu:checked").length==1){
+                if ($(".checkbox-folder-menu:checked").length==1){ //editar carpeta
+                    $("#mod_add_folder").data('mode','edit');
+                    $("#mod_add_folder").find('.spn-modal-header').html('Editar carpeta');
+                    $("#divFIparent").css('display','none');
+                    $("#FIname").val($(".checkbox-folder-menu:checked").next('div').find('.mp-a-folder')[0].title);
+                    $("#mod_add_folder").data('folder_id',$(".checkbox-folder-menu:checked").data('document'));
+                    $("#mod_add_folder").modal("show");
+                }
+                else{ //editar formulario
+                    if (window.location.pathname.includes('/my-projects/consultant')){
+                        var ws=$("#myProjectsConsultWorkspace").find("option:selected").attr("name");
+                    }
+                    else{
+                        var ws=me.user_info['workspace_id'];
+                    }
+                    $.ajax({
+                        url:'/project/getSettingsForEditing',
+                        type:'POST',
+                        data:JSON.stringify({'form_id':$(".checkbox-form-menu:checked").data('document'),'user_id':me.user_info['user_id'],'project_id':$("#aHomeMP").data('projectid'),'workspace_id':ws}),
+                        success:function(response){
+                            try{
+                                var res=JSON.parse(response);
+                            }catch(err){
+                                ajaxError();
+                            }
+                            if (res.success){
+                                if (res.data.status_id==2 || res.data.status_id==1){
+                                    $("#btnEditPublishingInfo").css("display",'none');
+                                }
+                                else{
+                                    $("#btnEditPublishingInfo").css("display",'initial');
+                                }
+                                $("#EFSname").val(res.data.name);
+                                $("#EFSfolder").val(res.data.folder_name);
+                                $("#EFSrows").val(res.data.rows);
+                                $("#EFScolumns").val(res.data.columns_number);
+                                $("#mod_edit_form_settings").data('form_id',res.data.form_id);
+                                $("#mod_edit_form_settings").data('folder_id',res.data.folder_id);
+                                $("#mod_edit_form_settings").data('rows',res.data.rows);
+                                $("#mod_edit_form_settings").data('columns_number',res.data.columns_number);
+                                $("#frmEditColumnsSettings").empty();
+                                var column_cont=1;
+                                for (var x of res.data.columns){
+                                    $("#frmEditColumnsSettings").append('<fieldset class="form-fieldset original-column"><legend class="form-fieldset-legend">Columna '+x['order']+'</legend><div class="form-group row"><label class="col-sm-2 col-form-label" >Nombre: </label><div class="col-sm-10"><input type="text" class="form-control" placeholder="Nombre de la columna" name="col_'+x['order']+'" value="'+x['name']+'"/></div></div><div class="row" style="display: flex; flex-flow: row nowrap; justify-content: space-between;"><div class="col-sm-10"><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="checkcol_'+x['order']+'" name="checkcol_'+x['order']+'"><label class="form-check-label" for="checkcol_'+x['order']+'">Editable</label></div><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="checkdel_'+x['order']+'" name="checkdel_'+x['order']+'"><label class="form-check-label" for="checkdel_'+x['order']+'">Borrar información de la columna</label></div></div><div style="margin-right:15px; margin-bottom:2px;"><button type="button" class="btn btn-danger btn-sm remove-column-fieldset" style="padding:1px 5px;" data-toggle="tooltip" title="Eliminar columna"><i class="fa fa-trash"></i></button></div></div></fieldset>')
+
+
+                                    column_cont++;
+                                    if (x['editable']==true){
+                                        $("#checkcol_"+x['order']).prop("checked",true);
+                                    }
+                                }
+                                $(".remove-column-fieldset").click(function(){
+                                    if ($($(this).parents('fieldset')).hasClass('original-column')){
+                                        var element=this;
+                                        $.confirm({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:'Al eliminar una columna que ya se encuentra en el formulario, también será <b>ELIMINADA LA INFORMACIÓN</b> contenida en dicha columna, ¿deseas continuar?',
+                                            buttons:{
+                                                confirm:{
+                                                    text:'Sí',
+                                                    action:function(){
+                                                        $(element).parents('fieldset').remove();
+                                                        var col_number=parseInt($("#EFScolumns").val())-1;
+                                                        $("#EFScolumns").val(col_number);
+                                                    }
+                                                },
+                                                cancel:{
+                                                    text:'No'
+                                                }
+                                            }
+                                        });
+                                    }
+                                    else{
+                                        $(this).parents('fieldset').remove();
+                                        var col_number=parseInt($("#EFScolumns").val())-1;
+                                        $("#EFScolumns").val(col_number);
+                                    }
+                                });
+
+                                $("#frmEditColumnsSettings").find('.form-control:last').on('focusout',function(){
+                                    var input=$(this);
+                                    if (input[0].value.trim().length>0){ //valida si es diferente de vacio y verifica que no tenga puros espacios vacios
+                                        input.removeClass("invalid-field").addClass("valid-field");
+                                    }
+                                    else{
+                                        input.removeClass("valid-field").addClass("invalid-field");
+                                    }
+                                });
+                                $("#mod_edit_form_settings").modal("show");
+
+                            }
+                            else{
+                                $.alert({
+                                    theme:'dark',
+                                    title:'Error',
+                                    content:res.msg_response
+                                });
+                            }
+                        },
+                        error:function(){
+                            $.alert({
+                                theme:'dark',
+                                title:'Error',
+                                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                            });
+                        }
+                    });
+
+
+
+                }
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Debes seleccionar un elemento para editarlo.'
+                });
+            }
+        }
+    });
+
+    ////para eliminar carpeta
+    $("#btnDeleteTempFolder").click(function(){
+        if ($(".checkbox-folder-menu:checked").length+$(".checkbox-form-menu:checked").length>0){
+            $.confirm({
+                theme:'dark',
+                title:'Atención',
+                content:'¿Está seguro que desea eliminar el contenido seleccionado? (UNA VEZ ELIMINADA, NO PODRÁ SER RECUPERADA DICHA INFORMACIÓN)',
+                buttons:{
+                    confirm:{
+                        text:'Sí',
+                        action:function(){
+                            var folders=[];
+                            for (x of $(".checkbox-folder-menu:checked")){
+                                folders.push($(x).data('document'));
+                            }
+                            var forms=[];
+                            for (y of $(".checkbox-form-menu:checked")){
+                                forms.push($(y).data('document'));
+                            }
+
+                            EasyLoading.show({
+                                text:'Cargando...',
+                                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+                            });
+                            $.ajax({
+                                url:'/project/deleteMenuElements',
+                                type:'POST',
+                                data:JSON.stringify({'user_id':me.user_info['user_id'],'project_id':$("#aHomeMP").data('projectid'),'forms':forms,'folders':folders}),
+                                success:function(response){
+                                    EasyLoading.hide();
+                                    try{
+                                        var res=JSON.parse(response);
+                                    }catch(err){
+                                        ajaxError();
+                                    }
+                                    if (res.success){
+                                        if ($("#div-include-fmp").children().length==0){
+                                            getFirstMenuFolders($("#aHomeMP").data('projectid'));
+                                        }
+                                        else{
+                                            getSubfoldersForms($("#div-include-fmp").children('.div-return-menu-subfolder').last().find('a').data('folder'),$("#aHomeMP").data('projectid'));
+                                        }
+                                        // loadTreeMenu(me.user_info['project_id']);
+                                    }
+                                    else{
+                                        $.alert({
+                                            theme:'dark',
+                                            title:'Atención',
+                                            content:res.msg_response
+                                        });
+                                    }
+                                },
+                                error:function(){
+                                    $.alert({
+                                        theme:'dark',
+                                        title:'Atención',
+                                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                                    });
+                                }
+                            });
+                        }
+                    },
+                    cancel:{
+                        text:'No'
+                    }
+                }
+            });
+        }
+        else{
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Debe seleccionar al menos un elemento para eliminarlo.'
+            });
+        }
     });
 
 
