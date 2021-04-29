@@ -4843,6 +4843,26 @@ def sendProjectRequest():
                 response['success']=True
                 response['msg_response']='La solicitud ha sido enviada para su revisión.'
 
+                proj_request=db.query("""
+                    select a.name as project_request,
+                    a.project_request_id,
+                    (select b.name from system.user b where b.user_id=a.created_by) as user_applying,
+                    (select b.email from system.user b where b.user_id=a.manager) as manager_mail,
+                    (select b.email from system.user b where b.user_id=a.partner) as partner_mail
+                    from templates.project_request a
+                    where a.project_request_id=%s
+                """%data['project_request_id']).dictresult()[0]
+
+                proj_request['bottom_img']=cfg.img_rb_logo
+                link=os.path.join(cfg.host,'templates','review-request',str(cfg.project_factor*int(proj_request['project_request_id'])))
+                proj_request['link']='<a href="%s"> link</a>'%link
+                proj_request['top_img']=cfg.proj_req_img
+
+                template='<p style="text-align: center;"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">{user_applying} ha creado la solicitud de proyecto  <em>"{project_request}"</em>.</span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Puede ingresar en el siguiente {link} para revisarlo.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+
+                body=template.format(**proj_request)
+                GF.sendMail('Solicitud proyecto',body,[proj_request['manager_mail'],proj_request['partner_mail']])
+
             else:
                 response['success']=False
                 response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'

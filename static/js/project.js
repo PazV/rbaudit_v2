@@ -1413,6 +1413,10 @@ $(document).ready(function(){
             }
         }
         if (valid==true){
+            EasyLoading.show({
+                text:'Cargando...',
+                type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+            });
             $.ajax({
                 url:'/project/sendProjectRequest',
                 type:'POST',
@@ -1423,6 +1427,7 @@ $(document).ready(function(){
                     }catch(err){
                         ajaxError();
                     }
+                    EasyLoading.hide();
                     if (res.success){
                         $.alert({
                             theme:'dark',
@@ -1447,6 +1452,7 @@ $(document).ready(function(){
                     }
                 },
                 failure:function(){
+                    EasyLoading.hide();
                     $.alert({
                         theme:'dark',
                         title:'Atención',
