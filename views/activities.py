@@ -92,8 +92,9 @@ def getUserActivities():
 
             filter_str=''
             company=''
-            project=''
+            # project=''
             form=''
+            folder=''
             status=[]
             date_from=[]
             date_to=[]
@@ -102,14 +103,19 @@ def getUserActivities():
                 for x in filter_list:
                     if x['field']=='company_name':
                         if company=='':
-                            company+=" c.company_name ilike '%%%s%%' "%x['value']
+                            company+=" d.name ilike '%%%s%%' "%x['value']
                         else:
-                            company+=" or c.company_name ilike '%%%s%%' "%x['value']
-                    elif x['field']=='project_name':
-                        if project=='':
-                            project+=" c.name ilike '%%%s%%' "%x['value']
+                            company+=" or d.name ilike '%%%s%%' "%x['value']
+                    # elif x['field']=='project_name':
+                    #     if project=='':
+                    #         project+=" c.name ilike '%%%s%%' "%x['value']
+                    #     else:
+                    #         project+=" or c.name ilike '%%%s%%' "%x['value']
+                    elif x['field']=='folder':
+                        if folder=='':
+                            folder+=" e.name ilike '%%%s%%' "%x['value']
                         else:
-                            project+=" or c.name ilike '%%%s%%' "%x['value']
+                            folder+=" or e.name ilike '%%%s%%' "%x['value']
                     elif x['field']=='form_name':
                         if form=='':
                             form+=" a.name ilike '%%%s%%'"%x['value']
@@ -125,8 +131,10 @@ def getUserActivities():
 
                 if company!='':
                     filter_str+=' and (%s) '%company
-                if project!='':
-                    filter_str+=' and (%s) '%project
+                # if project!='':
+                #     filter_str+=' and (%s) '%project
+                if folder!='':
+                    filter_str+=' and (%s) '%folder
                 if form!='':
                     filter_str+=' and (%s) '%form
                 if status!=[]:
@@ -171,15 +179,18 @@ def getUserActivities():
             forms=db.query("""
                 select a.form_id, a.project_id, a.name as form_name, to_char(a.resolve_before, 'DD/MM/YYYY') as resolve_before,
                 c.name,
-                c.company_name,
+                d.name as company_name,
+                e.name as folder,
                 case when a.resolve_before between current_date and current_date + interval '3 days' then 'act-priority-orange' when a.resolve_before < current_date then 'act-priority-red' when a.resolve_before > current_date + interval '3 days' then 'act-priority-yellow' end as priority_class,
                 case when b.status = 'Publicado' then 'Sin iniciar' else b.status end as status
-                from project.form a, project.form_status b, project.project c
+                from project.form a, project.form_status b, project.project c, system.company d, project.folder e
                 where a.project_id in (select project_id from project.project where (manager=%s or partner=%s or assigned_to=%s or %s in (select c.user_id from project.form_revisions c where c.form_id=a.form_id))
                 --and now() >= start_date and now() <= finish_date
                 )
                 and a.project_id=c.project_id and a.status_id=b.status_id
                 and a.status_id in (3,4,5,6)
+                and d.company_id=c.company_id
+                and a.folder_id=e.folder_id
                 %s
                 --order by expired desc, a.resolve_before asc
                 offset %s limit %s
@@ -188,10 +199,12 @@ def getUserActivities():
 
             form_count=db.query("""
                 select count(a.form_id)
-                from project.form a, project.form_status b, project.project c
+                from project.form a, project.form_status b, project.project c, system.company d, project.folder e
                 where a.project_id in (select project_id from project.project where (manager=%s or partner=%s or assigned_to=%s or %s in (select c.user_id from project.form_revisions c where c.form_id=a.form_id))
                 --and now() >= start_date and now() <= finish_date
                 ) and a.project_id=c.project_id and a.status_id=b.status_id
+                and d.company_id=c.company_id
+                and a.folder_id=e.folder_id
                 and a.status_id in (3,4,5,6) %s
             """%(user_id,user_id,user_id,user_id,filter_str)).dictresult()
 
@@ -236,8 +249,9 @@ def getWorkspaceActivities():
 
             filter_str=''
             company=''
-            project=''
+            # project=''
             form=''
+            folder=''
             status=[]
             date_from=[]
             date_to=[]
@@ -246,14 +260,19 @@ def getWorkspaceActivities():
                 for x in filter_list:
                     if x['field']=='company_name':
                         if company=='':
-                            company+=" c.company_name ilike '%%%s%%' "%x['value']
+                            company+=" d.name ilike '%%%s%%' "%x['value']
                         else:
-                            company+=" or c.company_name ilike '%%%s%%' "%x['value']
-                    elif x['field']=='project_name':
+                            company+=" or d.name ilike '%%%s%%' "%x['value']
+                    # elif x['field']=='project_name':
+                    #     if project=='':
+                    #         project+=" c.name ilike '%%%s%%' "%x['value']
+                    #     else:
+                    #         project+=" or c.name ilike '%%%s%%' "%x['value']
+                    elif x['field']=='folder':
                         if project=='':
-                            project+=" c.name ilike '%%%s%%' "%x['value']
+                            project+=" e.name ilike '%%%s%%' "%x['value']
                         else:
-                            project+=" or c.name ilike '%%%s%%' "%x['value']
+                            project+=" or e.name ilike '%%%s%%' "%x['value']
                     elif x['field']=='form_name':
                         if form=='':
                             form+=" a.name ilike '%%%s%%'"%x['value']
@@ -269,8 +288,10 @@ def getWorkspaceActivities():
 
                 if company!='':
                     filter_str+=' and (%s) '%company
-                if project!='':
-                    filter_str+=' and (%s) '%project
+                # if project!='':
+                #     filter_str+=' and (%s) '%project
+                if form!='':
+                    filter_str+=' and (%s) '%form
                 if form!='':
                     filter_str+=' and (%s) '%form
                 if status!=[]:
@@ -324,15 +345,18 @@ def getWorkspaceActivities():
                 forms=db.query("""
                     select a.form_id, a.project_id, a.name as form_name, to_char(a.resolve_before, 'DD/MM/YYYY') as resolve_before,
                     c.name,
-                    c.company_name,
+                    d.name as company_name,
+                    e.name as folder,
                     case when a.resolve_before between current_date and current_date + interval '3 days' then 'act-priority-orange' when a.resolve_before < current_date then 'act-priority-red' when a.resolve_before > current_date + interval '3 days' then 'act-priority-yellow' end as priority_class,
                     case when b.status = 'Publicado' then 'Sin iniciar' else b.status end as status
-                    from project.form a, project.form_status b, project.project c
+                    from project.form a, project.form_status b, project.project c, system.company d, project.folder e
                     where a.project_id in (select project_id from project.project where (manager in (%s) or partner in (%s) or assigned_to in (%s) or %s)
                     --and now() >= start_date and now() <= finish_date
                     )
                     and a.project_id=c.project_id and a.status_id=b.status_id
                     and a.status_id in (3,4,5,6)
+                    and d.company_id=c.company_id
+                    and a.folder_id=e.folder_id
                     %s
                     --order by expired desc, a.resolve_before asc
                     offset %s limit %s
@@ -341,11 +365,13 @@ def getWorkspaceActivities():
 
                 form_count=db.query("""
                     select count(a.form_id)
-                    from project.form a, project.form_status b, project.project c
+                    from project.form a, project.form_status b, project.project c, system.company d, project.folder e
                     where a.project_id in (select project_id from project.project where (manager in (%s) or partner in (%s) or assigned_to in (%s) or %s)
                     --and now() >= start_date and now() <= finish_date
                     ) and a.project_id=c.project_id and a.status_id=b.status_id
-                    and a.status_id in (3,4,5,6) %s
+                    and a.status_id in (3,4,5,6)
+                    and d.company_id=c.company_id
+                    and a.folder_id=e.folder_id %s
 
                 """%(users,users,users,users2,filter_str)).dictresult()
 

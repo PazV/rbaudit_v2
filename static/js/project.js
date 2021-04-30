@@ -2362,6 +2362,7 @@ function getGrdProjectRequestTemplate(project_request_id){
         destroy:true,
         searching:false,
         ordering:false,
+        paging:false,
         ajax:{
             data:{'project_request_id':project_request_id},
             url:'/project/getProjectRequestTemplate',
@@ -2371,7 +2372,8 @@ function getGrdProjectRequestTemplate(project_request_id){
         },
         columns:[
             {data:'ready',"width":"10%", "className":"dt-head-center dt-body-left"},
-            {data:'name',"width":"50%", "className":"dt-head-center dt-body-center"},
+            {data:'folder',"width":"20%", "className":"dt-head-center dt-body-center"},
+            {data:'name',"width":"30%", "className":"dt-head-center dt-body-center"},
             {data:'preview',"width":"20%", "className":"dt-head-center dt-body-center"},
             {data:'settings',"width":"10%", "className":"dt-head-center dt-body-center"},
             {data:'delete',"width":"10%", "className":"dt-head-center dt-body-center"},

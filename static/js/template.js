@@ -964,9 +964,10 @@ function loadTableProjectRequestReview(project_request_id){
             error:ajaxError,
         },
         columns:[
-            {data:'name',"width":"30%", "className":"dt-head-center dt-body-left"},
-            {data:'assigned_to',"width":"20%", "className":"dt-head-center dt-body-center"},
-            {data:'revisions',"width":"25%", "className":"dt-head-center dt-body-center"},
+            {data:'folder',"width":"20%", "className":"dt-head-center dt-body-left"},
+            {data:'name',"width":"20%", "className":"dt-head-center dt-body-left"},
+            {data:'assigned_to',"width":"15%", "className":"dt-head-center dt-body-center"},
+            {data:'revisions',"width":"20%", "className":"dt-head-center dt-body-center"},
             {data:'resolve_before',"width":"15%", "className":"dt-head-center dt-body-center"},
             {data:'actions',"width":"10%", "className":"dt-head-center dt-body-center"},
         ]

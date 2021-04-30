@@ -160,7 +160,8 @@ function loadUserActivities(user_id,filters){
         columns:[
             {data:'priority_class',"width":"5%", "className":"dt-head-center dt-body-center"},
             {data:'company_name',"width":"35%", "className":"dt-head-center dt-body-left"},
-            {data:'name',"width":"35%", "className":"dt-head-center dt-body-left"},
+            // {data:'name',"width":"35%", "className":"dt-head-center dt-body-left"},
+            {data:'folder',"width":"35%", "className":"dt-head-center dt-body-left"},
             {data:'form_name',"width":"35%", "className":"dt-head-center dt-body-left"},
             {data:'resolve_before',"width":"10%", "className":"dt-center"},
             {data:'status',"width":"15%", "className":"dt-head-center dt-body-left"},
@@ -194,7 +195,8 @@ function loadWorkspaceActivities(user_id,filters,workspace_id){
         columns:[
             {data:'priority_class',"width":"5%", "className":"dt-head-center dt-body-center"},
             {data:'company_name',"width":"35%", "className":"dt-head-center dt-body-left"},
-            {data:'name',"width":"35%", "className":"dt-head-center dt-body-left"},
+            // {data:'name',"width":"35%", "className":"dt-head-center dt-body-left"},
+            {data:'folder',"width":"35%", "className":"dt-head-center dt-body-left"},
             {data:'form_name',"width":"35%", "className":"dt-head-center dt-body-left"},
             {data:'resolve_before',"width":"10%", "className":"dt-center"},
             {data:'status',"width":"15%", "className":"dt-head-center dt-body-left"},

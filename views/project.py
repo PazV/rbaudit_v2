@@ -4584,24 +4584,29 @@ def getProjectRequestTemplate():
                 a.ready,
                 b.name,
                 b.t_form_id,
-                b.template_id*%d as template_factor
+                b.template_id*%d as template_factor,
+                c.name as folder
                 from
                 templates.project_request_forms a,
-                templates.t_forms b
+                templates.t_forms b,
+                templates.t_folders c
                 where a.t_form_id=b.t_form_id
                 and a.enabled=True
                 and a.project_request_id=%s
+                and b.t_folder_id=c.t_folder_id
                 order by b.name
-                offset %s limit %s
+                --offset %s limit %s
             """%(int(cfg.project_factor),project_request_id,int(request.form['start']),int(request.form['length']))).dictresult()
 
             info_total=db.query("""
                 select count(a.project_request_form_id)
                 from
                 templates.project_request_forms a,
-                templates.t_forms b
+                templates.t_forms b,
+                templates.t_folders c
                 where a.t_form_id=b.t_form_id
                 and a.enabled=True
+                and b.t_folder_id=c.t_folder_id
                 and a.project_request_id=%s
             """%project_request_id).dictresult()
 

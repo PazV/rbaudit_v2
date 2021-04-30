@@ -739,19 +739,24 @@ def getTableReviewProjectRequest():
                     a.project_request_form_id,
                     a.t_form_id,
                     b.name,
+                    c.name as folder,
                     (select c.name from system.user c where c.user_id=a.assigned_to) as assigned_to,
                     to_char(a.resolve_before,'DD-MM-YYYY') as resolve_before,
                     a.revisions as revisions_str,
                     b.template_id*%d as template_factor
                 from
                     templates.project_request_forms a,
-                    templates.t_forms b
+                    templates.t_forms b,
+                    templates.t_folders c
                 where a.t_form_id=b.t_form_id
                 and a.project_request_id=%s
                 and a.enabled=True
+                and b.t_folder_id=c.t_folder_id
                 order by b.name
                 offset %s limit %s
             """%(int(cfg.project_factor),project_request_id,int(request.form['start']),int(request.form['length']))).dictresult()
+
+            
 
             for x in proj_request:
                 rev_list=x['revisions_str'].split(",")
@@ -770,12 +775,15 @@ def getTableReviewProjectRequest():
 
             count=db.query("""
                 select
-                    count(a.t_form_id)
+                    count(a.project_request_form_id)
                 from
                     templates.project_request_forms a,
-                    templates.t_forms b
+                    templates.t_forms b,
+                    templates.t_folders c
                 where a.t_form_id=b.t_form_id
                 and a.project_request_id=%s
+                and a.enabled=True
+                and b.t_folder_id=c.t_folder_id
             """%project_request_id).dictresult()
             response['data']=proj_request
             response['recordsTotal']=count[0]['count']
