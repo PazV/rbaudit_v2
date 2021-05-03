@@ -7,7 +7,15 @@ $(document).ready(function(){
     var first_day=split_date.join("-");
     this.user_info=JSON.parse($("#spnSession")[0].textContent);
     // console.log(this.user_info);
-    loadProjects(me.user_info,''); //carga de inicio los proyectos
+    if (window.location.pathname.includes('/my-projects')){
+        if (window.location.pathname.includes('/my-projects/consultant')){
+            getConsultWorkspaces(me.user_info,true,'my_projects')
+        }
+        else{
+            loadProjects(me.user_info,''); //carga de inicio los proyectos
+        }
+    }
+
     var location=window.location.pathname;
 
 
@@ -19,9 +27,7 @@ $(document).ready(function(){
         $("#btnOpenNotifications").css("visibility","visible");
     }
 
-    if (window.location.pathname.includes('/my-projects/consultant')){
-        getConsultWorkspaces(me.user_info,true,'my_projects')
-    }
+
 
     if (window.location.pathname.includes('/home/') ||  (window.location.pathname.includes('/notifications/'))){
 
@@ -163,7 +169,7 @@ $(document).ready(function(){
                     data['project_users'].push($(pu).data('val'));
                 }
             }
-            console.log(data);
+            // console.log(data);
             $("#mod_new_project").modal("hide");
             $("#mod_project_template_settings").modal("show");
             // EasyLoading.show({
@@ -267,7 +273,7 @@ $(document).ready(function(){
                     data['project_users'].push($(pu).data('val'));
                 }
             }
-            console.log(data);
+            // console.log(data);
 
 
             EasyLoading.show({
@@ -365,9 +371,9 @@ $(document).ready(function(){
     });
 
     $("#grdProjectTemplateSettings").on('click','.proj-req-settings',function(e){
-        console.log(e);
+        // console.log(e);
         var ready_ok=$($("#grdProjectTemplateSettings").DataTable().row($(e.target).parent('td')).data()['ready']).hasClass('proj-req-ok');
-        console.log(ready_ok);
+        // console.log(ready_ok);
         var prfid=$(e.target).data('prfid');
         $("#mod_publish_form").data('prfid',prfid);
         $("#mod_publish_form").data('mode','project_request_settings');
@@ -404,7 +410,7 @@ $(document).ready(function(){
                         getProjectRequestUsers(prfid,sel_list);
                         $("#FTPassigned_to").removeAttr('selected').filter('[name='+res.data['assigned_to']+']').attr('selected', true);
                         for (var y of res.revisions){
-                            console.log(y)
+                            // console.log(y)
                             $('#FTPrevision_'+y['revision_number']+' option').removeAttr('selected').filter('[name='+y['user_id']+']').attr('selected', true);
                         }
                     }
@@ -1065,7 +1071,7 @@ $(document).ready(function(){
     });
 
     $("#aHomeMP").click(function(){
-        console.log($(this).data('projectid'));
+        // console.log($(this).data('projectid'));
         if (window.location.pathname.includes('/my-projects')){
             $("#div-include-fmp").empty();
             getFirstMenuFolders($(this).data('projectid'));
@@ -1297,7 +1303,7 @@ $(document).ready(function(){
     });
 
     $("#btnOpenNewCompany").click(function(){
-        console.log("company button");
+        // console.log("company button");
         $("#mod_new_company").modal("show");
     });
 
@@ -1468,7 +1474,7 @@ $(document).ready(function(){
                 content:'Debe configurar todos los formularios para poder enviar la solicitud.'
             });
         }
-        console.log(valid);
+        // console.log(valid);
     });
 
     $("#mod_show_project_requests").on('show.bs.modal',function(){
@@ -1841,7 +1847,7 @@ function getConsultantWorkspaces(user_info,is_first){
 }
 
 function getWorkspaceProjects(user_info,workspace_id,filter_str){
-    console.log(filter_str);
+    // console.log(filter_str);
     $.ajax({
         url:'/project/getConsultantProjects',
         type:'POST',
@@ -1952,7 +1958,7 @@ function getFirstMenuFolders(project_id){
                     //evento para regresar a la carpeta anterior
                     $(".return-menu-subfolder").click(function(){
                         returnSubFolder($(this).data('folder'),project_id);
-                        console.log($(this));
+                        // console.log($(this));
                         $(this).parent('.div-return-menu-subfolder').remove();
                     });
                     //obtener subcarpetas
@@ -1994,7 +2000,7 @@ function getSubfoldersForms(folder_id,project_id){
                 $("#divMPFoldersCont").append(res.data);
                 $(".folder-icon-div").dblclick(function(){
 
-                    console.log(this);
+                    // console.log(this);
 
                     $("#div-include-fmp").append('<div class="div-return-menu-subfolder" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
                     //evento para regresar a la carpeta anterior
@@ -2041,7 +2047,7 @@ function returnSubFolder(parent_id,project_id){
                 $("#divMPFoldersCont").empty();
                 $("#divMPFoldersCont").append(res.data);
                 $(".folder-icon-div").dblclick(function(){
-                    console.log($($(this).children(".checkbox-folder-menu")).data('document'));
+                    // console.log($($(this).children(".checkbox-folder-menu")).data('document'));
 
                     $("#div-include-fmp").append('<div class="div-return-menu-subfolder" data-toggle="tooltip" title="'+$(this).find('.mp-a-folder')[0].title+'"><a href="#" class="return-menu-subfolder" data-folder="'+$($(this).children(".checkbox-folder-menu")).data('document')+'"><i class="fa fa-folder-open icon-form-path"><span class="spn-form-menu-path">'+$(this).find('.mp-a-folder')[0].title+'</span></i></a></div>');
                     //evento para regresar a la carpeta anterior
@@ -2101,7 +2107,7 @@ function getFirstMenuFoldersMod(project_id,div_id,folder_input,home_div_id){
                     //evento para regresar a la carpeta anterior
                     $(".return-menu-subfolder-mod").click(function(){
                         returnSubFolderMod($(this).data('folder'),project_id,div_id,folder_input,home_div_id);
-                        console.log($(this));
+                        // console.log($(this));
                         $(this).parent('.div-return-menu-subfolder-mod').remove();
 
                     });
@@ -2215,7 +2221,7 @@ function returnSubFolderMod(parent_id,project_id,div_id,folder_input,home_div_id
                 // $("#divMPFoldersContMod").append(res.data);
                 $(div_id).empty();
                 $(div_id).append(res.data);
-                console.log($(".return-menu-subfolder-mod").length);
+                // console.log($(".return-menu-subfolder-mod").length);
                 if ($(".return-menu-subfolder-mod").length!=0){
                     var folder_name=$(".return-menu-subfolder-mod").last()[0].text;
                     var folder_id=$(".return-menu-subfolder-mod").last().data('folder');

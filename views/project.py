@@ -220,12 +220,13 @@ def getProjects():
                 filters=''
                 if data['filters']!='':
                     filters+=" and a.name ilike '%%%s%%'"%data['filters']
+
                 projects=db.query("""
-                    (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
+                    (select a.project_id, a.name || ' - ' || (select c.name from system.company c where a.company_id=c.company_id) as name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, (select c.name from system.company c where a.company_id=c.company_id) as company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                     from project.project a
                     where (a.manager=%s or a.partner=%s) %s
                     union
-                    select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
+                    select a.project_id, a.name || ' - ' || (select c.name from system.company c where a.company_id=c.company_id) as name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, (select c.name from system.company c where a.company_id=c.company_id) as company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                     from project.project a, project.project_users b
                     where a.project_id=b.project_id %s
                     and b.user_id=%s)
@@ -4051,11 +4052,11 @@ def getConsultantProjects():
 
 
                     projects=db.query("""
-                        (select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
+                        (select a.project_id, a.name || ' - ' || (select c.name from system.company c where a.company_id=c.company_id) as name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, (select c.name from system.company c where a.company_id=c.company_id) as company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                         from project.project a
                         where (a.manager in (%s) or a.partner in (%s)) %s
                         union
-                        select a.project_id, a.name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, a.company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
+                        select a.project_id, a.name || ' - ' || (select c.name from system.company c where a.company_id=c.company_id) as name, (a.project_id*%d) as project_factor,to_char(a.created,'DD-MM-YYYY') as created, (select c.name from system.company c where a.company_id=c.company_id) as company_name, to_char(a.start_date,'DD-MM-YYYY') as start_date, to_char(a.finish_date,'DD-MM-YYYY') as finish_date
                         from project.project a, project.project_users b
                         where a.project_id=b.project_id
                         and b.user_id in (%s) %s)
