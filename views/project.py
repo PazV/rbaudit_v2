@@ -4946,6 +4946,10 @@ def createProjectFromProjReq():
                 }
                 inserted_proj=db.insert("project.project",new_project)
 
+                proj_users=eval(proj_req['project_users'])
+                for pu in proj_users:
+                    db.insert("project.project_users",{'user_id':pu,'project_id':inserted_proj['project_id']})
+
                 folders=db.query("""
                     select * from templates.t_folders
                     where template_id=%s
