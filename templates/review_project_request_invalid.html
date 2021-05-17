@@ -1,0 +1,17 @@
+{% extends 'main_layout.html' %}
+{% block bodyContent %}
+{{ super() }}
+<div style="width:100%;">
+    <div class="content-fluid">
+        <div id="RPRprojectRequestInfo" >
+
+        </div>
+        <div>
+            <h3>{{ g.proj_req_msg }}</h3>
+        </div>
+        <div style="margin-top:40px;" class="d-print-none">
+            <a class="btn btn-primary pull-left btn-sm" href="/activity-list/" data-toggle="tooltip" title="Restaurar actividades eliminadas" id="btnRestoreProjRequest"><span class="hide-text">Regresar a inicio </span><i class="fa fa-home"></i></a>
+        </div>
+    </div>
+</div>
+{% endblock %}

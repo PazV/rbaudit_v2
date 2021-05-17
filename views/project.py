@@ -4967,7 +4967,7 @@ def createProjectFromProjReq():
                     insertProjectSubFolders(f['t_folder_id'],proj_req['template_id'],new_folder['folder_id'],inserted_proj['project_id'],data['project_request_id'])
 
                 db.query("""
-                    update templates.project_request set ready_to_review=False
+                    update templates.project_request set ready_to_review=False, reviewing_status=1
                     where project_request_id=%s
                 """%data['project_request_id'])
                 response['success']=True

@@ -76,7 +76,29 @@ def reviewProjectRequest(project_request_factor):
     g=GF.userInfo([{'project_request_id':project_request_id},{'project_factor':cfg.project_factor}])
     g.project_factor=cfg.project_factor
     g.project_request_factor=project_request_factor
-    return render_template('review_project_request.html',g=g)
+    status_proj_req=db.query("""
+        select ready_to_review, reviewing_status from templates.project_request
+        where project_request_id=%s
+    """%project_request_id).dictresult()[0]
+    if status_proj_req['ready_to_review']==True:
+        if status_proj_req['reviewing_status']==0:
+            return render_template('review_project_request.html',g=g)
+        else:
+            if status_proj_req['reviewing_status']==1:
+                g.proj_req_msg='Esta solicitud ya ha sido aprobada.'
+            elif status_proj_req['reviewing_status']==2:
+                g.proj_req_msg='Esta solicitud ha sido rechazada.'
+            return render_template('review_project_request_invalid.html',g=g)
+    else:
+        if status_proj_req['reviewing_status']==0:
+            g.proj_req_msg='Esta solicitud no está lista para ser revisada.'.decode('utf8')
+        elif status_proj_req['reviewing_status']==1:
+            g.proj_req_msg='Esta solicitud ya ha sido aprobada.'
+        elif status_proj_req['reviewing_status']==2:
+            g.proj_req_msg='Esta solicitud ha sido rechazada.'
+        return render_template('review_project_request_invalid.html',g=g)
+
+
 
 @bp.route('/getTemplatesTable', methods=['GET','POST'])
 @is_logged_in
@@ -756,7 +778,7 @@ def getTableReviewProjectRequest():
                 offset %s limit %s
             """%(int(cfg.project_factor),project_request_id,int(request.form['start']),int(request.form['length']))).dictresult()
 
-            
+
 
             for x in proj_request:
                 rev_list=x['revisions_str'].split(",")
