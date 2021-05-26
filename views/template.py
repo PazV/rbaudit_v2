@@ -18,6 +18,7 @@ from flask import current_app as app
 import app_config as cfg
 from . import general_functions
 GF = general_functions.GeneralFunctions()
+import datetime
 
 bp = Blueprint('template', __name__, url_prefix='/templates')
 
@@ -413,7 +414,16 @@ def saveTempForm():
         file.save(os.path.join(file_path, filename))
         read_file=load_workbook(os.path.join(file_path,filename))
         ws = read_file.worksheets[0]
-        # ws=read_file['Sheet1']
+
+        if len(files)==2:
+            tax_file=files[data['tax_file_name']]
+            file_extension = os.path.splitext(data['tax_file_name'])[1]
+            tax_file_name=secure_filename('%s%s'%(datetime.datetime.today().strftime("%Y%m%d%H%M%S"),file_extension))
+            tax_file.save(os.path.join(cfg.tax_forms_path,tax_file_name))
+            save_tax_name='%s|%s'%(data['tax_file_name'].encode('utf8'),tax_file_name)
+        else:
+            save_tax_name=''
+        app.logger.info(len(files))
 
         form={
             'template_id':data['template_id'],
@@ -422,7 +432,9 @@ def saveTempForm():
             'create_date':'now',
             't_folder_id':int(data['t_folder_id']),
             'columns_number':int(ws.max_column),
-            'rows':int(ws.max_row)
+            'rows':int(ws.max_row),
+            'tax_form_file_name':save_tax_name,
+            'tax_form_description':data['tax_form_description'].encode('utf8')
         }
 
         app.logger.info(ws.max_column)

@@ -4994,7 +4994,7 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
         #revisar si tiene formularios
         forms=db.query("""
             select a.t_form_id, a.assigned_to, a.resolve_before, a.revisions,
-            b.name, b.columns,
+            b.name, b.columns, b.tax_form_file_name, b.tax_form_description,
             c.created_by
             from templates.project_request_forms a,
             templates.t_forms b,
@@ -5010,6 +5010,10 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
                 rows=db.query("""
                     select count(*) from template_tables.template_%s_tform_%s
                 """%(template_id,f['t_form_id'])).dictresult()[0]
+                if f['tax_form_file_name']=='':
+                    tax_form_request_status=-1
+                else:
+                    tax_form_request_status=0
                 new_form=db.insert("project.form",{
                     'project_id':project_id,
                     'name':f['name'],
@@ -5026,7 +5030,10 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
                     'revisions':f['revisions'],
                     'user_last_update':f['created_by'],
                     'last_updated':'now()',
-                    'resolve_before':f['resolve_before']
+                    'resolve_before':f['resolve_before'],
+                    'tax_form_file_name':f['tax_form_file_name'],
+                    'tax_form_description':f['tax_form_description'],
+                    'tax_form_request_status':tax_form_request_status
                 })
                 revisions_list=f['revisions'].split(",")
                 for r in revisions_list:
@@ -5097,3 +5104,328 @@ def insertProjectSubFolders(old_folder_id,template_id,new_folder_id,project_id,p
     except:
         app.logger.info(traceback.format_exc(sys.exc_info()))
         GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+
+@bp.route('/getFormTaxForm', methods=['GET','POST'])
+@is_logged_in
+def getFormTaxForm():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                tax_form=db.query("""
+                    select tax_form_file_name,
+                        tax_form_description,
+                        tax_form_request_status,
+                        tax_form_requested_by
+                    from project.form
+                    where form_id=%s
+                """%data['form_id']).dictresult()[0]
+                if tax_form['tax_form_request_status']==-1:
+                    response['description']='No existe un formato fiscal disponible para este plan de trabajo.'
+                else:
+                    if tax_form['tax_form_request_status']==0: #sin solicitar;
+                        response['description']=tax_form['tax_form_description']
+                    elif tax_form['tax_form_request_status']==1: #solicitado;
+                        response['description']='El formato fiscal ha sido solicitado, se encuentra pendiente su aprobación.'
+                    elif tax_form['tax_form_request_status']==2:#aprobado;
+                        download_name=tax_form['tax_form_file_name'].split("|")[0]
+                        stored_name=tax_form['tax_form_file_name'].split("|")[1]
+                        file_link='/project/downloadTaxForm/%s/%s'%(str(int(data['form_id'])*cfg.project_factor),stored_name)
+                        response['description']='<div class="download-icon-div"><div style="display:grid;"><a href="%s" target="_blank" data-toggle="tooltip" title="%s" class="download-file"><i class="icon-excel"></i></a><span class="spn-icon-text" data-toggle="tooltip" title="%s">%s</span></div></div>'%(file_link,download_name.decode('utf8'),download_name.decode('utf8'),download_name.decode('utf8'))
+                    else:  #3:denegado
+                        response['description']='No tiene permisos para acceder a este formato fiscal.'
+                response['status']=tax_form['tax_form_request_status']
+                response['success']=True
+
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/downloadTaxForm/<form_factor>/<filename>', methods=['GET','POST'])
+@is_logged_in
+def downloadTaxForm(form_factor,filename):
+    #realiza descarga de archivo zip
+    #no requiere validación de permisos
+    response={}
+    try:
+        # app.logger.info("entra descarga")
+        # form_id=int(form_factor)/cfg.project_factor
+        # names=db.query("""
+        #     select tax_form_file_name from project.form
+        #     where form_id=%s
+        # """%form_id).dictresult()[0]
+        # download_name=names['tax_form_file_name'].split("|")[0]
+        # app.logger.info(download_name)
+        # os.rename(os.path.join(cfg.tax_forms_path,'%s'%filename),os.path.join(cfg.tax_forms_path,'%s'%download_name))
+
+        path=os.path.join(cfg.tax_forms_path,'%s'%filename)
+        name="%s"%filename
+
+        # path=os.path.join(cfg.tax_forms_path,'%s'%download_name)
+        # name="%s"%download_name
+        return send_file(path,attachment_filename=name)
+        # os.rename(os.path.join(cfg.tax_forms_path,'%s'%download_name),os.path.join(cfg.tax_forms_path,'%s'%filename))
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error.'
+        app.logger.info(traceback.format_exc(sys.exc_info()))
+        GF.sendErrorMail(traceback.format_exc(sys.exc_info()))
+        return response
+
+@bp.route('/requestFormTaxForm', methods=['GET','POST'])
+@is_logged_in
+def requestFormTaxForm():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update project.form
+                    set tax_form_request_status=1, tax_form_requested_by=%s
+                    where form_id=%s
+                """%(data['user_id'],data['form_id']))
+                form=db.query("""
+                    select a.name, a.tax_form_file_name, b.name as user_name,
+                    a.project_id
+                    from project.form a, system.user b
+                    where b.user_id=%s
+                    and a.form_id=%s
+                """%(data['user_id'],data['form_id'])).dictresult()[0]
+
+
+                form['tax_form_file_name']=form['tax_form_file_name'].split("|")[0]
+
+                form['bottom_img']=cfg.img_rb_logo
+                form['link']='<a href="%s">link</a>'%os.path.join(cfg.host,'activity-list')
+                form['top_img']=cfg.proj_req_img
+
+                template='<p style="text-align: center; color: rgb(77, 77, 77)"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">El usuario {user_name} ha solicitado descargar el formato fiscal "{tax_form_file_name}" correspondiente al Programa de Trabajo {name}.<br>Para aprobar o denegar la solicitud, favor de acceder al siguiente {link}, y acceder a la sección "Solicitudes Formatos Fiscales".</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+
+                body=template.format(**form)
+
+                mails=db.query("""
+                    (select a.email from system.user a, project.project b where a.user_id=b.manager and b.project_id=%s) union
+                    (select a.email from system.user a, project.project b where a.user_id=b.partner and b.project_id=%s)
+                """%(form['project_id'],form['project_id'])).dictresult()
+                GF.sendMail('Solicitud Formato Fiscal',body,[mails[0]['email'],mails[1]['email']])
+                response['success']=True
+                response['msg_response']='La solicitud ha sido enviada.'
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+@bp.route('/getPendingTaxFormsRequests', methods=['GET','POST'])
+@is_logged_in
+def getPendingTaxFormsRequests():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                tax_forms=db.query("""
+                    select a.form_id, a.tax_form_file_name, a.name as form_name
+                    from project.form a, project.project b
+                    where a.tax_form_request_status=1
+                    and (b.manager=%s or b.partner=%s)
+                    and a.project_id=b.project_id
+                """%(data['user_id'],data['user_id'])).dictresult()
+                if tax_forms!=[]:
+                    response['has_requests']=True
+                    for x in tax_forms:
+                        x['name']='Solicitud de PT %s - Formato: %s'%(x['form_name'],x['tax_form_file_name'].split("|")[0])
+                else:
+                    response['has_requests']=False
+                response['success']=True
+                response['data']=tax_forms
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+
+@bp.route('/getTaxFormRequestInfo', methods=['GET','POST'])
+@is_logged_in
+def getTaxFormRequestInfo():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                form=db.query("""
+                    select a.name as form_name,
+                    b.name as projec_name,
+                    c.name as company_name,
+                    a.tax_form_file_name,
+                    (select d.name from system.user d where d.user_id=a.tax_form_requested_by) as requested_by,
+                    e.name as folder_name
+                    from project.form a, project.project b, system.company c, project.folder e
+                    where a.form_id=%s
+                    and a.project_id=b.project_id
+                    and c.company_id=b.company_id
+                    and e.folder_id=a.folder_id
+                """%data['form_id']).dictresult()[0]
+                html='<p style="font-size:13px; color: #35383c"><b>Empresa:</b> %s<br><b>Actividad: </b>%s<br><b>Programa de trabajo: </b>%s<br><b>Formato fiscal: </b>%s<br><b>Solicitado por: </b>%s</p>'%(form['company_name'],form['folder_name'],form['form_name'],form['tax_form_file_name'].split("|")[0],form['requested_by'])
+                response['data']=html
+                response['success']=True
+
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+
+@bp.route('/approveTaxFormRequest', methods=['GET','POST'])
+@is_logged_in
+def approveTaxFormRequest():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update project.form
+                    set tax_form_request_status=2
+                    where form_id=%s
+                """%data['form_id'])
+
+                form=db.query("""
+                    select name, tax_form_file_name, project_id, tax_form_requested_by
+                    from project.form
+                    where form_id=%s
+                """%(data['form_id'])).dictresult()[0]
+
+                form['tax_form_file_name']=form['tax_form_file_name'].split("|")[0]
+
+                form['bottom_img']=cfg.img_rb_logo
+                link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(form['project_id'])),str(data['form_id']))
+                form['link']='<a href="%s"> link</a>'%link
+                form['top_img']=cfg.proj_req_img
+
+                template='<p style="text-align: center; color: rgb(77, 77, 77)"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Su solicitud para descargar el formato fiscal "{tax_form_file_name}" correspondiente al Programa de Trabajo {name} ha sido aprobada.<br>Para acceder y descargarlo, puede hacerlo a través del siguiente {link}.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+
+                body=template.format(**form)
+
+                mails=db.query("""
+                    select email from system.user where user_id=%s
+                """%(form['tax_form_requested_by'])).dictresult()
+                GF.sendMail('Solicitud Formato Fiscal Aprobada',body,[mails[0]['email']])
+
+
+                response['success']=True
+                response['msg_response']='El Formato Fiscal ha sido aprobado.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)
+
+
+@bp.route('/rejectTaxFormRequest', methods=['GET','POST'])
+@is_logged_in
+def rejectTaxFormRequest():
+    response={}
+    try:
+        if request.method=='POST':
+            valid,data=GF.getDict(request.form,'post')
+            if valid:
+                db.query("""
+                    update project.form
+                    set tax_form_request_status=3
+                    where form_id=%s
+                """%data['form_id'])
+
+                form=db.query("""
+                    select name, tax_form_file_name, project_id, tax_form_requested_by
+                    from project.form
+                    where form_id=%s
+                """%(data['form_id'])).dictresult()[0]
+
+                form['tax_form_file_name']=form['tax_form_file_name'].split("|")[0]
+
+                form['bottom_img']=cfg.img_rb_logo
+                link=os.path.join(cfg.host,'project',str(cfg.project_factor*int(form['project_id'])),str(data['form_id']))
+                form['link']='<a href="%s"> link</a>'%link
+                form['top_img']=cfg.proj_req_img
+
+                template='<p style="text-align: center; color: rgb(77, 77, 77)"><img src="{top_img}" alt="" width="50" height="50" /></p><p style="text-align: center;">&nbsp;</p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Estimado usuario:</span></p><p><span style="font-family: Verdana, Geneva, sans-serif; color: rgb(77, 77, 77);">Su solicitud para descargar el formato fiscal "{tax_form_file_name}" correspondiente al Programa de Trabajo {name} ha sido denegada.<br>Puede comunicarse con su supervisor para aclarar el motivo.<br>Puede acceder al Programa de Trabajo a través del siguiente {link}.</span></p><p><img src="{bottom_img}" alt="" width="250" height="70" /></p>'
+
+                body=template.format(**form)
+
+                mails=db.query("""
+                    select email from system.user where user_id=%s
+                """%(form['tax_form_requested_by'])).dictresult()
+                GF.sendMail('Solicitud Formato Fiscal Denegada',body,[mails[0]['email']])
+
+
+                response['success']=True
+                response['msg_response']='El Formato Fiscal ha sido denegado.'
+            else:
+                response['success']=False
+                response['msg_response']='Ocurrió un error al intentar obtener la información, favor de intentarlo de nuevo.'
+        else:
+            response['success']=False
+            response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo.'
+
+    except:
+        response['success']=False
+        response['msg_response']='Ocurrió un error, favor de intentarlo de nuevo más tarde.'
+        exc_info=sys.exc_info()
+        app.logger.info(traceback.format_exc(exc_info))
+        GF.sendErrorMail(traceback.format_exc(exc_info))
+    return json.dumps(response)

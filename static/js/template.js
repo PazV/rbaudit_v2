@@ -241,9 +241,12 @@ $(document).ready(function(){
         var form_input=$("#frmCreateTemplateForm :input");
         var valid=true;
         for (var x in form_input){
-            if ($("#"+form_input[x].id).hasClass('invalid-field')){
-                valid=false;
-                break
+            console.log(form_input[x].id);
+            if (form_input[x].id!=='tax_form_description' && form_input[x].id!=='taxFormFile'){
+                if ($("#"+form_input[x].id).hasClass('invalid-field')){
+                    valid=false;
+                    break
+                }
             }
         }
         if (valid===true){
@@ -257,6 +260,18 @@ $(document).ready(function(){
             var file_name=$("#newTempFormFile")[0].files[0].name;
             data.append(file_name,file);
             data.append('file_name',file_name);
+            if ($("#taxFormFile")[0].files.length>0){
+                var tax_file = $("#taxFormFile")[0].files[0];
+                var tax_file_name=$("#taxFormFile")[0].files[0].name;
+            }
+            else{
+                var tax_file ='';
+                var tax_file_name = '';
+            }
+            data.append(tax_file_name,tax_file);
+            data.append('tax_file_name',tax_file_name);
+            data.append('tax_form_description',$("#tax_form_description").val());
+
             EasyLoading.show({
                 text:'Cargando...',
                 type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
@@ -278,13 +293,13 @@ $(document).ready(function(){
                         $.alert({
                             theme:'dark',
                             title:'Atención',
-                            content:'El formulario ha sido creado, será abierto en una nueva pestaña.',
+                            content:'El formulario ha sido creado.',
                             buttons:{
                                 confirm:{
                                     text:'Aceptar',
                                     action:function(){
                                         loadTemplatesTable();
-                                        window.open('/templates/preview/'+res.template_factor+'/'+res.t_form_id,'_blank');
+                                        // window.open('/templates/preview/'+res.template_factor+'/'+res.t_form_id,'_blank');
 
                                         $("#mod_create_form_for_template").modal('hide');
                                     }

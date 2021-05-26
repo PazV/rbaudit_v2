@@ -34,14 +34,29 @@
                                     Campo inválido
                                 </div>
                             </div>
-                            <div class="form-group row no-space-bottom" style="padding:0 2%;">
+                            <div class="form-group row no-space-bottom" style="padding:0 2%; width: 96%; margin: 0 2% 1%;">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="newTempFormFile" name="form_file" data-required="true" pattern=".xlsx,.XLSX,.Xlsx" data-toggle="tooltip" title="Solo archivos del tipo .xlsx, .XLSX, .Xlsx"/>
                                     <label class="custom-file-label" for="newTempFormFile" style="overflow:hidden;">Seleccionar archivo</label>
                                 </div>
                             </div>
+                            <fieldset class="fieldset-project-users">
+                                <legend class="fieldset-legend-project-users">Formato fiscal</legend>
+                                <div class="form-group no-space-bottom justify-content-between">
+                                    <label for="tax_form_description" class="col-form-label col-form-label-sm">Descripción:</label>
+                                    <textarea class="form-control form-control-sm" id="tax_form_description" placeholder="Agregar descripción del formato fiscal" name="tax_form_description" style="width: 100%; margin-right: 1.5%;"></textarea>
+                                </div>
+                                <div class="form-group row no-space-bottom" style="padding:0 2%;">
+                                    <div class="custom-file" style="width: 97%; margin: 0.5% 1.5%;">
+                                        <input type="file" class="custom-file-input" id="taxFormFile" name="tax_form_file" data-required="true" pattern=".xlsx,.XLSX,.Xlsx" data-toggle="tooltip" title="Solo archivos del tipo .xlsx, .XLSX, .Xlsx"/>
+                                        <label class="custom-file-label" for="taxFormFile" style="overflow:hidden;">Seleccionar archivo</label>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+
                         </form>
-                        <div id="divNewTempFormFolders" class="mod-menu-explorer">
+                        <div id="divNewTempFormFolders" class="mod-menu-explorer" style="max-height:initial;">
                             {% include 'elements/_form_menu_path_mod_temp_form.html' %}
                             <div class="div-mP-folders-container row row-wo-margin" id="divMPFoldersContModTemp">
 

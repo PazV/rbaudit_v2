@@ -10,7 +10,7 @@ $(document).ready(function(){
         getFormObservations(me.user_info);
         getFormDocuments(me.user_info);
         getFormPath(me.user_info);
-
+        getTaxForm(me.user_info);
     }
 
     // $("#btnGotoFormStep2").click(function(){
@@ -2459,12 +2459,14 @@ $(document).ready(function(){
                             $("#comment_editor_buttons").remove();
                             $(".obs-bg").css("height","100%")
                             $("#btnAddObservation").attr("disabled",false);
-                            $("#divFormObs").css("height","65%");
+                            // $("#divFormObs").css("height","65%");
+                            $("#divFormObs").css("height","45%");
 
                         }
                         else{
                             $("#btnAddObservation").attr("disabled",false);
-                            $("#divFormObs").css("height","65%");
+                            // $("#divFormObs").css("height","65%");
+                            $("#divFormObs").css("height","45%");
                         }
                     },
                     error:function(){
@@ -2493,7 +2495,8 @@ $(document).ready(function(){
             $("#comment_editor_buttons").remove();
             $(".obs-bg").css("height","100%")
             $("#btnAddObservation").attr("disabled",false);
-            $("#divFormObs").css("height","65%");
+            // $("#divFormObs").css("height","65%");
+            $("#divFormObs").css("height","45%");
         });
 
         // $("#formComments").append('<div id="editor" style="width:100%; height:100px;"></div><button class="btn btn-primary pull-right">Guardar</button>');
@@ -2630,6 +2633,85 @@ $(document).ready(function(){
         resetForm("#frmCloneForm",['input|INPUT']);
     });
 
+    $("#btnRequestFormTaxForm").click(function(){
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
+        $.ajax({
+            url:'/project/requestFormTaxForm',
+            type:'POST',
+            data:JSON.stringify({'form_id':me.user_info['form_id'],'user_id':me.user_info['user_id']}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+                if (res.success){
+                    $("#btnRequestFormTaxForm").css("display","none");
+                }
+            },
+            error:function(){
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        })
+    });
+
+    $("#btnReviewTaxFormRequest").click(function(){
+        if (parseInt($("#SFTFRrequests").find("option:selected").attr("name"))==-1) {
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'No tiene ninguna solicitud pendiente.'
+            });
+            $("#btnReviewTaxFormRequest").attr("disabled",true);
+        }
+        else{
+            $.ajax({
+                url:'/project/getTaxFormRequestInfo',
+                type:'POST',
+                data:JSON.stringify({'form_id':parseInt($("#SFTFRrequests").find("option:selected").attr("name"))}),
+                success:function(response){
+                    try{
+                        var res=JSON.parse(response);
+                    }catch(err){
+                        ajaxError();
+                    }
+                    if (res.success){
+                        $("#divTaxFormReqDetails").html(res.data);
+                        $("#mod_tax_form_request_details").modal("show");
+                    }
+                    else{
+                        $.alert({
+                            theme:'dark',
+                            title:'Atención',
+                            content:res.msg_response
+                        });
+                    }
+                },
+                error:function(){
+                    EasyLoading.hide();
+                    $.alert({
+                        theme:'dark',
+                        title:'Atención',
+                        content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                    });
+                }
+            });
+        }
+    });
 
 });
 
@@ -2965,7 +3047,8 @@ function getFormObservations(user_info){
                                             $("#comment_editor_buttons").remove();
                                             $(".obs-bg").css("height","100%")
                                             $("#btnAddObservation").attr("disabled",false);
-                                            $("#divFormObs").css("height","65%");
+                                            //$("#divFormObs").css("height","65%");
+                                            $("#divFormObs").css("height","45%");
 
                                         }
                                         else{
@@ -2998,7 +3081,8 @@ function getFormObservations(user_info){
                             $("#comment_editor_buttons").remove();
                             $(".obs-bg").css("height","100%")
                             $("#btnAddObservation").attr("disabled",false);
-                            $("#divFormObs").css("height","65%");
+                            //$("#divFormObs").css("height","65%");
+                            $("#divFormObs").css("height","45%");
                         });
 
                     });
@@ -3087,6 +3171,41 @@ function getFormPath(user_info){
                     }
 
                 }
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        error:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
+}
+
+function getTaxForm(user_info){
+    $.ajax({
+        url:'/project/getFormTaxForm',
+        type:'POST',
+        data:JSON.stringify({'form_id':user_info['form_id'],'user_id':user_info['user_id']}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                if (res.status!=0){
+                    $("#btnRequestFormTaxForm").css("display",'none');
+                }
+                $("#formTaxDocuments").html(res.description);
             }
             else{
                 $.alert({

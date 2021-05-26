@@ -1583,6 +1583,94 @@ $(document).ready(function(){
         $("#SPRrequests").empty();
     });
 
+    $("#mod_show_tax_forms_requests").on('show.bs.modal',function(){
+        $("#btnReviewTaxFormRequest").attr('disabled',false);
+        loadPendingTaxFormsRequests(me.user_info['user_id']);
+
+    });
+
+    $("#mod_show_tax_forms_requests").on('hide.bs.modal',function(){
+        $("#SFTFRrequests").empty();
+    });
+
+    $("#mod_tax_form_request_details").on('hide.bs.modal',function(){
+        $("#divTaxFormReqDetails").empty();
+    });
+
+    $("#btnApproveTaxFormRequest").click(function(){
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
+        $.ajax({
+            url:'/project/approveTaxFormRequest',
+            type:'POST',
+            data:JSON.stringify({'form_id':parseInt($("#SFTFRrequests").find("option:selected").attr("name"))}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+                if (res.success){
+                    $("#mod_tax_form_request_details").modal("hide");
+                    loadPendingTaxFormsRequests(me.user_info['user_id']);
+                }
+            },
+            failure:function(){
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
+    $("#btnRejectTaxFormRequest").click(function(){
+        EasyLoading.show({
+            text:'Cargando...',
+            type:EasyLoading.TYPE["BALL_SCALE_RIPPLE_MULTIPLE"]
+        });
+        $.ajax({
+            url:'/project/rejectTaxFormRequest',
+            type:'POST',
+            data:JSON.stringify({'form_id':parseInt($("#SFTFRrequests").find("option:selected").attr("name"))}),
+            success:function(response){
+                try{
+                    var res=JSON.parse(response);
+                }catch(err){
+                    ajaxError();
+                }
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+                if (res.success){
+                    $("#mod_tax_form_request_details").modal("hide");
+                    loadPendingTaxFormsRequests(me.user_info['user_id']);
+                }
+            },
+            failure:function(){
+                EasyLoading.hide();
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:'Ocurrió un error, favor de intentarlo de nuevo.'
+                });
+            }
+        });
+    });
+
 });
 
 function loadProjects(user_info,filter_str){
@@ -2426,4 +2514,53 @@ function getProjectRequestUsers(prfid,sel_list){
             });
         }
     })
+}
+
+function loadPendingTaxFormsRequests(user_id){
+    $.ajax({
+        url:'/project/getPendingTaxFormsRequests',
+        type:'POST',
+        data:JSON.stringify({'user_id':user_id}),
+        success:function(response){
+            try{
+                var res=JSON.parse(response);
+            }catch(err){
+                ajaxError();
+            }
+            if (res.success){
+                $("#SFTFRrequests").empty();
+                if (res.has_requests==true){
+                    $.each(res.data,function(i,item){
+                        $("#SFTFRrequests").append($('<option>',{
+                            text:item.name,
+                            name:item.form_id,
+                            selected:true
+                        }));
+                    });
+                }
+                else{
+                    $("#SFTFRrequests").append($('<option>',{
+                        text:'Sin solicitudes',
+                        name:-1,
+                        selected:true
+                    }));
+                    $("#SFTFRrequests").attr('readonly',true);
+                }
+            }
+            else{
+                $.alert({
+                    theme:'dark',
+                    title:'Atención',
+                    content:res.msg_response
+                });
+            }
+        },
+        failure:function(){
+            $.alert({
+                theme:'dark',
+                title:'Atención',
+                content:'Ocurrió un error, favor de intentarlo de nuevo.'
+            });
+        }
+    });
 }
