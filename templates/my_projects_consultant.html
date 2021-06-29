@@ -33,7 +33,8 @@
                     <div class="card" style="height:100%;">
                         <div class="card-header header-folders-menu justify-content-between row row-wo-margin">
                             <span id="spnMyProjectName" data-toggle="tooltip"></span>
-                            <div style="display:none;">
+                            {% if g.consultant==True %}
+                            <div >
                                 <button class="btn btn-sm btn-mP-top-menu dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Nuevo" disabled><i class="fa fa-plus-circle"></i></button>
                                 <div class="dropdown-menu dropdown-menu-right" role="menu">
                                     <a class="dropdown-item" href="#mod_add_folder" data-toggle="modal" id="dropAddFolder">Nueva carpeta</a>
@@ -46,6 +47,7 @@
                                 <button class="btn btn-sm btn-mP-top-menu" data-toggle="tooltip" title="Editar carpeta" disabled id="btnEditFormFolder"><i class="fa fa-edit"></i></button>
                                 <button class="btn btn-sm btn-mP-top-menu" data-toggle="tooltip" title="Eliminar carpeta" disabled id="btnRemoveFormFolder"><i class="fa fa-trash-o"></i></button>
                             </div>
+                            {% endif %}
                         </div>
                         <div class="card-body myProject-menu-container">
                             {% include 'elements/_form_menu_path.html' %}
