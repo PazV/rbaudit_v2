@@ -4106,7 +4106,10 @@ def getPublishingInfo():
                     """%data['form_id']).dictresult()
                     users=db.query("""
                         select a.user_id, b.name from project.project_users a, system.user b where a.user_id=b.user_id and a.project_id=%s
-                    """%assigned['project_id']).dictresult()
+                        union select a.manager as user_id, b.name from project.project a, system.user b where a.manager=b.user_id and a.project_id=%s
+                        union select a.partner as user_id, b.name from project.project a, system.user b where a.partner=b.user_id and a.project_id=%s
+                    """%(assigned['project_id'],assigned['project_id'],assigned['project_id'])).dictresult()
+
                     assigned['revisions']=revisions
                     assigned['users']=users
                     response['data']=assigned
