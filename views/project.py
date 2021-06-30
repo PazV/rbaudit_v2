@@ -688,8 +688,10 @@ def getFormRevisionUsers():
                     where
                         a.user_id=b.user_id
                     and b.project_id=%s
-                    order by a.name
-                """%data['project_id']).dictresult()
+                    union select a.manager as user_id, b.name from project.project a, system.user b where a.manager=b.user_id and a.project_id=%s
+                    union select a.partner as user_id, b.name from project.project a, system.user b where a.partner=b.user_id and a.project_id=%s
+                    order by name
+                """%(data['project_id'],data['project_id'],data['project_id'])).dictresult()
                 response['data']=users
                 response['success']=True
             else:
